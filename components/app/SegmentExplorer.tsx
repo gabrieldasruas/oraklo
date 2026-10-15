@@ -20,7 +20,7 @@ import {
   ChevronRight,
   type LucideIcon,
 } from "lucide-react";
-import { niches, nicheGroups } from "@/content/app";
+import { nicheGroups, type Niche } from "@/content/app";
 import { Aura, Micro, Pill, WireArt } from "@/components/app/ui";
 
 const icons: Record<string, LucideIcon> = {
@@ -48,13 +48,14 @@ const toneByGroup: Record<string, string> = {
   Serviços: "night",
 };
 
-const N = niches.length;
-const STEP = 360 / N;
 const AUTO_SPEED = 7; // graus por segundo
 const fmt = (n: number) => n.toLocaleString("pt-BR");
 
 // Anel 3D de nichos: gira sozinho, pausa ao passar o mouse e pré-visualiza o nicho.
-export default function SegmentExplorer() {
+// A lista vem do servidor e não muda durante a visita, por isso os efeitos leem N/STEP só na montagem.
+export default function SegmentExplorer({ niches }: { niches: Niche[] }) {
+  const N = niches.length;
+  const STEP = 360 / N;
   const [group, setGroup] = useState("Todos");
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [frontId, setFrontId] = useState(niches[0].id);
@@ -298,7 +299,7 @@ export default function SegmentExplorer() {
                           <Icon size={18} aria-hidden />
                         </span>
                         <span className="font-mono text-[10px] uppercase tracking-widest opacity-70">
-                          Fit {n.score}
+                          {n.preview ? "Prévia" : `Fit ${n.score ?? "—"}`}
                         </span>
                       </div>
                       <div>
@@ -349,11 +350,22 @@ export default function SegmentExplorer() {
               {active.name}
             </h2>
             <p className="relative mt-4 text-sm leading-relaxed opacity-65">{active.description}</p>
+            {active.preview && (
+              <p className="relative mt-4 w-fit rounded-full border border-white/20 px-3 py-1 text-xs opacity-80">
+                Dados ilustrativos: nicho ainda não importado
+              </p>
+            )}
 
-            <p className="relative mt-8 text-8xl font-light leading-none tracking-[-0.06em] text-neon">
-              {active.score}
-            </p>
-            <Micro className="relative mt-2 !opacity-60">Índice de fit</Micro>
+            {active.score === null ? (
+              <p className="relative mt-8 text-5xl font-light leading-none tracking-[-0.05em] text-neon">Em breve</p>
+            ) : (
+              <p className="relative mt-8 text-8xl font-light leading-none tracking-[-0.06em] text-neon">
+                {active.score}
+              </p>
+            )}
+            <Micro className="relative mt-2 !opacity-60">
+              {active.score === null ? "Índice de fit · após o enriquecimento" : "Índice de fit"}
+            </Micro>
 
             <dl className="relative mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-white/10">
               {[

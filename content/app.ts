@@ -9,10 +9,11 @@ export type Niche = {
   description: string;
   companies: number;
   contacts: number;
-  score: number;
+  score: number | null; // null até existir o score de fit (fase 3)
   roles: string[];
   samples: string[];
   tags: string[];
+  preview?: boolean; // dados de exemplo: nicho ainda não importado da Receita
 };
 
 export const nicheGroups = [
