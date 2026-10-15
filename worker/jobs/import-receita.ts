@@ -22,7 +22,9 @@ const COLUMNS = { Estabelecimentos: 30, Empresas: 7, Socios: 11, Cnaes: 2, Munic
 const PORTE: Record<string, string> = { "00": "NAO_INFORMADO", "01": "ME", "03": "EPP", "05": "DEMAIS" };
 const SOCIO_KIND: Record<string, string> = { "1": "PJ", "2": "PF", "3": "ESTRANGEIRO" };
 
-type NicheFilter = { cnaes?: string[]; ufs?: string[]; sizes?: string[]; municipalities?: string[] };
+// Os demais critérios do filtro (porte, natureza, capital, idade, matriz) são aplicados só no banco,
+// em niche_companies(), para a busca poder afrouxá-los sobre a mesma base.
+type NicheFilter = { cnaes?: string[]; ufs?: string[]; municipalities?: string[]; cnae_main_only?: boolean };
 type Niche = { id: string; filter: NicheFilter };
 
 const args = process.argv.slice(2);
@@ -174,7 +176,7 @@ function matches(niche: Niche, uf: string, municipality: string, main: string, s
   const f = niche.filter;
   if (f.ufs && !f.ufs.includes(uf)) return false;
   if (f.municipalities && !f.municipalities.includes(municipality)) return false;
-  if (f.cnaes && !f.cnaes.includes(main) && !secondary.some((c) => f.cnaes!.includes(c))) return false;
+  if (f.cnaes && !f.cnaes.includes(main) && (f.cnae_main_only || !secondary.some((c) => f.cnaes!.includes(c)))) return false;
   return true;
 }
 
@@ -336,10 +338,10 @@ try {
      from (select distinct municipality_code, uf from public.companies) c
      where m.code = c.municipality_code and m.uf is distinct from c.uf`,
   );
-  // Empresas que não vieram nesta competência: não apaga (pode haver leads ligados), só marca
+  // Empresas não tocadas nesta execução (saíram da Receita ou do escopo dos nichos): não apaga
+  // (pode haver leads ligados), só marca. now() é o início da transação, igual ao updated_at do upsert.
   const gone = await db.query(
-    "update public.companies set status = 'fora_da_base', updated_at = now() where source_period <> $1 and status <> 'fora_da_base'",
-    [period],
+    "update public.companies set status = 'fora_da_base' where updated_at < now() and status <> 'fora_da_base'",
   );
   await db.query("select public.recompute_niches()");
   await db.query("commit");
@@ -348,9 +350,8 @@ try {
   log(`Concluído. ${gone.rowCount} empresas marcadas como fora_da_base.`);
   const counts = (await db.query("select id, companies_count from public.niches order by id")).rows;
   for (const { id, companies_count } of counts) {
-    const n = niches.find((x) => x.id === id)!;
-    const note = n.filter.sizes ? " (filtro de porte aplicado só no banco)" : "";
-    log(`  ${id}: arquivo=${perNicheInFile.get(id)} banco=${companies_count}${note}`);
+    // arquivo = casou com CNAE/UF/município; nicho = após os demais critérios aplicados no banco
+    log(`  ${id}: arquivo=${perNicheInFile.get(id)} nicho=${companies_count}`);
   }
 } catch (err) {
   await db.query("rollback").catch(() => {});
