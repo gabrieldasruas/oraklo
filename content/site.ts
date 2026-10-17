@@ -72,23 +72,4 @@ export const site = {
       { title: "Empresa", links: ["Sobre", "Carreiras", "Contato", "Privacidade"] },
     ],
   },
-  leadsPage: {
-    kpis: [
-      { label: "Leads na lista", value: "2.480", delta: "+12% no mês" },
-      { label: "Contatados", value: "1.136", delta: "+8% no mês" },
-      { label: "Respostas", value: "214", delta: "+21% no mês" },
-      { label: "Reuniões", value: "37", delta: "+5 esta semana" },
-    ],
-    filters: ["Cargo", "Setor", "Porte", "Localização", "Tecnologia", "Status"],
-    leads: [
-      { name: "Carla Mendes", role: "Diretora Comercial", company: "Vertix", place: "São Paulo, SP", status: "Respondeu", score: 92, last: "há 2 dias" },
-      { name: "Bruno Alves", role: "Head de Vendas", company: "Nuvemar", place: "Curitiba, PR", status: "Em sequência", score: 85, last: "há 1 dia" },
-      { name: "Juliana Rocha", role: "CEO", company: "Orbita", place: "Belo Horizonte, MG", status: "Reunião marcada", score: 97, last: "hoje" },
-      { name: "Diego Santos", role: "Gerente de Marketing", company: "Cálamo", place: "Porto Alegre, RS", status: "Novo", score: 64, last: "—" },
-      { name: "Patrícia Nunes", role: "VP de Operações", company: "Tessera", place: "Recife, PE", status: "Em sequência", score: 78, last: "há 3 dias" },
-      { name: "Felipe Barros", role: "Diretor de TI", company: "Lumen", place: "Florianópolis, SC", status: "Novo", score: 58, last: "—" },
-      { name: "Larissa Prado", role: "Coordenadora de Vendas", company: "Aurora", place: "Campinas, SP", status: "Respondeu", score: 88, last: "ontem" },
-      { name: "Thiago Faria", role: "Fundador", company: "Pixel&Co", place: "Rio de Janeiro, RJ", status: "Sem interesse", score: 41, last: "há 6 dias" },
-    ],
-  },
 };
