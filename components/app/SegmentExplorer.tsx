@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { nicheGroups, type Niche } from "@/content/app";
 import { Aura, Micro, Pill, WireArt } from "@/components/app/ui";
+import { createListFromNiche } from "@/app/(app)/listas/actions";
 
 const icons: Record<string, LucideIcon> = {
   truck: Truck,
@@ -406,9 +407,16 @@ export default function SegmentExplorer({ niches }: { niches: Niche[] }) {
               ))}
             </ul>
 
-            <Pill href="/listas" tone="neon" className="relative mt-7 w-full justify-between">
-              Criar lista deste nicho
-            </Pill>
+            {active.preview ? (
+              <p className="relative mt-7 text-xs opacity-60">Este nicho ainda não tem dados reais para virar lista.</p>
+            ) : (
+              <form action={createListFromNiche} className="relative mt-7">
+                <input type="hidden" name="niche" value={active.id} />
+                <Pill type="submit" tone="neon" className="w-full justify-between">
+                  Criar lista deste nicho
+                </Pill>
+              </form>
+            )}
           </div>
         </Aura>
       </div>

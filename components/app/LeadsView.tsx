@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search, Trash2, Mail, Phone } from "lucide-react";
-import { useLeads } from "@/lib/leads";
+import { STATUSES, useLeads, type Status } from "@/lib/leads";
 import PageHeader from "@/components/app/PageHeader";
 import LeadForm from "@/components/app/LeadForm";
 import { Aura, Glass, Micro, Pill, WireArt } from "@/components/app/ui";
@@ -25,7 +25,7 @@ const initials = (name: string) =>
     .toUpperCase();
 
 export default function LeadsView() {
-  const { leads, loaded, addLead, removeLead } = useLeads();
+  const { leads, loaded, error, addLead, removeLead, updateStatus } = useLeads();
   const [query, setQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
 
@@ -57,11 +57,16 @@ export default function LeadsView() {
       <PageHeader
         index="02"
         title="Leads"
-        description="Cadastre e acompanhe seus contatos. Os dados ficam salvos neste navegador."
+        description="Cadastre e acompanhe seus contatos. Os leads ficam salvos no workspace da sua equipe."
         action={<Pill onClick={() => setFormOpen(true)}>Novo lead</Pill>}
       />
 
       <div className="space-y-4">
+        {error && (
+          <p role="alert" className="rounded-2xl bg-rose-100 px-5 py-3 text-sm text-rose-900">
+            {error}
+          </p>
+        )}
         <section aria-label="Resumo" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {kpis.map((k, i) => (
             <Aura key={k.label} tone={k.tone} className="relative min-h-[140px] p-5">
@@ -138,9 +143,22 @@ export default function LeadsView() {
                     <td className="px-4 py-4">{l.company}</td>
                     <td className="px-4 py-4 opacity-60">{l.place || "—"}</td>
                     <td className="px-4 py-4">
-                      <span className="inline-flex items-center gap-2 rounded-full border border-night/10 bg-white/70 px-3 py-1.5 text-xs">
-                        <span className={`size-2 rounded-full ${statusDot[l.status]}`} /> {l.status}
-                      </span>
+                      <label className="relative inline-flex items-center">
+                        <span className="sr-only">Status de {l.name}</span>
+                        <span
+                          aria-hidden
+                          className={`pointer-events-none absolute left-3 size-2 rounded-full ${statusDot[l.status]}`}
+                        />
+                        <select
+                          value={l.status}
+                          onChange={(e) => updateStatus(l.id, e.target.value as Status)}
+                          className="min-h-9 cursor-pointer appearance-none rounded-full border border-night/10 bg-white/70 py-1.5 pl-7 pr-4 text-xs hover:bg-white"
+                        >
+                          {STATUSES.map((s) => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
+                      </label>
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
@@ -172,7 +190,7 @@ export default function LeadsView() {
           {loaded && filtered.length === 0 && (
             <p className="px-5 py-14 text-center text-sm opacity-60">
               {leads.length === 0
-                ? "Nenhum lead cadastrado ainda. Clique em “Novo lead” para começar."
+                ? "Nenhum lead cadastrado ainda. Clique em “Novo lead” ou adicione uma empresa a partir da busca."
                 : "Nenhum lead encontrado para essa busca."}
             </p>
           )}

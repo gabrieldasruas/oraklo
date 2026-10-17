@@ -3,13 +3,23 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, LogOut } from "lucide-react";
+import { signOut } from "@/app/entrar/actions";
 import { appNav } from "@/components/app/nav";
 import { Micro } from "@/components/app/ui";
 import { site } from "@/content/site";
 
 // Painel enxuto no topo: serve para o usuário se localizar entre as seções principais.
-export default function TopPanel() {
+const initials = (name: string) =>
+  name
+    .split(/[\s@.]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+
+export default function TopPanel({ user }: { user: { name: string; workspaceName: string } | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(pathname === "/painel");
 
@@ -67,19 +77,41 @@ export default function TopPanel() {
             {open ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
             <span className="hidden sm:inline">{open ? "Recolher" : "Seções"}</span>
           </button>
-          <Link
-            href="/configuracoes"
-            aria-label="Configurações"
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-night font-mono text-xs text-neon transition-transform hover:scale-105"
-          >
-            GS
-          </Link>
+          {user ? (
+            <>
+              <Link
+                href="/configuracoes"
+                aria-label={`${user.name} (${user.workspaceName}) — configurações`}
+                title={`${user.name} · ${user.workspaceName}`}
+                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-night font-mono text-xs text-neon transition-transform hover:scale-105"
+              >
+                {initials(user.name)}
+              </Link>
+              <form action={signOut}>
+                <button
+                  type="submit"
+                  aria-label="Sair"
+                  title="Sair"
+                  className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-night/10 bg-white/70 hover:bg-night hover:text-white"
+                >
+                  <LogOut size={15} aria-hidden />
+                </button>
+              </form>
+            </>
+          ) : (
+            <Link
+              href="/entrar"
+              className="flex min-h-10 shrink-0 items-center rounded-full bg-night px-4 text-xs font-medium text-white"
+            >
+              Entrar
+            </Link>
+          )}
         </div>
       </div>
 
       <div id="top-panel-body" hidden={open ? undefined : true}>
         {open && (
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
             {appNav.map((item, i) => {
               const active = pathname === item.href;
               const Icon = item.icon;

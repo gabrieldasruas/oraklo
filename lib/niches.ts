@@ -1,6 +1,7 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/db/admin";
+import { titleCase } from "@/lib/format";
 import { niches as exampleNiches, type Niche } from "@/content/app";
 
 type NicheRow = {
@@ -17,16 +18,6 @@ type NicheRow = {
   avg_score: number | null;
   sample_cnpjs: string[];
 };
-
-// Nomes da Receita vêm em caixa alta: "TRANSPORTES MARVEL S.A." → "Transportes Marvel S.A."
-const LOWER = new Set(["de", "da", "do", "das", "dos", "e"]);
-function titleCase(name: string) {
-  return name
-    .toLowerCase()
-    .split(" ")
-    .map((w, i) => (w.includes(".") ? w.toUpperCase() : i > 0 && LOWER.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
-    .join(" ");
-}
 
 async function fetchNiches(): Promise<Niche[]> {
   const db = createAdminClient();
@@ -70,5 +61,5 @@ async function fetchNiches(): Promise<Niche[]> {
   return merged;
 }
 
-// As contagens só mudam após uma importação ou enriquecimento.
-export const getNiches = unstable_cache(fetchNiches, ["niches"], { revalidate: 3600, tags: ["niches"] });
+// As contagens só mudam após uma importação ou enriquecimento; 5 min basta para refletir uma importação nova.
+export const getNiches = unstable_cache(fetchNiches, ["niches"], { revalidate: 300, tags: ["niches"] });
