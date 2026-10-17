@@ -14,7 +14,6 @@ export type Lead = {
   status: Status;
   score: number;
   createdAt: string; // ISO
-  last?: string; // texto livre (legado dos exemplos)
 };
 
-export type LeadInput = Omit<Lead, "id" | "createdAt" | "last">;
+export type LeadInput = Omit<Lead, "id" | "createdAt">;

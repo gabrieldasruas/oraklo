@@ -169,7 +169,7 @@ export default function LeadsView() {
                       </div>
                     </td>
                     <td className="px-4 py-4 font-mono text-xs opacity-55">
-                      {l.last ?? new Date(l.createdAt).toLocaleDateString("pt-BR")}
+                      {new Date(l.createdAt).toLocaleDateString("pt-BR")}
                     </td>
                     <td className="px-4 py-4 text-right">
                       <button

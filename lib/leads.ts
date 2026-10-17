@@ -7,6 +7,9 @@ import type { Lead, LeadInput, Status } from "@/lib/lead-types";
 export { STATUSES } from "@/lib/lead-types";
 export type { Lead, Status } from "@/lib/lead-types";
 
+// Chave da versão antiga, que guardava leads fictícios no navegador. Apagada na primeira visita.
+const LEGACY_KEY = "prospecta:leads:v1";
+
 // Leads do workspace, salvos no banco via Server Actions. Mesma interface da versão em localStorage,
 // mais `updateStatus` e `error`. As alterações são otimistas e revertidas se o servidor falhar.
 export function useLeads() {
@@ -15,6 +18,12 @@ export function useLeads() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    try {
+      window.localStorage.removeItem(LEGACY_KEY);
+    } catch {
+      // armazenamento indisponível (modo privado): nada a limpar
+    }
+
     listLeads()
       .then(setLeads)
       .catch(() => setError("Não foi possível carregar os leads. Recarregue a página."))
