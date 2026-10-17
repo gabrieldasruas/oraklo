@@ -1,106 +1,68 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { site } from "@/content/site";
+import { createLead, deleteLead, listLeads, updateLeadStatus } from "@/app/(app)/leads/actions";
+import type { Lead, LeadInput, Status } from "@/lib/lead-types";
 
-export const STATUSES = [
-  "Novo",
-  "Em sequência",
-  "Respondeu",
-  "Reunião marcada",
-  "Sem interesse",
-] as const;
+export { STATUSES } from "@/lib/lead-types";
+export type { Lead, Status } from "@/lib/lead-types";
 
-export type Status = (typeof STATUSES)[number];
-
-export type Lead = {
-  id: string;
-  name: string;
-  role: string;
-  company: string;
-  email: string;
-  phone: string;
-  place: string;
-  status: Status;
-  score: number;
-  createdAt: string; // ISO
-  last?: string; // texto livre dos exemplos iniciais
-};
-
-const KEY = "prospecta:leads:v1";
-
-function seed(): Lead[] {
-  const now = new Date().toISOString();
-  return site.leadsPage.leads.map((l, i) => ({
-    id: `seed-${i}`,
-    name: l.name,
-    role: l.role,
-    company: l.company,
-    email: "",
-    phone: "",
-    place: l.place,
-    status: l.status as Status,
-    score: l.score,
-    createdAt: now,
-    last: l.last,
-  }));
-}
-
-function read(): Lead[] {
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    if (raw === null) return seed(); // primeira visita: exemplos
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : seed();
-  } catch {
-    return seed();
-  }
-}
-
-function write(leads: Lead[]) {
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(leads));
-  } catch {
-    // armazenamento indisponível (modo privado, cota cheia): segue só em memória
-  }
-}
-
+// Leads do workspace, salvos no banco via Server Actions. Mesma interface da versão em localStorage,
+// mais `updateStatus` e `error`. As alterações são otimistas e revertidas se o servidor falhar.
 export function useLeads() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Carrega após a hidratação para evitar divergência entre servidor e cliente.
   useEffect(() => {
-    setLeads(read());
-    setLoaded(true);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === KEY) setLeads(read());
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    listLeads()
+      .then(setLeads)
+      .catch(() => setError("Não foi possível carregar os leads. Recarregue a página."))
+      .finally(() => setLoaded(true));
   }, []);
 
-  const update = useCallback((fn: (prev: Lead[]) => Lead[]) => {
+  const addLead = useCallback(async (data: LeadInput) => {
+    setError(null);
+    try {
+      const lead = await createLead(data);
+      setLeads((prev) => [lead, ...prev]);
+    } catch {
+      setError("Não foi possível salvar o lead. Tente de novo.");
+    }
+  }, []);
+
+  const removeLead = useCallback(async (id: string) => {
+    setError(null);
+    let removed: Lead | undefined;
     setLeads((prev) => {
-      const next = fn(prev);
-      write(next);
-      return next;
+      removed = prev.find((l) => l.id === id);
+      return prev.filter((l) => l.id !== id);
     });
+    try {
+      await deleteLead(id);
+    } catch {
+      if (removed) setLeads((prev) => [removed!, ...prev]);
+      setError("Não foi possível excluir o lead. Tente de novo.");
+    }
   }, []);
 
-  const addLead = useCallback(
-    (data: Omit<Lead, "id" | "createdAt">) =>
-      update((prev) => [
-        { ...data, id: crypto.randomUUID(), createdAt: new Date().toISOString() },
-        ...prev,
-      ]),
-    [update],
-  );
+  const updateStatus = useCallback(async (id: string, status: Status) => {
+    setError(null);
+    let before: Status | undefined;
+    setLeads((prev) =>
+      prev.map((l) => {
+        if (l.id !== id) return l;
+        before = l.status;
+        return { ...l, status };
+      }),
+    );
+    try {
+      await updateLeadStatus(id, status);
+    } catch {
+      if (before) setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status: before! } : l)));
+      setError("Não foi possível atualizar o status. Tente de novo.");
+    }
+  }, []);
 
-  const removeLead = useCallback(
-    (id: string) => update((prev) => prev.filter((l) => l.id !== id)),
-    [update],
-  );
-
-  return { leads, loaded, addLead, removeLead };
+  return { leads, loaded, error, addLead, removeLead, updateStatus };
 }

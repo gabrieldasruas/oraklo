@@ -50,3 +50,25 @@ Se o download começar a falhar com 401/404, o token deve ter mudado:
 - **Municípios:** os códigos são da própria Receita, não do IBGE. A UF não vem no arquivo `Municipios` e é preenchida a partir dos estabelecimentos.
 - **MEI:** a razão social termina com o CPF do titular. O import remove esse número (LGPD).
 - **Layout:** cada linha tem o número de colunas conferido. Se a Receita mudar o layout, a importação aborta antes de gravar.
+
+## Login e workspaces
+
+- **Cadastro e workspace:** ao se cadastrar, o usuário ganha um workspace próprio e vira admin dele (trigger `on_auth_user_created`). Um usuário = um workspace por enquanto.
+- **Confirmação de e-mail:** o Supabase vem com "Confirm email" ligado. O SMTP embutido dele só entrega para e-mails da equipe do projeto e tem limite de poucos envios por hora. No modo teste, desligue em **Authentication → Sign In / Providers → Email → Confirm email**. Para produção, configure um SMTP próprio.
+- **Redirect do link de confirmação:** em **Authentication → URL Configuration**, o *Site URL* e os *Redirect URLs* precisam incluir a URL do app (ex.: `http://localhost:3000/**`). O link cai em `/auth/confirm`.
+
+### Quem lê o quê
+
+| Dado | Acesso |
+|---|---|
+| `leads`, `lists`, `list_items`, `exports`, `workspaces` | Cliente do usuário (`lib/db/server.ts`), isolado por RLS (`is_member`) |
+| `companies`, `partners` | **Só o servidor**, com a service role (`lib/db/admin.ts`), depois de `requireUser()`. Não há policy de leitura para usuários: ler direto pela API do Supabase permitiria baixar a base inteira e contornar a cota de exportação |
+| `niches`, `cnaes`, `municipalities` | Leitura para qualquer usuário logado |
+
+- **Funções que mexem com empresas:** criar lista (`create_list_from_filter`) e registrar exportação (`register_export`) são `security definer`. Elas conferem o workspace do usuário e a cota.
+- **Teste de isolamento:** `npm run test:rls` cria dois usuários temporários, testa que um não lê, altera nem exporta dados do outro e apaga os dois no fim. Rode depois de qualquer mudança de RLS.
+
+### Gotchas
+
+- **Limite de 1.000 linhas:** a API do Supabase devolve no máximo 1.000 linhas por requisição. Leituras que podem passar disso precisam ser paginadas, como em `getListCnpjs` (listas têm até 5.000 empresas).
+- **Idade da empresa:** o critério `min_years_open` dos nichos usa a data de hoje. Por isso uma lista criada agora pode ter algumas empresas a mais que a contagem do card, que só é recalculada na importação.

@@ -2,10 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
-import { STATUSES, type Lead, type Status } from "@/lib/leads";
+import { STATUSES, type LeadInput, type Status } from "@/lib/lead-types";
 import { Micro, Pill } from "@/components/app/ui";
 
-type Data = Omit<Lead, "id" | "createdAt">;
+type Data = LeadInput;
 
 const field =
   "mt-2 min-h-12 w-full rounded-2xl border border-night/10 bg-white/80 px-4 text-sm";

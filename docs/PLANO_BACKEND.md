@@ -259,27 +259,27 @@ Toda rota de workspace valida a sessão e depende do RLS como segunda barreira. 
 ## 6. Fases
 
 ### Fase 0: Preparação (≈1 dia)
-- [ ] Criar o projeto no Supabase (dev e prod) e definir as variáveis em `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`).
-- [ ] Configurar a Supabase CLI e as migrations em `supabase/migrations/`.
-- [ ] Criar o esqueleto de `worker/` com o `pg-boss` e um job de teste.
+- [x] Criar o projeto no Supabase (só dev, no modo teste) e definir as variáveis em `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`).
+- [x] Configurar a Supabase CLI e as migrations em `supabase/migrations/`.
+- [ ] Criar o esqueleto de `worker/` com o `pg-boss` e um job de teste. *(adiado para a fase 3; no modo teste a importação roda à mão)*
 - [ ] Definir os 2 ou 3 nichos-piloto com a lista exata de CNAEs (ex.: transportadoras SC = 4930-2/02, 4930-2/03, 4930-2/04).
 
 ### Fase 1: Base de empresas e segmentação (≈1 a 2 semanas)
-- [ ] Migrations das tabelas globais e índices.
-- [ ] `import-receita` filtrado pelos CNAEs dos nichos-piloto.
-- [ ] `recompute-niches` e `GET /api/niches`.
-- [ ] Trocar `niches` de `content/app.ts` pela API no `SegmentExplorer`, mantendo o mesmo formato `Niche`.
-- [ ] Endpoint de busca com filtros e uma tela simples de resultados.
+- [x] Migrations das tabelas globais e índices.
+- [x] `import-receita` filtrado pelos CNAEs dos nichos-piloto.
+- [x] `recompute-niches` e `GET /api/niches`.
+- [x] Trocar `niches` de `content/app.ts` pela API no `SegmentExplorer`, mantendo o mesmo formato `Niche`.
+- [x] Endpoint de busca com filtros e uma tela simples de resultados.
 
 **Aceite:** os cards de Segmentação mostram contagens reais, e a busca devolve empresas reais filtráveis por CNAE, UF, município e porte em menos de 500 ms.
 
 ### Fase 2: Contas, listas e leads (≈1 semana)
-- [ ] Supabase Auth, login e cadastro, workspace criado no primeiro acesso.
-- [ ] Proteger as rotas de `app/(app)` (redirecionar para o login sem sessão).
-- [ ] Migrations das tabelas por workspace com RLS e testes de isolamento entre dois workspaces.
-- [ ] Trocar `lib/leads.ts` (localStorage) por Server Actions. Os leads de exemplo deixam de existir.
-- [ ] Listas reais: criar a partir de um nicho ou de uma busca, adicionar empresas.
-- [ ] Exportar CSV com controle de cota.
+- [x] Supabase Auth, login e cadastro, workspace criado no primeiro acesso.
+- [x] Proteger as rotas de `app/(app)` (redirecionar para o login sem sessão).
+- [x] Migrations das tabelas por workspace com RLS e testes de isolamento entre dois workspaces.
+- [x] Trocar `lib/leads.ts` (localStorage) por Server Actions. Os leads de exemplo deixam de existir.
+- [x] Listas reais: criar a partir de um nicho ou de uma busca, adicionar empresas.
+- [x] Exportar CSV com controle de cota.
 
 **Aceite:** dois usuários de workspaces diferentes não enxergam os dados um do outro, e uma lista criada a partir de um nicho pode ser exportada.
 

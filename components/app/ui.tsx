@@ -114,12 +114,14 @@ export function Pill({
   href,
   type = "button",
   tone = "dark",
+  disabled = false,
   className = "",
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   href?: string;
   type?: "button" | "submit";
+  disabled?: boolean;
   tone?: "dark" | "neon" | "ghost";
   className?: string;
 }) {
@@ -147,7 +149,7 @@ export function Pill({
     );
   }
   return (
-    <button type={type} onClick={onClick} className={cls}>
+    <button type={type} onClick={onClick} disabled={disabled} className={`${cls} disabled:cursor-wait disabled:opacity-50 disabled:hover:translate-y-0`}>
       {children}
       {arrow}
     </button>
