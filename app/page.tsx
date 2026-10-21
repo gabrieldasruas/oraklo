@@ -6,37 +6,13 @@ import WelcomeButton from "@/components/app/WelcomeButton";
 import DotMatrixTitle from "@/components/landing/DotMatrixTitle";
 import FloatingCards from "@/components/landing/FloatingCards";
 import PromptBar from "@/components/landing/PromptBar";
+import LogoMark from "@/components/brand/LogoMark";
 
 const links = [
   { label: "Produto", href: "/produto" },
   { label: "Histórias", href: "/historias" },
   { label: "Preços", href: "/precos" },
 ];
-
-// Ícone do app aceso (o logo do Prospecta como "app icon", à la Higgsfield).
-function GlowIcon() {
-  return (
-    <div className="icon-drop relative mx-auto size-24 md:size-28" style={{ animationDelay: "0.2s" }}>
-      <div className="icon-glow relative flex size-full items-center justify-center overflow-hidden rounded-[30%] bg-[#111113]">
-        {/* grade interna */}
-        <div
-          aria-hidden
-          className="absolute inset-0 opacity-40"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
-            backgroundSize: "12px 12px",
-          }}
-        />
-        {/* brilho de vidro */}
-        <div aria-hidden className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/15 to-transparent" />
-        <span className="relative size-[30%] rounded-full bg-neon shadow-[0_0_30px_6px_rgba(184,255,60,0.8)]" />
-      </div>
-      {/* moldura metálica */}
-      <div aria-hidden className="pointer-events-none absolute -inset-1.5 -z-10 rounded-[32%] bg-gradient-to-b from-zinc-300 to-zinc-600" />
-    </div>
-  );
-}
 
 export default function WelcomePage() {
   const segments = niches.map((n) => n.name);
@@ -70,9 +46,7 @@ export default function WelcomePage() {
         {/* Topo */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
-              <span className="size-3 rounded-full bg-neon" />
-            </span>
+            <LogoMark size={44} animated={false} />
             <span className="text-xl font-semibold uppercase tracking-[-0.03em]">{site.name}</span>
           </div>
           <Micro className="hidden items-center gap-2 !opacity-70 sm:flex">
@@ -82,7 +56,10 @@ export default function WelcomePage() {
 
         {/* Centro */}
         <main className="flex flex-1 flex-col items-center justify-center py-10 text-center">
-          <GlowIcon />
+          {/* logo: lupa cibernética que troca de acabamento em loop */}
+          <div className="icon-drop" style={{ animationDelay: "0.2s" }}>
+            <LogoMark size={150} />
+          </div>
           <div className="mt-8 w-full max-w-4xl">
             <DotMatrixTitle text={site.name} />
           </div>

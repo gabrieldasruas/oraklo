@@ -314,3 +314,96 @@ body {
     animation: none;
   }
 }
+
+/* ====== Logo (lupa cibernética) ====== */
+.logo-tilt {
+  transform: perspective(500px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.logo-mark {
+  animation: logo-float 5s ease-in-out infinite;
+}
+@keyframes logo-float {
+  50% {
+    translate: 0 -8px;
+  }
+}
+/* troca de acabamento: entra com um "glitch" curto */
+@keyframes logo-swap {
+  0% {
+    opacity: 0;
+    scale: 0.92;
+    filter: blur(6px) saturate(2);
+    clip-path: inset(0 0 55% 0);
+  }
+  35% {
+    opacity: 1;
+    clip-path: inset(40% 0 0 0);
+    translate: 3px 0;
+  }
+  60% {
+    clip-path: inset(0 0 0 0);
+    translate: -2px 0;
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+    filter: none;
+    translate: 0 0;
+  }
+}
+.logo-swap {
+  animation: logo-swap 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes lens-scan {
+  0% {
+    transform: translateY(-48px);
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(48px);
+    opacity: 0;
+  }
+}
+.lens-scan {
+  animation: lens-scan 2.2s ease-in-out infinite;
+}
+@keyframes lens-dot {
+  50% {
+    opacity: 0.55;
+  }
+}
+.lens-dot {
+  animation: lens-dot 1.6s ease-in-out infinite;
+}
+@keyframes led-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  48% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.55;
+  }
+  52% {
+    opacity: 0.95;
+  }
+}
+.led-flicker {
+  animation: led-flicker 0.9s steps(6) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-mark,
+  .logo-swap,
+  .lens-scan,
+  .lens-dot,
+  .led-flicker {
+    animation: none;
+  }
+}
