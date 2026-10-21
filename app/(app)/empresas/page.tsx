@@ -8,6 +8,7 @@ import { formatCnae, formatCnpj, formatMoney, SIZE_LABEL } from "@/lib/format";
 import PageHeader from "@/components/app/PageHeader";
 import SaveListForm from "@/components/app/SaveListForm";
 import { Glass, Micro } from "@/components/app/ui";
+import { CompanySkyline } from "@/components/three/lazy";
 
 export const metadata: Metadata = { title: `Empresas — ${site.name}` };
 
@@ -51,6 +52,20 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Pro
         title="Empresas"
         description="Busque na base da Receita Federal por atividade, região, porte e capital. Salve o resultado como lista para exportar."
       />
+
+      {/* skyline 3D: um prédio por empresa da página, altura = capital social */}
+      <div className="reveal mb-4">
+        <CompanySkyline
+          total={total}
+          companies={page.items.map((c) => ({
+            cnpj: c.cnpj,
+            name: c.name,
+            shareCapital: c.shareCapital,
+            size: c.size,
+            place: [c.city, c.uf].filter(Boolean).join(", "),
+          }))}
+        />
+      </div>
 
       <div className="grid gap-4 xl:grid-cols-[340px_1fr]">
         <Glass className="h-fit p-5 xl:sticky xl:top-24">

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const CARDS = ".app-main .glass, .app-main [class*='aura-']:not(.blur-3xl)";
+const CARDS = ".app-main .glass:not(.no-fx), .app-main [class*='aura-']:not(.blur-3xl):not(.no-fx)";
 
 // Efeito global nos cards do app: luz neon que segue o mouse e leve inclinação 3D.
 // Um único listener para a página inteira — não precisa mexer em cada página.

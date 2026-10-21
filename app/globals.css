@@ -165,21 +165,21 @@ body {
 }
 
 /* ====== Cards de todas as páginas ====== */
-.app-main .glass,
-.app-main [class*="aura-"]:not(.blur-3xl) {
+.app-main .glass:not(.no-fx),
+.app-main [class*="aura-"]:not(.blur-3xl):not(.no-fx) {
   transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
   transition:
     transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 0.4s ease;
 }
-.app-main .glass:hover,
-.app-main [class*="aura-"]:not(.blur-3xl):hover {
+.app-main .glass:not(.no-fx):hover,
+.app-main [class*="aura-"]:not(.blur-3xl):not(.no-fx):hover {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.9) inset,
     0 34px 60px -30px rgba(10, 10, 10, 0.4);
 }
 /* luz neon que segue o mouse (posição vem do CardFX) */
-.app-main .glass {
+.app-main .glass:not(.no-fx) {
   background-image: radial-gradient(
     420px circle at var(--mx, 50%) var(--my, 50%),
     rgba(184, 255, 60, calc(0.22 * var(--spot, 0))),
@@ -202,8 +202,8 @@ body {
   }
 }
 @supports (animation-timeline: view()) {
-  .app-main .glass,
-  .app-main [class*="aura-"]:not(.blur-3xl) {
+  .app-main .glass:not(.no-fx),
+  .app-main [class*="aura-"]:not(.blur-3xl):not(.no-fx) {
     animation: card-in linear both;
     animation-timeline: view();
     animation-range: entry 0% entry 55%;
@@ -226,11 +226,21 @@ body {
   .reveal,
   .mask-up,
   .page-in,
-  .app-main .glass,
+  .app-main .glass:not(.no-fx),
   .app-main [class*="aura-"],
   .app-main tbody tr,
   .app-main li {
     animation: none !important;
     transform: none !important;
+  }
+}
+
+/* barra de progresso do ciclo automático do funil 3D */
+@keyframes cycle-bar {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
   }
 }

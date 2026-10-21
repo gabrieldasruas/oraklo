@@ -21,8 +21,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { nicheGroups, type Niche } from "@/content/app";
-import { Aura, Micro, Pill, WireArt } from "@/components/app/ui";
+import { Aura, Micro, Pill } from "@/components/app/ui";
 import { createListFromNiche } from "@/app/(app)/listas/actions";
+import { NicheShape, RingVortex } from "@/components/three/lazy";
 
 const icons: Record<string, LucideIcon> = {
   truck: Truck,
@@ -221,10 +222,13 @@ export default function SegmentExplorer({ niches }: { niches: Niche[] }) {
         ))}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_400px]">
+      <div className="grid gap-4 xl:grid-cols-[1fr_400px] xl:items-start">
         {/* Palco do anel 3D */}
-        <div className="glass relative overflow-hidden">
-          <WireArt kind="rings" className="pointer-events-none absolute left-1/2 top-1/2 size-[44rem] -translate-x-1/2 -translate-y-1/2 text-night opacity-[0.07]" />
+        <div className="glass no-fx relative overflow-hidden">
+          {/* vórtice de partículas 3D que gira junto com o anel */}
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[430px] md:h-[520px]">
+            <RingVortex rotation={rot} tone={toneByGroup[active.group] ?? "lime"} />
+          </div>
           <div
             ref={stageRef}
             className="relative h-[430px] cursor-grab touch-pan-y select-none active:cursor-grabbing md:h-[520px]"
@@ -289,7 +293,7 @@ export default function SegmentExplorer({ niches }: { niches: Niche[] }) {
                         if (drag.current.total > 6) return;
                         bringToFront(i);
                       }}
-                      className={`aura-${tone} group relative flex size-full cursor-pointer flex-col justify-between overflow-hidden rounded-[24px] border border-white/60 p-4 text-left shadow-[0_24px_40px_-24px_rgba(10,10,10,0.5)] transition-transform duration-300 hover:scale-[1.06]`}
+                      className={`aura-${tone} no-fx group relative flex size-full cursor-pointer flex-col justify-between overflow-hidden rounded-[24px] border border-white/60 p-4 text-left shadow-[0_24px_40px_-24px_rgba(10,10,10,0.5)] transition-transform duration-300 hover:scale-[1.06]`}
                     >
                       <div className="flex items-start justify-between">
                         <span
@@ -342,10 +346,13 @@ export default function SegmentExplorer({ niches }: { niches: Niche[] }) {
         {/* Pré-visualização do nicho */}
         <Aura tone="night" className="h-fit p-7 xl:sticky xl:top-4">
           <div aria-live="polite" className="relative">
-            <WireArt kind="rings" className="absolute -right-16 -top-12 size-72 text-neon opacity-25" />
-            <span className="relative flex size-12 items-center justify-center rounded-full bg-neon text-night">
-              <ActiveIcon size={22} aria-hidden />
-            </span>
+            {/* forma 3D do nicho: muda a cada nicho, reage ao mouse */}
+            <div aria-hidden className="relative -mx-7 -mt-7 mb-1">
+              <NicheShape index={Math.max(0, niches.indexOf(active))} companies={active.companies} />
+              <span className="absolute left-7 top-7 flex size-12 items-center justify-center rounded-full bg-neon text-night">
+                <ActiveIcon size={22} aria-hidden />
+              </span>
+            </div>
             <Micro className="relative mt-5 !opacity-60">{active.group}</Micro>
             <h2 className="relative mt-3 max-w-[18rem] text-4xl font-medium leading-[1] tracking-[-0.045em]">
               {active.name}

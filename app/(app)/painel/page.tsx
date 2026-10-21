@@ -6,6 +6,7 @@ import { Aura, Glass, Micro, WireArt } from "@/components/app/ui";
 import Prospecta3D from "@/components/three/Prospecta3DLazy";
 import CountUp from "@/components/motion/CountUp";
 import { Reveal } from "@/components/motion/Reveal";
+import { FunnelHero } from "@/components/three/lazy";
 
 export const metadata: Metadata = { title: `Visão geral — ${site.name}` };
 
@@ -19,6 +20,11 @@ export default function PainelPage() {
         description="Resumo da sua prospecção nos últimos 30 dias."
         action={<Prospecta3D quality="low" className="-my-8 hidden size-[220px] md:block" />}
       />
+
+      {/* funil em partículas 3D com os números reais */}
+      <div className="reveal mb-4">
+        <FunnelHero steps={overview.funnel} />
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-12">
         {/* Destaque principal */}

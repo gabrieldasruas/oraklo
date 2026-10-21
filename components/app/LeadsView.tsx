@@ -6,6 +6,8 @@ import { STATUSES, useLeads, type Status } from "@/lib/leads";
 import PageHeader from "@/components/app/PageHeader";
 import LeadForm from "@/components/app/LeadForm";
 import { Aura, Glass, Micro, Pill, WireArt } from "@/components/app/ui";
+import { LeadsConstellation } from "@/components/three/lazy";
+import CountUp from "@/components/motion/CountUp";
 
 const statusDot: Record<string, string> = {
   Novo: "bg-night/30",
@@ -28,6 +30,7 @@ export default function LeadsView() {
   const { leads, loaded, error, addLead, removeLead, updateStatus } = useLeads();
   const [query, setQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
+  const [picked, setPicked] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -47,6 +50,16 @@ export default function LeadsView() {
     },
     { label: "Reuniões", value: leads.filter((l) => l.status === "Reunião marcada").length, tone: "mint" as const },
   ];
+
+  // Vindo da constelação 3D: limpa a busca, rola até o lead e destaca a linha.
+  function pick(id: string) {
+    setQuery("");
+    setPicked(id);
+    requestAnimationFrame(() =>
+      document.getElementById(`lead-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }),
+    );
+    window.setTimeout(() => setPicked((p) => (p === id ? null : p)), 2400);
+  }
 
   function onDelete(id: string, name: string) {
     if (window.confirm(`Excluir o lead "${name}"?`)) removeLead(id);
@@ -76,11 +89,14 @@ export default function LeadsView() {
               />
               <Micro className="relative !opacity-70">{k.label}</Micro>
               <p className="relative mt-5 text-6xl font-light leading-none tracking-[-0.05em] tabular-nums">
-                {loaded ? k.value.toLocaleString("pt-BR") : "–"}
+                {loaded ? <CountUp value={k.value} /> : "–"}
               </p>
             </Aura>
           ))}
         </section>
+
+        {/* constelação 3D dos leads: clicar num ponto leva até a linha da tabela */}
+        <LeadsConstellation leads={leads} onPick={pick} />
 
         <Glass className="overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-night/10 p-4">
@@ -114,7 +130,11 @@ export default function LeadsView() {
               </thead>
               <tbody className="divide-y divide-night/10 border-t border-night/10">
                 {filtered.map((l) => (
-                  <tr key={l.id} className="transition-colors hover:bg-white/60">
+                  <tr
+                    key={l.id}
+                    id={`lead-${l.id}`}
+                    className={`scroll-mt-28 transition-colors duration-700 hover:bg-white/60 ${picked === l.id ? "bg-neon/40" : ""}`}
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-night font-mono text-xs text-neon">
