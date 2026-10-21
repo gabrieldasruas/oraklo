@@ -79,7 +79,9 @@ export default function ParticleField({
   mouseRadius = 0.9,
   spin = 0.05,
   tilt = 0.25,
+  morphFrom,
 }: {
+  morphFrom?: number;
   shapes: Shape[];
   morph: MorphRef;
   colorA?: string;
@@ -147,6 +149,11 @@ export default function ParticleField({
     geometry.dispose();
     material.dispose();
   }, [geometry, material]);
+
+  // Formas novas chegaram: recomeça a transição a partir de `morphFrom` (ex.: 0 = forma anterior).
+  useEffect(() => {
+    if (morphFrom !== undefined) material.uniforms.uMorph.value = morphFrom;
+  }, [geometry, material, morphFrom]);
 
   // posição do mouse em coordenadas da tela (-1..1) relativa ao canvas
   const ndc = useRef(new THREE.Vector2(9, 9));

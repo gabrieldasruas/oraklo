@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { nicheShape } from "@/lib/three/nicheShapes";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import Stage from "../Stage";
 import ParticleField from "../ParticleField";
-import { block, galaxy, helix, sphere, torus } from "@/lib/three/shapes";
+import { galaxy, torus } from "@/lib/three/shapes";
 
 export const TONE_COLORS: Record<string, [string, string]> = {
   lime: ["#7fbf1a", "#b8ff3c"],
@@ -41,18 +42,32 @@ export function RingVortex({ rotation, tone }: { rotation: React.RefObject<numbe
   );
 }
 
-/** Forma 3D do nicho em destaque: cada nicho tem a sua (esfera, hélice, galáxia, bloco). */
-export function NicheShape({ index, companies }: { index: number; companies: number }) {
-  const shapes = useMemo(() => [sphere(5000, 1.25), helix(5000), galaxy(5000, 3, 9), block(5000, 2, 1.6, 1.6)], []);
-  const morph = useRef(index % 4);
+const N_NICHE = 6000;
+
+/**
+ * Modelo 3D do segmento em destaque (caminhão, armazém, fábrica, trigo, capacete…).
+ * Ao trocar de nicho, as partículas saem do modelo anterior e remontam o novo.
+ */
+export function NicheShape({ icon }: { icon: string }) {
+  const [pair, setPair] = useState(() => {
+    const s = nicheShape(icon, N_NICHE);
+    return { shapes: [s, s], from: 1 };
+  });
+  const last = useRef(icon);
+  const morph = useRef(1);
+
   useEffect(() => {
-    morph.current = index % 4;
-  }, [index]);
-  // nichos com mais empresas = partículas maiores
-  const size = 16 + Math.min(14, Math.log10(companies + 1) * 3);
+    if (icon === last.current) return;
+    setPair({ shapes: [nicheShape(last.current, N_NICHE), nicheShape(icon, N_NICHE)], from: 0 });
+    last.current = icon;
+    morph.current = 1;
+  }, [icon]);
+
   return (
-    <Stage className="h-56" camera={{ position: [0, 0, 5.4], fov: 40 }} dpr={[1, 1.5]}>
-      <ParticleField shapes={shapes} morph={morph} size={size} mouseForce={0.6} spin={0.25} />
+    <Stage className="h-60" camera={{ position: [0, 0.4, 5.6], fov: 40 }} dpr={[1, 1.5]}>
+      <group rotation={[0.25, -0.5, 0]}>
+        <ParticleField shapes={pair.shapes} morph={morph} morphFrom={pair.from} size={19} mouseForce={0.55} spin={0.3} tilt={0.15} />
+      </group>
     </Stage>
   );
 }

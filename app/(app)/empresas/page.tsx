@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Mail, Phone, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { site } from "@/content/site";
 import { requireUser } from "@/lib/auth";
 import { countCompanies, filterFromParams, getFacets, searchCompanies } from "@/lib/companies";
 import { formatCnae, formatCnpj, formatMoney, SIZE_LABEL } from "@/lib/format";
 import PageHeader from "@/components/app/PageHeader";
 import SaveListForm from "@/components/app/SaveListForm";
+import ContactCell from "@/components/app/ContactCell";
 import { Glass, Micro } from "@/components/app/ui";
 import { CompanySkyline } from "@/components/three/lazy";
 
@@ -169,7 +170,7 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Pro
 
           <Glass className="overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[820px] text-left text-sm">
+              <table className="w-full min-w-[980px] text-left text-sm">
                 <caption className="sr-only">Empresas encontradas</caption>
                 <thead>
                   <tr className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-50">
@@ -195,12 +196,8 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Pro
                       <td className="px-4 py-4 opacity-70">{[c.city, c.uf].filter(Boolean).join(", ") || "—"}</td>
                       <td className="px-4 py-4 opacity-70">{SIZE_LABEL[c.size] ?? "—"}</td>
                       <td className="px-4 py-4 text-right font-mono text-xs tabular-nums">{formatMoney(c.shareCapital)}</td>
-                      <td className="px-4 py-4">
-                        <span className="flex gap-2 opacity-70">
-                          {c.email && <Mail size={15} aria-label="Tem e-mail" />}
-                          {c.phones.length > 0 && <Phone size={15} aria-label="Tem telefone" />}
-                          {!c.email && !c.phones.length && "—"}
-                        </span>
+                      <td className="px-4 py-3">
+                        <ContactCell email={c.email} phones={c.phones} />
                       </td>
                     </tr>
                   ))}

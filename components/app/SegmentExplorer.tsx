@@ -348,7 +348,7 @@ export default function SegmentExplorer({ niches }: { niches: Niche[] }) {
           <div aria-live="polite" className="relative">
             {/* forma 3D do nicho: muda a cada nicho, reage ao mouse */}
             <div aria-hidden className="relative -mx-7 -mt-7 mb-1">
-              <NicheShape index={Math.max(0, niches.indexOf(active))} companies={active.companies} />
+              <NicheShape icon={active.icon} />
               <span className="absolute left-7 top-7 flex size-12 items-center justify-center rounded-full bg-neon text-night">
                 <ActiveIcon size={22} aria-hidden />
               </span>
