@@ -5,6 +5,7 @@ import {
   Building2,
   Mail,
   BarChart3,
+  MapPinned,
   type LucideIcon,
 } from "lucide-react";
 
@@ -21,6 +22,7 @@ export const appNav: NavItem[] = [
   { label: "Leads", href: "/leads", icon: Users, desc: "Contatos salvos" },
   { label: "Segmentação", href: "/segmentacao", icon: Layers, desc: "Nichos de mercado" },
   { label: "Empresas", href: "/empresas", icon: Building2, desc: "Busca na base" },
+  { label: "Busca avançada", href: "/busca-avancada", icon: MapPinned, desc: "Raio no mapa" },
   { label: "Sequências", href: "/sequencias", icon: Mail, desc: "Cadências" },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3, desc: "Desempenho" },
 ];

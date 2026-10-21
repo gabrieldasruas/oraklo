@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 // Seções que exigem login. Produto, Histórias e Preços continuam públicas.
-const PROTECTED = ["/painel", "/leads", "/segmentacao", "/empresas", "/listas", "/sequencias", "/relatorios", "/configuracoes", "/api"];
+const PROTECTED = ["/painel", "/leads", "/segmentacao", "/empresas", "/busca-avancada", "/listas", "/sequencias", "/relatorios", "/configuracoes", "/api"];
 
 // Renova a sessão do Supabase a cada requisição e faz o redirecionamento otimista para o login.
 // A autorização de verdade acontece no servidor (lib/auth.ts e RLS).
