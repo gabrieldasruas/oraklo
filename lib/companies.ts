@@ -32,6 +32,9 @@ type Row = {
   receita_email: string | null;
   receita_phones: string[];
   website: string | null;
+  zip: string | null;
+  address: string | null;
+  district: string | null;
 };
 
 export type CompanyItem = {
@@ -48,6 +51,10 @@ export type CompanyItem = {
   email: string | null;
   phones: string[];
   website: string | null;
+  /** CEP (8 dígitos) — usado para localizar a empresa no mapa */
+  zip: string | null;
+  address: string | null;
+  district: string | null;
 };
 
 const list = (v: string | string[] | undefined) =>
@@ -106,11 +113,14 @@ function toItem(r: Row, cities: Map<string, string>): CompanyItem {
     email: r.receita_email,
     phones: r.receita_phones ?? [],
     website: r.website,
+    zip: r.zip ? r.zip.replace(/D/g, "").padStart(8, "0") : null,
+    address: r.address ? titleCase(r.address) : null,
+    district: r.district ? titleCase(r.district) : null,
   };
 }
 
 const COLUMNS =
-  "cnpj, legal_name, trade_name, is_headquarters, opened_at, cnae_main, uf, municipality_code, size, share_capital, receita_email, receita_phones, website";
+  "cnpj, legal_name, trade_name, is_headquarters, opened_at, cnae_main, uf, municipality_code, size, share_capital, receita_email, receita_phones, website, zip, address, district";
 
 export async function searchCompanies(filter: CompanyFilter, cursor?: string, limit = 50) {
   const after = decodeCursor(cursor);
@@ -155,7 +165,7 @@ export async function getCompany(cnpj: string): Promise<CompanyDetail | null> {
   const db = createAdminClient();
   const { data: c, error } = await db
     .from("companies")
-    .select(`${COLUMNS}, status, cnae_secondary, district, address, zip, legal_nature, cnpj_root, source_period`)
+    .select(`${COLUMNS}, status, cnae_secondary, legal_nature, cnpj_root, source_period`)
     .eq("cnpj", cnpj)
     .maybeSingle<Row & { status: string; cnae_secondary: string[]; district: string | null; address: string | null; zip: string | null; legal_nature: string | null; cnpj_root: string; source_period: string }>();
   if (error) throw new Error(`Falha ao ler empresa: ${error.message}`);

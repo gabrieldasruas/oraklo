@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Crosshair, Loader2, MapPin, Search, X } from "lucide-react";
+import type { EmpresaNoMapa } from "./RadiusMap";
 import { Glass, Micro } from "@/components/app/ui";
 import ContactCell from "@/components/app/ContactCell";
 import {
@@ -37,6 +38,9 @@ type Item = {
   shareCapital: number | null;
   email: string | null;
   phones: string[];
+  zip: string | null;
+  address: string | null;
+  district: string | null;
 };
 type Resultado = {
   items: Item[];
@@ -48,6 +52,9 @@ type Resultado = {
   centro: { name: string; uf: string };
 };
 type Override = { escopo?: Escopo; raioKm?: number; ufs?: string[]; centro?: Centro };
+
+/** Fração das empresas (as de maior capital) que ganham pin neon; as demais ficam como marcação leve. */
+const FRACAO_DESTAQUE = 0.3;
 
 const INICIO: Centro = [-23.5505, -46.6333]; // São Paulo
 const fmt = (n: number) => n.toLocaleString("pt-BR");
@@ -71,6 +78,16 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
 
   const [escopo, setEscopo] = useState<Escopo>("raio");
 
+  // localização das empresas pelo CEP
+  const [coords, setCoords] = useState<Record<string, { lat: number; lng: number }>>({});
+  const [localizando, setLocalizando] = useState(false);
+  const [foco, setFoco] = useState<string | null>(null);
+  const pedidos = useRef(new Set<string>());
+
+  // seletor de cidade (escolher a cidade move o centro do mapa para ela)
+  const [ufCidade, setUfCidade] = useState<string | null>(null);
+  const [buscaCidade, setBuscaCidade] = useState("");
+
   // Prévia ao vivo (no navegador): cidades e estados que entram na busca.
   const perto = useMemo(() => cidadeMaisProxima(centro[0], centro[1]).municipio, [centro]);
   const ufsDoEstado = ufsFiltro.length ? ufsFiltro : [perto.uf];
@@ -82,6 +99,59 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
   }, [centro, raioKm, ufsFiltro, escopo, perto]);
   const estados = useMemo(() => [...new Set(cidades.map((c) => c.uf))].sort(), [cidades]);
   const nomeEstado = (uf: string) => ESTADOS[uf]?.nome ?? uf;
+
+  const ufLista = ufCidade ?? perto.uf;
+  const opcoesCidade = useMemo(() => {
+    const q = buscaCidade
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "");
+    const daUf = MUNICIPIOS.filter((m) => m.uf === ufLista);
+    const filtradas = q
+      ? daUf.filter((m) => m.name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").includes(q))
+      : daUf;
+    return filtradas.sort((a, b) => a.name.localeCompare(b.name, "pt-BR")).slice(0, 30);
+  }, [buscaCidade, ufLista]);
+
+  function escolherCidade(code: string) {
+    const m = MUNICIPIOS.find((x) => x.code === code);
+    if (!m) return;
+    setCentro([m.lat, m.lng]);
+    setEscopo("cidade");
+    setRaioKm((r) => Math.min(r, 25));
+    setFitToken((t) => t + 1);
+    setBuscaCidade("");
+    setAviso(null);
+  }
+
+  // Assim que chegam resultados, localiza pelo CEP as empresas que ainda não têm coordenada.
+  useEffect(() => {
+    const faltando = (res?.items ?? [])
+      .map((i) => i.zip)
+      .filter((z): z is string => !!z && !coords[z] && !pedidos.current.has(z));
+    if (!faltando.length) return;
+    faltando.forEach((z) => pedidos.current.add(z));
+    setLocalizando(true);
+    fetch("/api/geo-cep", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ceps: faltando.slice(0, 60) }) })
+      .then((r) => (r.ok ? r.json() : { coords: {} }))
+      .then((j) => setCoords((c) => ({ ...c, ...(j.coords ?? {}) })))
+      .catch(() => {})
+      .finally(() => setLocalizando(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [res?.items]);
+
+  // Empresas localizadas → pins. As de maior capital (resultado já vem ordenado) ganham destaque.
+  const empresasNoMapa: EmpresaNoMapa[] = useMemo(() => {
+    const itens = res?.items ?? [];
+    const corte = Math.max(1, Math.ceil(itens.length * FRACAO_DESTAQUE));
+    return itens.flatMap((i, idx) => {
+      const c = i.zip ? coords[i.zip] : undefined;
+      if (!c) return [];
+      return [{ cnpj: i.cnpj, name: i.name, lat: c.lat, lng: c.lng, destaque: idx < corte, local: [i.address, i.district, i.city && `${i.city}/${i.uf}`].filter(Boolean).join(" · "), capital: i.shareCapital }];
+    });
+  }, [res?.items, coords]);
+  const localizadas = empresasNoMapa.length;
 
   const rotuloBotao =
     escopo === "cidade"
@@ -183,6 +253,9 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
               cidades={cidades.slice(0, 400)}
               fitToken={fitToken}
               circuloAtivo={escopo === "raio"}
+              empresas={empresasNoMapa}
+              foco={foco}
+              onFoco={setFoco}
               onChange={mover}
             />
 
@@ -195,6 +268,12 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
                 <b className="font-medium">{fmt(cidades.length)}</b> municípios · {estados.join(", ") || "—"}
               </span>
             </div>
+            {res && res.items.length > 0 && (
+              <div className="pointer-events-none absolute right-4 top-4 z-[500] flex items-center gap-2 rounded-full bg-night px-4 py-2 text-xs text-white shadow-lg">
+                {localizando ? <Loader2 size={13} className="animate-spin text-neon" /> : <MapPin size={13} className="text-neon" aria-hidden />}
+                {localizando ? "Localizando pelo CEP…" : `${fmt(localizadas)} de ${fmt(res.items.length)} empresas no mapa`}
+              </div>
+            )}
             <div className="pointer-events-none absolute bottom-4 left-4 z-[500] flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-xs shadow-lg backdrop-blur">
               <Crosshair size={13} aria-hidden /> Centro perto de <b className="font-medium">{perto.name}/{perto.uf}</b>
             </div>
@@ -306,6 +385,57 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
                 </button>
               ))}
             </div>
+
+            {/* escolher a cidade: primeiro o estado, depois a cidade */}
+            {escopo === "cidade" && (
+              <div className="mt-3 rounded-2xl border border-white/15 bg-white/5 p-3">
+                <div className="flex gap-2">
+                  <label className="relative">
+                    <span className="sr-only">Estado da cidade</span>
+                    <select
+                      value={ufLista}
+                      onChange={(e) => {
+                        setUfCidade(e.target.value);
+                        setBuscaCidade("");
+                      }}
+                      className="min-h-10 cursor-pointer appearance-none rounded-full border border-white/15 bg-night py-1 pl-3 pr-7 font-mono text-xs text-white"
+                    >
+                      {UFS.map((u) => (
+                        <option key={u} value={u}>
+                          {u}
+                        </option>
+                      ))}
+                    </select>
+                    <span aria-hidden className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] opacity-60">▼</span>
+                  </label>
+                  <label className="relative flex-1">
+                    <span className="sr-only">Buscar cidade</span>
+                    <Search size={14} aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
+                    <input
+                      value={buscaCidade}
+                      onChange={(e) => setBuscaCidade(e.target.value)}
+                      placeholder={`Cidade em ${nomeEstado(ufLista)}`}
+                      className="min-h-10 w-full rounded-full border border-white/15 bg-white/10 pl-8 pr-3 text-xs placeholder:text-white/40 focus:border-neon focus:outline-none"
+                    />
+                  </label>
+                </div>
+                <ul className="mt-2 max-h-40 space-y-0.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                  {opcoesCidade.map((m) => (
+                    <li key={m.code}>
+                      <button
+                        type="button"
+                        onClick={() => escolherCidade(m.code)}
+                        className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-1.5 text-left text-xs ${m.code === perto.code ? "bg-neon text-night" : "hover:bg-white/10"}`}
+                      >
+                        {m.name}
+                        {m.code === perto.code && <span className="font-mono text-[10px]">selecionada</span>}
+                      </button>
+                    </li>
+                  ))}
+                  {!opcoesCidade.length && <li className="px-3 py-1.5 text-xs text-white/50">Nenhuma cidade encontrada.</li>}
+                </ul>
+              </div>
+            )}
           </div>
 
           <div>
@@ -465,7 +595,12 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
               </thead>
               <tbody className="divide-y divide-night/10 border-t border-night/10">
                 {res.items.map((c) => (
-                  <tr key={c.cnpj} className="transition-colors hover:bg-white/60">
+                  <tr
+                    key={c.cnpj}
+                    onMouseEnter={() => setFoco(c.cnpj)}
+                    onMouseLeave={() => setFoco(null)}
+                    className={`transition-colors hover:bg-white/60 ${foco === c.cnpj ? "bg-neon/25" : ""}`}
+                  >
                     <td className="px-6 py-4">
                       <Link href={`/empresas/${c.cnpj}`} className="block font-medium tracking-[-0.01em] underline-offset-4 hover:underline">
                         {c.name}
@@ -475,7 +610,19 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
                         {!c.isHeadquarters && " · filial"}
                       </span>
                     </td>
-                    <td className="px-4 py-4 opacity-70">{[c.city, c.uf].filter(Boolean).join(", ") || "—"}</td>
+                    <td className="px-4 py-4">
+                      <span className="flex items-start gap-2">
+                        {c.zip && coords[c.zip] ? (
+                          <MapPin size={14} aria-label="Localizada no mapa" className="mt-0.5 shrink-0 text-night" />
+                        ) : (
+                          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-night/25" aria-hidden />
+                        )}
+                        <span>
+                          <span className="block opacity-80">{[c.city, c.uf].filter(Boolean).join(", ") || "—"}</span>
+                          {c.address && <span className="block text-xs opacity-50">{c.address}{c.district ? ` · ${c.district}` : ""}</span>}
+                        </span>
+                      </span>
+                    </td>
                     <td className="px-4 py-4 opacity-70">{SIZE_LABEL[c.size] ?? "—"}</td>
                     <td className="px-4 py-4 text-right font-mono text-xs tabular-nums">{formatMoney(c.shareCapital)}</td>
                     <td className="px-4 py-3">
