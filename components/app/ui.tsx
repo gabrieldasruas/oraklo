@@ -133,7 +133,7 @@ export function Pill({
   const cls = `group flex min-h-12 w-fit cursor-pointer items-center gap-3 rounded-full py-1.5 pl-6 pr-1.5 text-sm font-medium transition-transform hover:-translate-y-0.5 ${tones[tone]} ${className}`;
   const arrow = (
     <span
-      className={`flex size-9 items-center justify-center rounded-full ${
+      className={`flex size-9 items-center justify-center rounded-full transition-transform duration-300 group-hover:rotate-45 ${
         tone === "dark" ? "bg-neon text-night" : "bg-night text-neon"
       }`}
     >
