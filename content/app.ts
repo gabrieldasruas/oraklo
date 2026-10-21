@@ -305,9 +305,9 @@ export const reports = {
 export const settings = {
   sections: ["Perfil", "Equipe", "Integrações", "Notificações"],
   team: [
-    { name: "Gabriel Senhas", role: "Administrador", email: "gabriel@prospecta.app" },
-    { name: "Rafael Lima", role: "SDR", email: "rafael@prospecta.app" },
-    { name: "Ana Souza", role: "Gestora", email: "ana@prospecta.app" },
+    { name: "Gabriel Senhas", role: "Administrador", email: "gabriel@oraklo.app" },
+    { name: "Rafael Lima", role: "SDR", email: "rafael@oraklo.app" },
+    { name: "Ana Souza", role: "Gestora", email: "ana@oraklo.app" },
   ],
   integrations: [
     { name: "CRM", text: "Sincronize leads e negócios.", on: true },

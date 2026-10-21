@@ -8,6 +8,7 @@ import { signOut } from "@/app/entrar/actions";
 import { appNav } from "@/components/app/nav";
 import { Micro } from "@/components/app/ui";
 import { site } from "@/content/site";
+import LogoMark from "@/components/brand/LogoMark";
 
 // Painel enxuto no topo: serve para o usuário se localizar entre as seções principais.
 const initials = (name: string) =>
@@ -32,9 +33,7 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
     <header className={`glass z-30 p-3 md:p-4 ${open ? "" : "sticky top-3"}`}>
       <div className="flex items-center gap-3">
         <Link href="/" className="flex shrink-0 items-center gap-3" aria-label={`${site.name} — início`}>
-          <span className="flex size-10 items-center justify-center rounded-xl bg-night">
-            <span className="size-3 rounded-full bg-neon" />
-          </span>
+          <LogoMark size={42} animated={false} />
           <span className="text-xl font-semibold uppercase tracking-[-0.03em]">{site.name}</span>
         </Link>
 

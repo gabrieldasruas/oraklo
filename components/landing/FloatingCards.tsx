@@ -5,7 +5,7 @@ import { Building2, Mail, Truck, TrendingUp, Zap } from "lucide-react";
 
 /*
  * Cartões flutuando em volta do título (como as fotos na intro da Higgsfield),
- * mas com o conteúdo do Prospecta. Cada um tem 3 camadas de movimento que não brigam:
+ * mas com o conteúdo do Oraklo. Cada um tem 3 camadas de movimento que não brigam:
  *  1. entrada (voa de fora, `fly-in`)        → propriedade `scale`/`opacity`
  *  2. paralaxe com o mouse (profundidade)     → propriedade `translate`
  *  3. flutuação contínua + inclinação         → `transform` (keyframes `bob`)
