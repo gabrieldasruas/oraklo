@@ -1,5 +1,6 @@
 import Link from "next/link";
 import TopPanel from "@/components/app/TopPanel";
+import CardFX from "@/components/motion/CardFX";
 import { secondaryNav } from "@/components/app/nav";
 import { Micro } from "@/components/app/ui";
 import { site } from "@/content/site";
@@ -11,7 +12,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="app-canvas min-h-screen font-display text-night">
       <div className="relative z-10 mx-auto max-w-[1440px] p-3 md:p-4">
         <TopPanel user={user && { name: user.name, workspaceName: user.workspaceName }} />
-        <main className="pt-6 md:pt-8">{children}</main>
+        <main className="app-main pt-6 md:pt-8">{children}</main>
+        <CardFX />
         <footer className="flex flex-wrap items-center justify-between gap-4 px-2 pb-4 pt-12">
           <Micro>
             © {new Date().getFullYear()} {site.name} · {site.email}

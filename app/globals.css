@@ -135,10 +135,11 @@ body {
 }
 
 /* ====== Entradas (estilo Buttermax) ====== */
+/* usa `translate` (e não `transform`) para não brigar com a inclinação dos cards */
 @keyframes reveal-up {
   from {
     opacity: 0;
-    transform: translateY(28px);
+    translate: 0 28px;
   }
 }
 @keyframes mask-up {
@@ -152,9 +153,84 @@ body {
 .mask-up {
   animation: mask-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+/* Troca de página */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+  }
+}
+.page-in {
+  animation: page-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ====== Cards de todas as páginas ====== */
+.app-main .glass,
+.app-main [class*="aura-"]:not(.blur-3xl) {
+  transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s ease;
+}
+.app-main .glass:hover,
+.app-main [class*="aura-"]:not(.blur-3xl):hover {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 34px 60px -30px rgba(10, 10, 10, 0.4);
+}
+/* luz neon que segue o mouse (posição vem do CardFX) */
+.app-main .glass {
+  background-image: radial-gradient(
+    420px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(184, 255, 60, calc(0.22 * var(--spot, 0))),
+    transparent 65%
+  );
+}
+
+/* Entrada ao rolar a página: cada card aparece quando chega na tela */
+@keyframes card-in {
+  from {
+    opacity: 0;
+    translate: 0 48px;
+    scale: 0.97;
+  }
+}
+@keyframes row-in {
+  from {
+    opacity: 0;
+    translate: -12px 0;
+  }
+}
+@supports (animation-timeline: view()) {
+  .app-main .glass,
+  .app-main [class*="aura-"]:not(.blur-3xl) {
+    animation: card-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+  .app-main tbody tr,
+  .app-main ol > li,
+  .app-main ul > li {
+    animation: row-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 80%;
+  }
+}
+/* o painel já tem a própria entrada em cascata */
+.app-main .reveal .glass,
+.app-main .reveal [class*="aura-"] {
+  animation: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal,
-  .mask-up {
-    animation: none;
+  .mask-up,
+  .page-in,
+  .app-main .glass,
+  .app-main [class*="aura-"],
+  .app-main tbody tr,
+  .app-main li {
+    animation: none !important;
+    transform: none !important;
   }
 }
