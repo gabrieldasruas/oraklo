@@ -33,7 +33,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
  * Contato de uma empresa: e-mail e telefone em "chips" clicáveis
  * (abrem o e-mail / ligação / WhatsApp) com botão de copiar.
  */
-export default function ContactCell({ email, phones }: { email: string | null; phones: string[] }) {
+export default function ContactCell({ email, phones, inline = false }: { email: string | null; phones: string[]; /** chips lado a lado (listas compactas) */ inline?: boolean }) {
   const [first, ...rest] = phones;
   const digits = first?.replace(/\D/g, "") ?? "";
   // celulares (11 dígitos com 9 na frente) podem abrir no WhatsApp
@@ -48,7 +48,7 @@ export default function ContactCell({ email, phones }: { email: string | null; p
   }
 
   return (
-    <div className="flex min-w-[15rem] flex-col gap-1.5">
+    <div className={inline ? "flex flex-wrap gap-1.5" : "flex min-w-[15rem] flex-col gap-1.5"}>
       {email && (
         <div className="group/chip flex items-center gap-1 rounded-full border border-night/10 bg-white/70 py-1 pl-1 pr-1 transition-colors hover:border-night/25 hover:bg-white">
           <a href={`mailto:${email}`} className="flex min-w-0 flex-1 items-center gap-2.5" title={`Enviar e-mail para ${email}`}>

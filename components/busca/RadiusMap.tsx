@@ -1,13 +1,17 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { Circle, CircleMarker, MapContainer, Marker, Popup, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
+import { Circle, CircleMarker, MapContainer, Marker, Popup, TileLayer, Tooltip, ZoomControl, useMap, useMapEvents } from "react-leaflet";
 import { formatMoney } from "@/lib/format";
 import { BRASIL_BOUNDS, RAIO_MAX_KM, RAIO_MIN_KM, distanciaKm, type Municipio } from "@/lib/geo/radius";
 
 export type Centro = [number, number];
+/** auto: mapa de ruas de longe, satélite com nomes das ruas de perto */
+export type ModoMapa = "auto" | "mapa" | "satelite";
+/** zoom a partir do qual o modo automático troca para satélite */
+const ZOOM_SATELITE = 15;
 
 /** Empresa localizada pelo CEP. `destaque` = está entre as mais relevantes (pin grande). */
 export type EmpresaNoMapa = {
@@ -20,6 +24,9 @@ export type EmpresaNoMapa = {
   capital: number | null;
 };
 
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
+const ATRIB = "Mapa &copy; Esri, Maxar, Earthstar Geographics, HERE, Garmin, &copy; colaboradores do OpenStreetMap";
+
 // Pin neon (gota) para as empresas em destaque.
 const pinIcon = (foco: boolean) =>
   L.divIcon({
@@ -30,7 +37,7 @@ const pinIcon = (foco: boolean) =>
     html: `<span class="company-pin ${foco ? "company-pin--foco" : ""}"><span></span></span>`,
   });
 
-// Alças brancas com borda escura, como na referência (centro + 4 pontos cardeais).
+// Alças brancas com borda escura (centro + 4 pontos cardeais).
 const handleIcon = (main: boolean) =>
   L.divIcon({
     className: "",
@@ -51,22 +58,25 @@ function pontosCardeais([lat, lng]: Centro, km: number): Centro[] {
   ];
 }
 
-// Clique no mapa move o centro.
-function ClickToMove({ onMove }: { onMove: (c: Centro) => void }) {
-  useMapEvents({
+// Clique no mapa move o centro; também acompanha o zoom (para o modo automático).
+function Eventos({ onMove, onZoom }: { onMove: (c: Centro) => void; onZoom: (z: number) => void }) {
+  const map = useMapEvents({
     click(e) {
       onMove([e.latlng.lat, e.latlng.lng]);
+    },
+    zoomend() {
+      onZoom(map.getZoom());
     },
   });
   return null;
 }
 
-// Mantém o círculo inteiro à vista quando o raio muda bastante (ex.: pelo controle deslizante).
+// Mantém o círculo inteiro à vista quando o raio/centro muda por um controle.
 function FitOnRadius({ centro, raioKm, token }: { centro: Centro; raioKm: number; token: number }) {
   const map = useMap();
   useEffect(() => {
     if (!token) return;
-    map.flyToBounds(L.latLng(centro[0], centro[1]).toBounds(raioKm * 2000 * 1.15), { duration: 0.6 });
+    map.flyToBounds(L.latLng(centro[0], centro[1]).toBounds(raioKm * 2000 * 1.1), { duration: 0.6 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
   return null;
@@ -79,9 +89,19 @@ function FitToEmpresas({ empresas }: { empresas: EmpresaNoMapa[] }) {
   useEffect(() => {
     if (!empresas.length) return;
     const b = L.latLngBounds(empresas.map((e) => [e.lat, e.lng] as [number, number]));
-    map.flyToBounds(b.pad(0.25), { duration: 0.8, maxZoom: 14 });
+    map.flyToBounds(b.pad(0.2), { duration: 0.8, maxZoom: 14 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assinatura]);
+  return null;
+}
+
+// "Ver a rua": voa até uma empresa no nível do satélite.
+function VoarPara({ alvo }: { alvo: { lat: number; lng: number; token: number } | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (alvo) map.flyTo([alvo.lat, alvo.lng], 18, { duration: 1.1 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alvo?.token]);
   return null;
 }
 
@@ -94,11 +114,13 @@ export default function RadiusMap({
   empresas = [],
   foco = null,
   onFoco,
+  modo = "auto",
+  voar = null,
   onChange,
 }: {
   centro: Centro;
   raioKm: number;
-  /** municípios dentro do raio (pontos neon no mapa) */
+  /** municípios que entram na busca (pontos no mapa) */
   cidades: Municipio[];
   /** muda quando o mapa deve reenquadrar o círculo */
   fitToken: number;
@@ -106,16 +128,24 @@ export default function RadiusMap({
   circuloAtivo?: boolean;
   /** empresas localizadas pelo CEP (pins) */
   empresas?: EmpresaNoMapa[];
-  /** CNPJ em destaque (linha da tabela sob o mouse) */
+  /** CNPJ em destaque (item da lista sob o mouse) */
   foco?: string | null;
   onFoco?: (cnpj: string | null) => void;
+  modo?: ModoMapa;
+  /** aproxima até este ponto (muda `token` para repetir) */
+  voar?: { lat: number; lng: number; token: number } | null;
   onChange: (centro: Centro, raioKm: number) => void;
 }) {
+  const [zoom, setZoom] = useState(7);
+  const satelite = modo === "satelite" || (modo === "auto" && zoom >= ZOOM_SATELITE);
+
   const centerIcon = useMemo(() => handleIcon(true), []);
+  const edgeIcon = useMemo(() => handleIcon(false), []);
   const pin = useMemo(() => pinIcon(false), []);
   const pinFoco = useMemo(() => pinIcon(true), []);
+  const [voarLocal, setVoarLocal] = useState<{ lat: number; lng: number; token: number } | null>(null);
   const temEmpresas = empresas.length > 0;
-  const edgeIcon = useMemo(() => handleIcon(false), []);
+
   // último centro aceito pelo pai (se o arraste sair do Brasil, a alça volta para ele)
   const aceito = useRef(centro);
   useEffect(() => {
@@ -123,12 +153,28 @@ export default function RadiusMap({
   }, [centro]);
   const cardeais = pontosCardeais(centro, raioKm);
 
+  // no satélite, traço neon para o círculo continuar visível
+  const corCirculo = satelite ? "#b8ff3c" : "#0b0b0c";
+
+  const tooltip = (e: EmpresaNoMapa) => (
+    <Tooltip direction="top" offset={[0, e.destaque ? -34 : -6]} className="pin-tooltip">
+      <span className="block text-[13px] font-medium leading-tight">{e.name}</span>
+      <span className="block text-[11px] opacity-60">{e.local}</span>
+      <span className="mt-0.5 block font-mono text-[11px]">{formatMoney(e.capital)}</span>
+    </Tooltip>
+  );
+  const popup = (e: EmpresaNoMapa) => (
+    <Popup>
+      <CardEmpresa e={e} onRua={() => setVoarLocal({ lat: e.lat, lng: e.lng, token: Date.now() })} />
+    </Popup>
+  );
+
   return (
     <MapContainer
       center={centro}
       zoom={7}
       minZoom={4}
-      maxZoom={13}
+      maxZoom={19}
       maxBounds={BRASIL_BOUNDS}
       maxBoundsViscosity={1}
       worldCopyJump={false}
@@ -136,34 +182,37 @@ export default function RadiusMap({
       zoomControl={false}
       attributionControl
     >
-      {/* mapa cinza-claro (Esri, sem chave de API) + camada de nomes por cima */}
-      <TileLayer
-        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
-        attribution="Mapa &copy; Esri, HERE, Garmin, &copy; colaboradores do OpenStreetMap"
-        maxNativeZoom={16}
-        noWrap
-      />
-      <TileLayer
-        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
-        maxNativeZoom={16}
-        noWrap
-      />
-      <ClickToMove onMove={(c) => onChange(c, raioKm)} />
+      {satelite ? (
+        <>
+          {/* imagem de satélite + nomes de ruas e lugares por cima */}
+          <TileLayer key="sat" url={`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`} attribution={ATRIB} maxNativeZoom={19} maxZoom={19} noWrap />
+          <TileLayer key="sat-ruas" url={`${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`} maxNativeZoom={19} maxZoom={19} noWrap />
+          <TileLayer key="sat-nomes" url={`${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`} maxNativeZoom={19} maxZoom={19} noWrap />
+        </>
+      ) : (
+        // mapa de ruas colorido e detalhado
+        <TileLayer key="ruas" url={`${ESRI}/World_Street_Map/MapServer/tile/{z}/{y}/{x}`} attribution={ATRIB} maxNativeZoom={19} maxZoom={19} noWrap />
+      )}
+
+      <ZoomControl position="bottomright" zoomInTitle="Aproximar" zoomOutTitle="Afastar" />
+      <Eventos onMove={(c) => onChange(c, raioKm)} onZoom={setZoom} />
       <FitOnRadius centro={centro} raioKm={raioKm} token={fitToken} />
       <FitToEmpresas empresas={empresas} />
+      <VoarPara alvo={voar} />
+      <VoarPara alvo={voarLocal} />
 
       <Circle
         center={centro}
         radius={raioKm * 1000}
         pathOptions={
           circuloAtivo
-            ? { color: "#0b0b0c", weight: 3, fillColor: "#0b0b0c", fillOpacity: 0.16, dashArray: undefined }
-            : { color: "#0b0b0c", weight: 1.5, fillColor: "#0b0b0c", fillOpacity: 0.04, dashArray: "6 8" }
+            ? { color: corCirculo, weight: 3, fillColor: "#0b0b0c", fillOpacity: satelite ? 0.08 : 0.12, dashArray: undefined }
+            : { color: corCirculo, weight: 1.5, fillColor: "#0b0b0c", fillOpacity: 0.03, dashArray: "6 8" }
         }
         interactive={false}
       />
 
-      {/* cidades dentro do raio */}
+      {/* cidades que entram na busca (discretas quando já há empresas no mapa) */}
       {cidades.map((m) => (
         <CircleMarker
           key={m.code}
@@ -171,7 +220,7 @@ export default function RadiusMap({
           radius={temEmpresas ? 2 : 3.5}
           pathOptions={
             temEmpresas
-              ? { color: "#0b0b0c", weight: 0, fillColor: "#0b0b0c", fillOpacity: 0.18 }
+              ? { color: "#0b0b0c", weight: 0, fillColor: "#0b0b0c", fillOpacity: 0.2 }
               : { color: "#0b0b0c", weight: 1, fillColor: "#b8ff3c", fillOpacity: 1 }
           }
         >
@@ -188,18 +237,12 @@ export default function RadiusMap({
           <CircleMarker
             key={e.cnpj}
             center={[e.lat, e.lng]}
-            radius={foco === e.cnpj ? 7 : 4}
-            pathOptions={{ color: "#fff", weight: 1.5, fillColor: foco === e.cnpj ? "#b8ff3c" : "#0b0b0c", fillOpacity: 0.75 }}
+            radius={foco === e.cnpj ? 8 : 5}
+            pathOptions={{ color: "#fff", weight: 2, fillColor: foco === e.cnpj ? "#b8ff3c" : "#0b0b0c", fillOpacity: 0.85 }}
             eventHandlers={{ mouseover: () => onFoco?.(e.cnpj), mouseout: () => onFoco?.(null) }}
           >
-            <Tooltip direction="top" offset={[0, e.destaque ? -34 : -6]} className="pin-tooltip">
-              <span className="block text-[13px] font-medium leading-tight">{e.name}</span>
-              <span className="block text-[11px] opacity-60">{e.local}</span>
-              <span className="mt-0.5 block font-mono text-[11px]">{formatMoney(e.capital)}</span>
-            </Tooltip>
-            <Popup>
-              <CardEmpresa e={e} />
-            </Popup>
+            {tooltip(e)}
+            {popup(e)}
           </CircleMarker>
         ))}
 
@@ -214,14 +257,8 @@ export default function RadiusMap({
             zIndexOffset={foco === e.cnpj ? 1000 : 500}
             eventHandlers={{ mouseover: () => onFoco?.(e.cnpj), mouseout: () => onFoco?.(null) }}
           >
-            <Tooltip direction="top" offset={[0, e.destaque ? -34 : -6]} className="pin-tooltip">
-              <span className="block text-[13px] font-medium leading-tight">{e.name}</span>
-              <span className="block text-[11px] opacity-60">{e.local}</span>
-              <span className="mt-0.5 block font-mono text-[11px]">{formatMoney(e.capital)}</span>
-            </Tooltip>
-            <Popup>
-              <CardEmpresa e={e} />
-            </Popup>
+            {tooltip(e)}
+            {popup(e)}
           </Marker>
         ))}
 
@@ -261,15 +298,24 @@ export default function RadiusMap({
   );
 }
 
-function CardEmpresa({ e }: { e: EmpresaNoMapa }) {
+function CardEmpresa({ e, onRua }: { e: EmpresaNoMapa; onRua: () => void }) {
   return (
-    <div className="min-w-48 font-display">
+    <div className="min-w-52 font-display">
       <p className="text-sm font-medium leading-tight text-night">{e.name}</p>
       <p className="mt-0.5 text-xs text-night/60">{e.local}</p>
       <p className="mt-2 text-lg font-light tracking-[-0.03em] text-night">{formatMoney(e.capital)}</p>
-      <a href={`/empresas/${e.cnpj}`} className="mt-1 inline-block text-xs font-medium text-night underline underline-offset-4">
-        Abrir empresa →
-      </a>
+      <div className="mt-2 flex gap-2">
+        <button
+          type="button"
+          onClick={onRua}
+          className="cursor-pointer rounded-full bg-night px-3 py-1.5 text-[11px] font-medium text-neon"
+        >
+          Ver a rua
+        </button>
+        <a href={`/empresas/${e.cnpj}`} className="rounded-full border border-night/15 px-3 py-1.5 text-[11px] font-medium text-night">
+          Abrir empresa →
+        </a>
+      </div>
     </div>
   );
 }

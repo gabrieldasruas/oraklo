@@ -156,7 +156,7 @@ export type CompanyDetail = CompanyItem & {
   address: string | null;
   zip: string | null;
   legalNature: string | null;
-  partners: { name: string; kind: string | null; enteredAt: string | null }[];
+  partners: { name: string; kind: string | null; role: string | null; enteredAt: string | null }[];
   sourcePeriod: string;
 };
 
@@ -174,7 +174,7 @@ export async function getCompany(cnpj: string): Promise<CompanyDetail | null> {
   const codes = [c.cnae_main, ...c.cnae_secondary].filter(Boolean) as string[];
   const [cnaes, partners, cities] = await Promise.all([
     db.from("cnaes").select("code, description").in("code", codes),
-    db.from("partners").select("name, kind, entered_at").eq("cnpj_root", c.cnpj_root).order("entered_at"),
+    db.from("partners").select("name, kind, role, entered_at").eq("cnpj_root", c.cnpj_root).order("entered_at"),
     municipalityNames([c.municipality_code ?? ""]),
   ]);
   if (cnaes.error || partners.error) throw new Error("Falha ao ler detalhes da empresa");
@@ -190,7 +190,7 @@ export async function getCompany(cnpj: string): Promise<CompanyDetail | null> {
     zip: c.zip,
     legalNature: c.legal_nature,
     // Só nome e qualificação do sócio (LGPD); o CPF nem é importado.
-    partners: partners.data.map((p) => ({ name: titleCase(p.name as string), kind: p.kind as string | null, enteredAt: p.entered_at as string | null })),
+    partners: partners.data.map((p) => ({ name: titleCase(p.name as string), kind: p.kind as string | null, role: (p.role as string | null) ?? null, enteredAt: p.entered_at as string | null })),
     sourcePeriod: c.source_period,
   };
 }
