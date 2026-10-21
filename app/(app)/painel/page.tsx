@@ -3,7 +3,7 @@ import { site } from "@/content/site";
 import { overview } from "@/content/app";
 import PageHeader from "@/components/app/PageHeader";
 import { Aura, Glass, Micro, WireArt } from "@/components/app/ui";
-import LogoMark from "@/components/brand/LogoMark";
+import Prospecta3D from "@/components/three/Prospecta3DLazy";
 import CountUp from "@/components/motion/CountUp";
 import { Reveal } from "@/components/motion/Reveal";
 import { FunnelHero } from "@/components/three/lazy";
@@ -18,7 +18,7 @@ export default function PainelPage() {
         index="01"
         title="Visão geral"
         description="Resumo da sua prospecção nos últimos 30 dias."
-        action={<LogoMark size={150} className="-my-4 hidden md:block" />}
+        action={<Prospecta3D quality="low" className="-my-8 hidden size-[220px] md:block" />}
       />
 
       {/* funil em partículas 3D com os números reais */}

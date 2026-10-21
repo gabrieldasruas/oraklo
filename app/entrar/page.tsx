@@ -3,7 +3,7 @@ import Link from "next/link";
 import { site } from "@/content/site";
 import { Micro, WireArt } from "@/components/app/ui";
 import AuthForm from "@/components/auth/AuthForm";
-import LogoMark from "@/components/brand/LogoMark";
+import Prospecta3D from "@/components/three/Prospecta3DLazy";
 import DotGridIntro from "@/components/motion/DotGridIntro";
 import { MaskText, Reveal } from "@/components/motion/Reveal";
 
@@ -29,15 +29,14 @@ export default async function EntrarPage({ searchParams }: { searchParams: Promi
       </div>
       <div className="relative z-10 flex min-h-dvh flex-col px-4 py-6 md:px-10 md:py-8">
         <Link href="/" className="flex w-fit items-center gap-3" aria-label={`${site.name} — início`}>
-          <LogoMark size={42} animated={false} />
+          <span className="flex size-10 items-center justify-center rounded-xl bg-night">
+            <span className="size-3 rounded-full bg-neon" />
+          </span>
           <span className="text-xl font-semibold uppercase tracking-[-0.03em]">{site.name}</span>
         </Link>
         <main className="relative flex flex-1 flex-col items-center justify-center gap-8 py-10">
           {/* objeto 3D: acima do título no celular, à direita no desktop */}
-          {/* logo Oraklo: acima do título no celular, grande à direita no desktop */}
-          <div className="-mb-4 size-36 xl:absolute xl:right-[6%] xl:top-1/2 xl:mb-0 xl:size-[340px] xl:-translate-y-1/2 2xl:right-[9%] 2xl:size-[400px]">
-            <LogoMark size="100%" />
-          </div>
+          <Prospecta3D className="pointer-events-none -mb-8 size-48 xl:absolute xl:right-0 xl:top-1/2 xl:mb-0 xl:size-[460px] xl:-translate-y-1/2 2xl:right-[4%] 2xl:size-[540px]" />
           <div className="text-center">
             <Micro>Plataforma de prospecção B2B</Micro>
             <h1 className="mt-4 text-5xl font-medium tracking-[-0.05em] md:text-6xl">
