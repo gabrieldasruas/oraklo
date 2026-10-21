@@ -6,8 +6,8 @@ import { useEffect, useId, useRef, useState } from "react";
  * Logo do Prospecta: lupa cibernética.
  * - Aro metálico, lente de vidro iridescente com grade de varredura e o ponto neon
  *   no centro (o "lead encontrado"), cabo grafite com anel neon.
- * - Animação inspirada em ícones que trocam de "acabamento" em loop:
- *   vidro 3D → neon → LED → meio-tom, cada um numa cor da paleta do site.
+ * - Animação: a lupa gira no próprio eixo como uma moeda, alternando entre a face
+ *   de vidro e a face neon, com uma faixa de luz passando durante o giro.
  *
  * Geometria (viewBox 200×200): lente em (84,84), cabo a 45° para baixo/direita.
  */
@@ -15,89 +15,9 @@ import { useEffect, useId, useRef, useState } from "react";
 const C = 84; // centro da lente
 const R = 56; // raio da linha central do aro
 const RING = 15; // espessura do aro
+const HOLD = 2800; // ms parada em cada face antes de girar
 
-export type LogoMode = "glass" | "neon" | "led" | "halftone";
-const CYCLE: { mode: LogoMode; ms: number }[] = [
-  { mode: "glass", ms: 2600 },
-  { mode: "neon", ms: 1500 },
-  { mode: "led", ms: 1500 },
-  { mode: "halftone", ms: 1500 },
-];
-
-const COLORS: Record<Exclude<LogoMode, "glass">, string> = {
-  neon: "#b8ff3c",
-  led: "#ff5f86",
-  halftone: "#9fb2ff",
-};
-
-/** Silhueta da lupa num canvas (para os modos LED e meio-tom). */
-function silhouette(ctx: CanvasRenderingContext2D, s: number) {
-  ctx.save();
-  ctx.scale(s, s);
-  ctx.translate(10, 10); // mesma margem do viewBox -10 -10 220 220
-  ctx.lineCap = "round";
-  ctx.strokeStyle = ctx.fillStyle = "#fff";
-  ctx.lineWidth = RING;
-  ctx.beginPath();
-  ctx.arc(C, C, R, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.translate(C, C);
-  ctx.rotate(Math.PI / 4);
-  ctx.beginPath();
-  ctx.roundRect(R + 6, -14, 18, 28, 5);
-  ctx.roundRect(R + 22, -13, 70, 26, 13);
-  ctx.fill();
-  ctx.rotate(-Math.PI / 4);
-  ctx.beginPath();
-  ctx.arc(0, 0, 11, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-/** Desenha a lupa em pontos: `led` = grade regular; `halftone` = pontos que variam de tamanho. */
-function DotMode({ mode, color, size }: { mode: "led" | "halftone"; color: string; size: number }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const cv = ref.current!;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const px = size * dpr;
-    cv.width = cv.height = px;
-    const ctx = cv.getContext("2d")!;
-
-    // silhueta borrada (o borrão vira o "degradê" do meio-tom)
-    const off = document.createElement("canvas");
-    off.width = off.height = px;
-    const o = off.getContext("2d")!;
-    if (mode === "halftone") o.filter = `blur(${px * 0.025}px)`;
-    silhouette(o, px / 220);
-    const data = o.getImageData(0, 0, px, px).data;
-
-    const step = mode === "led" ? px / 46 : px / 38;
-    ctx.clearRect(0, 0, px, px);
-    ctx.fillStyle = color;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = mode === "led" ? step * 0.9 : 0;
-    for (let y = step / 2; y < px; y += step) {
-      for (let x = step / 2; x < px; x += step) {
-        const a = data[(Math.floor(y) * px + Math.floor(x)) * 4 + 3] / 255;
-        if (mode === "led") {
-          if (a < 0.5) continue;
-          ctx.globalAlpha = 0.9;
-          ctx.beginPath();
-          ctx.arc(x, y, step * 0.36, 0, Math.PI * 2);
-          ctx.fill();
-        } else {
-          if (a < 0.04) continue;
-          ctx.globalAlpha = 1;
-          ctx.beginPath();
-          ctx.arc(x, y, step * 0.55 * Math.sqrt(a), 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    }
-  }, [mode, color, size]);
-  return <canvas ref={ref} className={`size-full ${mode === "led" ? "led-flicker" : ""}`} />;
-}
+export type LogoMode = "glass" | "neon";
 
 /** Versão "vidro 3D" (a principal, usada também parada em tamanhos pequenos). */
 export function LogoGlass({ className = "" }: { className?: string }) {
@@ -221,8 +141,8 @@ function LogoNeon({ color }: { color: string }) {
 }
 
 /**
- * Logo animado: troca de acabamento em loop. Passar o mouse pausa no vidro e inclina
- * a lupa em 3D. `animated={false}` mostra só o vidro (para tamanhos pequenos).
+ * Logo animado: gira entre vidro e neon. Passar o mouse para no vidro e inclina a lupa
+ * em 3D seguindo o cursor. `animated={false}` mostra só o vidro (tamanhos pequenos).
  */
 export default function LogoMark({
   size = 140,
@@ -232,24 +152,27 @@ export default function LogoMark({
 }: {
   size?: number;
   animated?: boolean;
-  /** força um acabamento fixo (sem o loop) */
+  /** força uma face fixa (sem o giro) */
   only?: LogoMode;
   className?: string;
 }) {
-  const [step, setStep] = useState(0);
+  const [turns, setTurns] = useState(0); // cada giro soma meia volta
   const [hover, setHover] = useState(false);
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!animated || hover || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setStep(0);
+    if (only || !animated || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (hover) {
+      // volta para a face de vidro mais próxima
+      setTurns((t) => (t % 2 ? t + 1 : t));
       return;
     }
-    const t = setTimeout(() => setStep((s) => (s + 1) % CYCLE.length), CYCLE[step].ms);
-    return () => clearTimeout(t);
-  }, [step, hover, animated]);
+    const id = setInterval(() => setTurns((t) => t + 1), HOLD);
+    return () => clearInterval(id);
+  }, [hover, animated, only]);
 
-  const mode = only ?? CYCLE[step].mode;
+  const angle = only === "neon" ? 180 : only === "glass" ? 0 : turns * 180;
+  const showingNeon = Math.round(angle / 180) % 2 === 1;
 
   return (
     <div
@@ -272,19 +195,23 @@ export default function LogoMark({
         e.currentTarget.style.setProperty("--ry", `${x * 24}deg`);
       }}
     >
-      {/* brilho atrás, na cor do acabamento atual */}
+      {/* brilho atrás: mais forte quando a face neon está à mostra */}
       <div
         aria-hidden
-        className="absolute inset-[12%] rounded-full blur-2xl transition-colors duration-700"
-        style={{ background: mode === "glass" ? "rgba(184,255,60,0.35)" : `${COLORS[mode]}55` }}
+        className="absolute inset-[12%] rounded-full blur-2xl transition-opacity duration-700"
+        style={{ background: "rgba(184,255,60,0.45)", opacity: showingNeon ? 1 : 0.6 }}
       />
       <div className="logo-tilt relative size-full">
-        {/* cada acabamento entra com um "glitch" curto (classe logo-swap reinicia via key) */}
-        <div key={mode} className="logo-swap absolute inset-0">
-          {mode === "glass" && <LogoGlass className="size-full" />}
-          {mode === "neon" && <LogoNeon color={COLORS.neon} />}
-          {(mode === "led" || mode === "halftone") && <DotMode mode={mode} color={COLORS[mode]} size={size} />}
+        <div className="logo-coin relative size-full" style={{ transform: `rotateY(${angle}deg)` }}>
+          <div className="logo-face absolute inset-0">
+            <LogoGlass className="size-full" />
+          </div>
+          <div className="logo-face absolute inset-0" style={{ transform: "rotateY(180deg)" }}>
+            <LogoNeon color="#b8ff3c" />
+          </div>
         </div>
+        {/* faixa de luz que atravessa durante cada giro */}
+        {animated && !only && <div key={turns} aria-hidden className="logo-sweep pointer-events-none absolute inset-0" />}
       </div>
     </div>
   );

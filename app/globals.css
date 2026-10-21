@@ -328,32 +328,38 @@ body {
     translate: 0 -8px;
   }
 }
-/* troca de acabamento: entra com um "glitch" curto */
-@keyframes logo-swap {
+/* giro tipo moeda entre a face de vidro e a neon */
+.logo-tilt {
+  transform-style: preserve-3d;
+}
+.logo-coin {
+  transform-style: preserve-3d;
+  transition: transform 1.1s cubic-bezier(0.68, -0.35, 0.27, 1.35);
+}
+.logo-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+/* faixa de luz que atravessa a lupa enquanto ela gira */
+@keyframes logo-sweep {
   0% {
     opacity: 0;
-    scale: 0.92;
-    filter: blur(6px) saturate(2);
-    clip-path: inset(0 0 55% 0);
+    background-position: 160% 0;
   }
-  35% {
+  25% {
     opacity: 1;
-    clip-path: inset(40% 0 0 0);
-    translate: 3px 0;
-  }
-  60% {
-    clip-path: inset(0 0 0 0);
-    translate: -2px 0;
   }
   100% {
-    opacity: 1;
-    scale: 1;
-    filter: none;
-    translate: 0 0;
+    opacity: 0;
+    background-position: -60% 0;
   }
 }
-.logo-swap {
-  animation: logo-swap 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+.logo-sweep {
+  background: linear-gradient(105deg, transparent 35%, rgba(244, 255, 214, 0.85) 48%, rgba(184, 255, 60, 0.5) 52%, transparent 65%) no-repeat;
+  background-size: 220% 100%;
+  mix-blend-mode: screen;
+  mask: radial-gradient(circle at 42% 42%, black 45%, transparent 62%);
+  animation: logo-sweep 1.1s ease-out both;
 }
 @keyframes lens-scan {
   0% {
@@ -380,30 +386,12 @@ body {
 .lens-dot {
   animation: lens-dot 1.6s ease-in-out infinite;
 }
-@keyframes led-flicker {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  48% {
-    opacity: 0.85;
-  }
-  50% {
-    opacity: 0.55;
-  }
-  52% {
-    opacity: 0.95;
-  }
-}
-.led-flicker {
-  animation: led-flicker 0.9s steps(6) infinite;
-}
 @media (prefers-reduced-motion: reduce) {
   .logo-mark,
-  .logo-swap,
+  .logo-sweep,
   .lens-scan,
   .lens-dot,
-  .led-flicker {
+  .logo-coin {
     animation: none;
   }
 }
