@@ -459,3 +459,19 @@ body {
     animation: none;
   }
 }
+
+/* nome da empresa ao passar o mouse no pin */
+.leaflet-tooltip.pin-tooltip {
+  border: 0;
+  border-radius: 14px;
+  background: #0b0b0c;
+  color: #fff;
+  padding: 8px 12px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  font-family: inherit;
+  max-width: 260px;
+  white-space: normal;
+}
+.leaflet-tooltip-top.pin-tooltip::before {
+  border-top-color: #0b0b0c;
+}

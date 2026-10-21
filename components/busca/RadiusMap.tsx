@@ -192,6 +192,11 @@ export default function RadiusMap({
             pathOptions={{ color: "#fff", weight: 1.5, fillColor: foco === e.cnpj ? "#b8ff3c" : "#0b0b0c", fillOpacity: 0.75 }}
             eventHandlers={{ mouseover: () => onFoco?.(e.cnpj), mouseout: () => onFoco?.(null) }}
           >
+            <Tooltip direction="top" offset={[0, e.destaque ? -34 : -6]} className="pin-tooltip">
+              <span className="block text-[13px] font-medium leading-tight">{e.name}</span>
+              <span className="block text-[11px] opacity-60">{e.local}</span>
+              <span className="mt-0.5 block font-mono text-[11px]">{formatMoney(e.capital)}</span>
+            </Tooltip>
             <Popup>
               <CardEmpresa e={e} />
             </Popup>
@@ -209,6 +214,11 @@ export default function RadiusMap({
             zIndexOffset={foco === e.cnpj ? 1000 : 500}
             eventHandlers={{ mouseover: () => onFoco?.(e.cnpj), mouseout: () => onFoco?.(null) }}
           >
+            <Tooltip direction="top" offset={[0, e.destaque ? -34 : -6]} className="pin-tooltip">
+              <span className="block text-[13px] font-medium leading-tight">{e.name}</span>
+              <span className="block text-[11px] opacity-60">{e.local}</span>
+              <span className="mt-0.5 block font-mono text-[11px]">{formatMoney(e.capital)}</span>
+            </Tooltip>
             <Popup>
               <CardEmpresa e={e} />
             </Popup>

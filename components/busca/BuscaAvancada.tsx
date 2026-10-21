@@ -12,6 +12,7 @@ import {
   centroNoBrasil,
   ESTADOS,
   MUNICIPIOS,
+  distanciaKm,
   municipiosNoRaio,
   RAIO_MAX_KM,
   RAIO_MIN_KM,
@@ -59,7 +60,15 @@ const FRACAO_DESTAQUE = 0.3;
 const INICIO: Centro = [-23.5505, -46.6333]; // São Paulo
 const fmt = (n: number) => n.toLocaleString("pt-BR");
 
-export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
+export default function BuscaAvancada({
+  cnaes,
+  ufsComDados = {},
+}: {
+  cnaes: Cnae[];
+  /** UF → empresas já importadas na base */
+  ufsComDados?: Record<string, number>;
+}) {
+  const [cidadePopover, setCidadePopover] = useState(false);
   const [centro, setCentro] = useState<Centro>(INICIO);
   const [raioKm, setRaioKm] = useState(60);
   const [fitToken, setFitToken] = useState(1); // 1 = enquadra o círculo ao abrir
@@ -114,16 +123,36 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
     return filtradas.sort((a, b) => a.name.localeCompare(b.name, "pt-BR")).slice(0, 30);
   }, [buscaCidade, ufLista]);
 
-  function escolherCidade(code: string) {
+  function escolherCidade(code: string, buscarJa = false) {
     const m = MUNICIPIOS.find((x) => x.code === code);
     if (!m) return;
-    setCentro([m.lat, m.lng]);
+    const c: Centro = [m.lat, m.lng];
+    setCentro(c);
     setEscopo("cidade");
     setRaioKm((r) => Math.min(r, 25));
     setFitToken((t) => t + 1);
     setBuscaCidade("");
+    setCidadePopover(false);
+    setAviso(null);
+    if (buscarJa) void buscar(undefined, { escopo: "cidade", centro: c });
+  }
+
+  // Leva o círculo até o estado, com raio suficiente para cobrir o estado inteiro.
+  function irParaEstado(uf: string) {
+    const e = ESTADOS[uf];
+    if (!e) return;
+    const doEstado = MUNICIPIOS.filter((m) => m.uf === uf);
+    const longe = doEstado.reduce((mx, m) => Math.max(mx, distanciaKm(e.lat, e.lng, m.lat, m.lng)), 0);
+    setCentro([e.lat, e.lng]);
+    setRaioKm(Math.min(RAIO_MAX_KM, Math.max(RAIO_MIN_KM, Math.ceil(longe / 5) * 5)));
+    setFitToken((t) => t + 1);
     setAviso(null);
   }
+
+  const semDados = (uf: string) => !ufsComDados[uf];
+  const estadosComDados = Object.entries(ufsComDados)
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1]);
 
   // Assim que chegam resultados, localiza pelo CEP as empresas que ainda não têm coordenada.
   useEffect(() => {
@@ -233,9 +262,7 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
     if (!e) return;
     // leva o mapa para o estado e busca nele inteiro
     const c: Centro = [e.lat, e.lng];
-    setCentro(c);
-    setRaioKm(Math.min(RAIO_MAX_KM, 300));
-    setFitToken((t) => t + 1);
+    irParaEstado(uf);
     setEscopo("estado");
     setUfsFiltro([uf]);
     void buscar(undefined, { escopo: "estado", ufs: [uf], centro: c });
@@ -354,6 +381,67 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
                 ▼
               </span>
             </label>
+            <div className="relative">
+              <button
+                type="button"
+                aria-expanded={cidadePopover}
+                onClick={() => setCidadePopover((v) => !v)}
+                className="relative min-h-9 cursor-pointer rounded-full border border-night/15 bg-white pl-4 pr-8 text-xs font-medium hover:border-night/40"
+              >
+                Outra cidade…
+                <span aria-hidden className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-60">▲</span>
+              </button>
+              {cidadePopover && (
+                <div className="absolute bottom-full left-0 z-20 mb-2 w-80 rounded-2xl border border-night/10 bg-white p-3 shadow-2xl">
+                  <div className="flex gap-2">
+                    <label className="relative">
+                      <span className="sr-only">Estado</span>
+                      <select
+                        value={ufLista}
+                        onChange={(e) => {
+                          setUfCidade(e.target.value);
+                          setBuscaCidade("");
+                        }}
+                        className="min-h-10 cursor-pointer appearance-none rounded-full border border-night/15 bg-white py-1 pl-3 pr-7 font-mono text-xs"
+                      >
+                        {UFS.map((u) => (
+                          <option key={u} value={u}>
+                            {u}
+                          </option>
+                        ))}
+                      </select>
+                      <span aria-hidden className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] opacity-60">▼</span>
+                    </label>
+                    <label className="relative flex-1">
+                      <span className="sr-only">Cidade</span>
+                      <Search size={14} aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
+                      <input
+                        autoFocus
+                        value={buscaCidade}
+                        onChange={(e) => setBuscaCidade(e.target.value)}
+                        placeholder={`Cidade em ${nomeEstado(ufLista)}`}
+                        className="min-h-10 w-full rounded-full border border-night/15 bg-white pl-8 pr-3 text-xs focus:border-night focus:outline-none"
+                      />
+                    </label>
+                  </div>
+                  <ul className="mt-2 max-h-52 space-y-0.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                    {opcoesCidade.map((m) => (
+                      <li key={m.code}>
+                        <button
+                          type="button"
+                          onClick={() => escolherCidade(m.code, true)}
+                          className="flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-1.5 text-left text-xs hover:bg-night hover:text-white"
+                        >
+                          {m.name}
+                          <span className="font-mono text-[10px] opacity-50">{m.uf}</span>
+                        </button>
+                      </li>
+                    ))}
+                    {!opcoesCidade.length && <li className="px-3 py-1.5 text-xs opacity-50">Nenhuma cidade encontrada.</li>}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         </Glass>
 
@@ -493,6 +581,10 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
 
           <div>
             <Micro className="!opacity-60">Limitar a estados (opcional)</Micro>
+            <p className="mt-2 text-[11px] leading-relaxed text-white/50">
+              <span className="mr-1 inline-block size-2 rounded-full bg-neon align-middle" /> já tem empresas na base
+              {estadosComDados.length > 0 && <> · hoje: {estadosComDados.map(([u, n]) => `${u} (${fmt(n)})`).join(", ")}</>}
+            </p>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {UFS.map((u) => {
                 const on = ufsFiltro.includes(u);
@@ -501,13 +593,20 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
                   <button
                     key={u}
                     type="button"
-                    onClick={() => setUfsFiltro((s) => toggle(s, u))}
+                    onClick={() => {
+                      setUfsFiltro((s) => toggle(s, u));
+                      if (!on) irParaEstado(u); // marcou: o círculo vai até o estado
+                    }}
                     aria-pressed={on}
-                    className={`min-h-8 min-w-10 cursor-pointer rounded-full border px-2 font-mono text-[11px] transition-colors ${
+                    title={semDados(u) ? `${nomeEstado(u)}: ainda sem empresas na base` : `${nomeEstado(u)}: ${fmt(ufsComDados[u])} empresas na base`}
+                    className={`relative min-h-8 min-w-10 cursor-pointer rounded-full border px-2 font-mono text-[11px] transition-colors ${
                       on ? "border-neon bg-neon text-night" : dentro ? "border-white/40 text-white" : "border-white/10 text-white/35 hover:text-white/70"
                     }`}
                   >
                     {u}
+                    {!semDados(u) && (
+                      <span aria-hidden className={`absolute -right-0.5 -top-0.5 size-2 rounded-full ring-2 ring-night ${on ? "bg-night" : "bg-neon"}`} />
+                    )}
                   </button>
                 );
               })}
@@ -635,7 +734,9 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
           </div>
           {!res.items.length && (
             <p className="px-5 py-14 text-center text-sm opacity-60">
-              Nenhuma empresa nesse raio com esses filtros. Aumente o raio ou mude a atividade.
+              {res.ufs.length > 0 && res.ufs.every(semDados)
+                ? `Ainda não importamos empresas de ${res.ufs.join(", ")} para a base. Hoje há dados de: ${estadosComDados.map(([u]) => u).join(", ") || "nenhum estado"}.`
+                : "Nenhuma empresa nesse raio com esses filtros. Aumente o raio ou mude a atividade."}
             </p>
           )}
           {res.nextCursor && (
