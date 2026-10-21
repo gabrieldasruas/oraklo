@@ -1,10 +1,10 @@
 // Todo o conteúdo (fictício) do layout fica aqui. Nesta fase não há funcionalidades.
 export const site = {
-  name: "Prospecta",
-  title: "Prospecta — Encontre, qualifique e converta novos clientes",
+  name: "Oraklo",
+  title: "Oraklo — Saiba quem vai comprar antes da primeira ligação",
   description:
     "Plataforma de prospecção B2B: base de contatos, filtros avançados e sequências de abordagem em um só lugar.",
-  email: "contato@prospecta.app",
+  email: "contato@oraklo.app",
   nav: [
     { label: "Produto", href: "/produto" },
     { label: "Segmentação", href: "/segmentacao" },

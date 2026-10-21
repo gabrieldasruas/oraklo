@@ -51,7 +51,7 @@ export default function DotMatrixTitle({ text, className = "" }: { text: string;
       o.textAlign = "center";
       o.textBaseline = "middle";
       o.fillStyle = "#fff";
-      // letter-spacing apertado, como os títulos do Prospecta
+      // letter-spacing apertado, como os títulos do Oraklo
       (o as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = `${-fs * 0.04}px`;
       o.fillText(text, w / 2, h / 2 + fs * 0.04);
       const data = o.getImageData(0, 0, w, h).data;

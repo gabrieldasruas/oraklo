@@ -90,7 +90,7 @@ export default function DotGridIntro() {
     >
       <canvas ref={canvas} className="size-full" />
       <p className="absolute bottom-8 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-[0.3em] text-neon/70">
-        Prospecta · conectando leads
+        Oraklo · prevendo seus próximos clientes
       </p>
     </div>
   );

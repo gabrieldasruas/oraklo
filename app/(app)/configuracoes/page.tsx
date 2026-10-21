@@ -40,7 +40,7 @@ export default function ConfiguracoesPage() {
             </label>
             <label className="block text-sm font-medium">
               E-mail
-              <input className={input} defaultValue="gabriel@prospecta.app" readOnly />
+              <input className={input} defaultValue="gabriel@oraklo.app" readOnly />
             </label>
             <label className="block text-sm font-medium">
               Empresa

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 220 220">
+  <!-- Ícone da aba (Oraklo): versão simplificada da lupa de vidro -->
+  <defs>
+    <linearGradient id="rim" x1="20%" y1="10%" x2="80%" y2="95%">
+      <stop offset="0" stop-color="#fbfff0"/>
+      <stop offset="0.25" stop-color="#d6ff8a"/>
+      <stop offset="0.5" stop-color="#5f8f12"/>
+      <stop offset="0.8" stop-color="#b8ff3c"/>
+      <stop offset="1" stop-color="#f2ffd1"/>
+    </linearGradient>
+    <radialGradient id="lens" cx="38%" cy="34%" r="75%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.35" stop-color="#bdf3ff"/>
+      <stop offset="0.65" stop-color="#c9b6ff"/>
+      <stop offset="1" stop-color="#ffc2e4"/>
+    </radialGradient>
+    <linearGradient id="handle" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5b5d68"/>
+      <stop offset="1" stop-color="#0b0b0c"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(45 84 84)">
+    <rect x="162" y="69" width="70" height="30" rx="15" fill="url(#handle)"/>
+    <rect x="144" y="68" width="20" height="32" rx="6" fill="#b8ff3c"/>
+  </g>
+  <circle cx="84" cy="84" r="56" fill="url(#lens)"/>
+  <ellipse cx="68" cy="64" rx="26" ry="12" transform="rotate(-35 68 64)" fill="#fff" opacity="0.8"/>
+  <circle cx="84" cy="84" r="13" fill="#b8ff3c"/>
+  <circle cx="84" cy="84" r="56" fill="none" stroke="url(#rim)" stroke-width="18"/>
+</svg>

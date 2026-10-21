@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 /*
- * Logo do Prospecta: lupa cibernética.
+ * Logo do Oraklo: lupa cibernética (o oráculo que enxerga quem vai comprar).
  * - Aro metálico, lente de vidro iridescente com grade de varredura e o ponto neon
  *   no centro (o "lead encontrado"), cabo grafite com anel neon.
  * - Animação: a lupa gira no próprio eixo como uma moeda, alternando entre a face
@@ -150,7 +150,8 @@ export default function LogoMark({
   only,
   className = "",
 }: {
-  size?: number;
+  /** px ou qualquer medida CSS (ex.: "100%" para preencher o pai) */
+  size?: number | string;
   animated?: boolean;
   /** força uma face fixa (sem o giro) */
   only?: LogoMode;
@@ -178,7 +179,7 @@ export default function LogoMark({
     <div
       ref={box}
       role="img"
-      aria-label="Prospecta"
+      aria-label="Oraklo"
       className={`logo-mark relative ${className}`}
       style={{ width: size, height: size }}
       onPointerEnter={() => setHover(true)}
