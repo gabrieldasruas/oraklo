@@ -55,6 +55,7 @@ export default function RadiusMap({
   raioKm,
   cidades,
   fitToken,
+  circuloAtivo = true,
   onChange,
 }: {
   centro: Centro;
@@ -63,6 +64,8 @@ export default function RadiusMap({
   cidades: Municipio[];
   /** muda quando o mapa deve reenquadrar o círculo */
   fitToken: number;
+  /** fora do modo raio, o círculo fica tracejado e apagado */
+  circuloAtivo?: boolean;
   onChange: (centro: Centro, raioKm: number) => void;
 }) {
   const centerIcon = useMemo(() => handleIcon(true), []);
@@ -105,7 +108,11 @@ export default function RadiusMap({
       <Circle
         center={centro}
         radius={raioKm * 1000}
-        pathOptions={{ color: "#0b0b0c", weight: 3, fillColor: "#0b0b0c", fillOpacity: 0.16 }}
+        pathOptions={
+          circuloAtivo
+            ? { color: "#0b0b0c", weight: 3, fillColor: "#0b0b0c", fillOpacity: 0.16, dashArray: undefined }
+            : { color: "#0b0b0c", weight: 1.5, fillColor: "#0b0b0c", fillOpacity: 0.04, dashArray: "6 8" }
+        }
         interactive={false}
       />
 

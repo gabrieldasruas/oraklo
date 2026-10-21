@@ -6,7 +6,17 @@ import Link from "next/link";
 import { Crosshair, Loader2, MapPin, Search, X } from "lucide-react";
 import { Glass, Micro } from "@/components/app/ui";
 import ContactCell from "@/components/app/ContactCell";
-import { cidadeMaisProxima, centroNoBrasil, municipiosNoRaio, RAIO_MAX_KM, RAIO_MIN_KM, UFS } from "@/lib/geo/radius";
+import {
+  cidadeMaisProxima,
+  centroNoBrasil,
+  ESTADOS,
+  MUNICIPIOS,
+  municipiosNoRaio,
+  RAIO_MAX_KM,
+  RAIO_MIN_KM,
+  UFS,
+  type Escopo,
+} from "@/lib/geo/radius";
 import { formatCnae, formatCnpj, formatMoney, SIZE_LABEL } from "@/lib/format";
 import type { Centro } from "./RadiusMap";
 
@@ -28,7 +38,16 @@ type Item = {
   email: string | null;
   phones: string[];
 };
-type Resultado = { items: Item[]; nextCursor: string | null; total: number | null; municipios: number; ufs: string[] };
+type Resultado = {
+  items: Item[];
+  nextCursor: string | null;
+  total: number | null;
+  municipios: number;
+  ufs: string[];
+  escopo: Escopo;
+  centro: { name: string; uf: string };
+};
+type Override = { escopo?: Escopo; raioKm?: number; ufs?: string[]; centro?: Centro };
 
 const INICIO: Centro = [-23.5505, -46.6333]; // São Paulo
 const fmt = (n: number) => n.toLocaleString("pt-BR");
@@ -50,10 +69,26 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  // Prévia ao vivo (no navegador): cidades e estados dentro do círculo.
-  const cidades = useMemo(() => municipiosNoRaio(centro[0], centro[1], raioKm, ufsFiltro), [centro, raioKm, ufsFiltro]);
-  const estados = useMemo(() => [...new Set(cidades.map((c) => c.uf))].sort(), [cidades]);
+  const [escopo, setEscopo] = useState<Escopo>("raio");
+
+  // Prévia ao vivo (no navegador): cidades e estados que entram na busca.
   const perto = useMemo(() => cidadeMaisProxima(centro[0], centro[1]).municipio, [centro]);
+  const ufsDoEstado = ufsFiltro.length ? ufsFiltro : [perto.uf];
+  const cidades = useMemo(() => {
+    if (escopo === "cidade") return [perto];
+    if (escopo === "estado") return MUNICIPIOS.filter((m) => ufsDoEstado.includes(m.uf));
+    return municipiosNoRaio(centro[0], centro[1], raioKm, ufsFiltro);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [centro, raioKm, ufsFiltro, escopo, perto]);
+  const estados = useMemo(() => [...new Set(cidades.map((c) => c.uf))].sort(), [cidades]);
+  const nomeEstado = (uf: string) => ESTADOS[uf]?.nome ?? uf;
+
+  const rotuloBotao =
+    escopo === "cidade"
+      ? `Buscar em ${perto.name}`
+      : escopo === "estado"
+        ? `Buscar em todo ${ufsDoEstado.join(", ")}`
+        : `Buscar no raio de ${raioKm} km`;
 
   const cnaesFiltrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -72,19 +107,33 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
     }
     setAviso(null);
     setCentro(c);
+    if (km !== raioKm) setEscopo("raio"); // mexeu nas bordas = quer buscar por raio
     setRaioKm(km);
   }
 
   const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
-  async function buscar(cursor?: string) {
+  /** `o` permite buscar já com um novo alcance (usado pelas sugestões de ampliar). */
+  async function buscar(cursor?: string, o: Override = {}) {
+    const c = o.centro ?? centro;
     setCarregando(true);
     setErro(null);
     try {
       const r = await fetch("/api/busca-raio", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ lat: centro[0], lng: centro[1], raioKm, ufs: ufsFiltro, cnaes: cnaesSel, portes, temEmail, matriz, cursor }),
+        body: JSON.stringify({
+          lat: c[0],
+          lng: c[1],
+          raioKm: o.raioKm ?? raioKm,
+          escopo: o.escopo ?? escopo,
+          ufs: o.ufs ?? ufsFiltro,
+          cnaes: cnaesSel,
+          portes,
+          temEmail,
+          matriz,
+          cursor,
+        }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error ?? "Falha na busca");
@@ -94,6 +143,32 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
     } finally {
       setCarregando(false);
     }
+  }
+
+  // Sugestões de alcance: ampliar o raio, ir para o estado inteiro ou trocar de estado.
+  function ampliarRaio(km: number) {
+    setEscopo("raio");
+    setUfsFiltro([]);
+    setRaioKm(km);
+    setFitToken((t) => t + 1);
+    void buscar(undefined, { escopo: "raio", raioKm: km, ufs: [] });
+  }
+  function todoEstado(uf: string) {
+    setEscopo("estado");
+    setUfsFiltro([uf]);
+    void buscar(undefined, { escopo: "estado", ufs: [uf] });
+  }
+  function outroEstado(uf: string) {
+    const e = ESTADOS[uf];
+    if (!e) return;
+    // leva o mapa para o estado e busca nele inteiro
+    const c: Centro = [e.lat, e.lng];
+    setCentro(c);
+    setRaioKm(Math.min(RAIO_MAX_KM, 300));
+    setFitToken((t) => t + 1);
+    setEscopo("estado");
+    setUfsFiltro([uf]);
+    void buscar(undefined, { escopo: "estado", ufs: [uf], centro: c });
   }
 
   return (
@@ -107,12 +182,15 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
               raioKm={raioKm}
               cidades={cidades.slice(0, 400)}
               fitToken={fitToken}
+              circuloAtivo={escopo === "raio"}
               onChange={mover}
             />
 
             {/* resumo flutuante sobre o mapa */}
             <div className="pointer-events-none absolute left-4 top-4 z-[500] flex flex-wrap gap-2">
-              <span className="rounded-full bg-night px-4 py-2 font-mono text-xs text-neon shadow-lg">{raioKm} km de raio</span>
+              <span className="rounded-full bg-night px-4 py-2 font-mono text-xs text-neon shadow-lg">
+                {escopo === "cidade" ? `Só ${perto.name}` : escopo === "estado" ? `Todo ${ufsDoEstado.join(", ")}` : `${raioKm} km de raio`}
+              </span>
               <span className="rounded-full bg-white/90 px-4 py-2 text-xs shadow-lg backdrop-blur">
                 <b className="font-medium">{fmt(cidades.length)}</b> municípios · {estados.join(", ") || "—"}
               </span>
@@ -138,7 +216,10 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
                 max={RAIO_MAX_KM}
                 step={5}
                 value={raioKm}
-                onChange={(e) => setRaioKm(Number(e.target.value))}
+                onChange={(e) => {
+                  setRaioKm(Number(e.target.value));
+                  setEscopo("raio");
+                }}
                 onPointerUp={() => setFitToken((t) => t + 1)}
                 onKeyUp={() => setFitToken((t) => t + 1)}
                 className="h-2 flex-1 cursor-pointer accent-night"
@@ -147,10 +228,86 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
             </label>
             <Micro>Arraste o centro ou as bordas · clique no mapa para mover</Micro>
           </div>
+
+          {/* Sugestão de alcance: para quem não quer pensar em km */}
+          <div className="flex flex-wrap items-center gap-2 border-t border-night/10 bg-white/40 px-5 py-4">
+            <p className="mr-2 text-sm">
+              <span className="font-medium">Quer ampliar?</span>{" "}
+              <span className="opacity-60">
+                Buscar empresas a mais km de {perto.name}, em todo {perto.uf} ou em outro estado?
+              </span>
+            </p>
+            {[10, 25, 50, 100, 200, 400]
+              .filter((km) => escopo !== "raio" || km > raioKm)
+              .slice(0, 3)
+              .map((km) => (
+                <button
+                  key={km}
+                  type="button"
+                  onClick={() => ampliarRaio(km)}
+                  className="min-h-9 cursor-pointer rounded-full border border-night/15 bg-white px-4 text-xs font-medium hover:bg-night hover:text-white"
+                >
+                  {km} km de {perto.name}
+                </button>
+              ))}
+            <button
+              type="button"
+              onClick={() => todoEstado(perto.uf)}
+              className="min-h-9 cursor-pointer rounded-full bg-night px-4 text-xs font-medium text-white hover:bg-neon hover:text-night"
+            >
+              Todo {perto.uf}
+            </button>
+            <label className="relative">
+              <span className="sr-only">Buscar em outro estado</span>
+              <select
+                value=""
+                onChange={(e) => e.target.value && outroEstado(e.target.value)}
+                className="min-h-9 cursor-pointer appearance-none rounded-full border border-night/15 bg-white py-1 pl-4 pr-8 text-xs font-medium hover:border-night/40"
+              >
+                <option value="">Outro estado…</option>
+                {UFS.filter((u) => u !== perto.uf).map((u) => (
+                  <option key={u} value={u}>
+                    {u} · {nomeEstado(u)}
+                  </option>
+                ))}
+              </select>
+              <span aria-hidden className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-60">
+                ▼
+              </span>
+            </label>
+          </div>
         </Glass>
 
         {/* Filtros */}
         <aside className="aura-night no-fx space-y-6 rounded-[28px] p-6 text-white xl:sticky xl:top-4">
+          {/* Onde buscar */}
+          <div>
+            <Micro className="!opacity-60">Onde buscar</Micro>
+            <div role="radiogroup" aria-label="Alcance da busca" className="mt-3 grid grid-cols-3 gap-2">
+              {(
+                [
+                  { v: "raio", t: "No raio", d: `${raioKm} km` },
+                  { v: "cidade", t: "Na cidade", d: `${perto.name}/${perto.uf}` },
+                  { v: "estado", t: "No estado", d: `Todo ${ufsDoEstado.join(", ")}` },
+                ] as { v: Escopo; t: string; d: string }[]
+              ).map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  role="radio"
+                  aria-checked={escopo === o.v}
+                  onClick={() => setEscopo(o.v)}
+                  className={`min-h-16 cursor-pointer rounded-2xl border px-3 py-2 text-left transition-colors ${
+                    escopo === o.v ? "border-neon bg-neon text-night" : "border-white/15 hover:bg-white/10"
+                  }`}
+                >
+                  <span className="block text-sm font-medium">{o.t}</span>
+                  <span className={`block truncate text-[11px] ${escopo === o.v ? "opacity-70" : "text-white/50"}`}>{o.d}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <Micro className="!opacity-60">Atividade (CNAE)</Micro>
             <label className="relative mt-3 block">
@@ -257,10 +414,10 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
           <button
             type="button"
             onClick={() => buscar()}
-            disabled={carregando || !cidades.length}
+            disabled={carregando}
             className="group flex min-h-14 w-full cursor-pointer items-center justify-between rounded-full bg-neon py-2 pl-6 pr-2 text-base font-medium text-night transition-transform hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60"
           >
-            Buscar no raio
+            <span className="truncate">{rotuloBotao}</span>
             <span className="flex size-10 items-center justify-center rounded-full bg-night text-neon">
               {carregando ? <Loader2 size={18} className="animate-spin" /> : <MapPin size={18} />}
             </span>
@@ -281,7 +438,14 @@ export default function BuscaAvancada({ cnaes }: { cnaes: Cnae[] }) {
         <Glass className="overflow-hidden">
           <div className="flex flex-wrap items-baseline justify-between gap-2 p-5">
             <p className="text-4xl font-light tracking-[-0.05em] tabular-nums">
-              {fmt(res.total ?? 0)} <span className="text-base tracking-normal opacity-60">empresas no raio</span>
+              {fmt(res.total ?? 0)}{" "}
+              <span className="text-base tracking-normal opacity-60">
+                {res.escopo === "cidade"
+                  ? `empresas em ${res.centro.name}/${res.centro.uf}`
+                  : res.escopo === "estado"
+                    ? `empresas em todo ${res.ufs.join(", ")}`
+                    : "empresas no raio"}
+              </span>
             </p>
             <Micro>
               {fmt(res.municipios)} municípios · {res.ufs.join(", ")}

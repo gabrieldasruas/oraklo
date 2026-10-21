@@ -1,12 +1,12 @@
 import type { NextRequest } from "next/server";
 import { getUser } from "@/lib/auth";
 import { countCompanies, searchCompanies, type CompanyFilter } from "@/lib/companies";
-import { centroNoBrasil, municipiosNoRaio, RAIO_MAX_KM, RAIO_MIN_KM, UFS } from "@/lib/geo/radius";
+import { centroNoBrasil, cidadeMaisProxima, MUNICIPIOS, municipiosNoRaio, RAIO_MAX_KM, RAIO_MIN_KM, UFS, type Escopo } from "@/lib/geo/radius";
 
 const PORTES = ["ME", "EPP", "DEMAIS", "NAO_INFORMADO"];
 
 // POST /api/busca-raio
-// { lat, lng, raioKm, ufs?: string[], cnaes?: string[], portes?: string[], temEmail?: boolean, matriz?: boolean, cursor?: string }
+// { lat, lng, raioKm, escopo?: "raio" | "cidade" | "estado", ufs?: string[], cnaes?: string[], portes?: string[], temEmail?: boolean, matriz?: boolean, cursor?: string }
 export async function POST(request: NextRequest) {
   if (!(await getUser())) return Response.json({ error: "Não autenticado" }, { status: 401 });
 
@@ -31,16 +31,29 @@ export async function POST(request: NextRequest) {
   const portes = arr(body.portes).filter((p) => PORTES.includes(p));
   const cursor = typeof body.cursor === "string" ? body.cursor : undefined;
 
-  const municipios = municipiosNoRaio(lat, lng, raioKm, ufs);
+  const escopo: Escopo = body.escopo === "cidade" || body.escopo === "estado" ? body.escopo : "raio";
+  const centro = cidadeMaisProxima(lat, lng).municipio;
+
+  // raio: cidades no círculo · cidade: só a do centro · estado: o(s) estado(s) inteiro(s)
+  const ufsEstado = ufs.length ? ufs : [centro.uf];
+  const municipios =
+    escopo === "cidade"
+      ? [centro]
+      : escopo === "estado"
+        ? MUNICIPIOS.filter((m) => ufsEstado.includes(m.uf))
+        : municipiosNoRaio(lat, lng, raioKm, ufs);
   const resumo = {
+    escopo,
+    centro: { name: centro.name, uf: centro.uf },
     municipios: municipios.length,
-    ufs: [...new Set(municipios.map((m) => m.uf))],
+    ufs: escopo === "estado" ? ufsEstado : [...new Set(municipios.map((m) => m.uf))],
     // os mais próximos, para mostrar no mapa/painel
     cidades: municipios.slice(0, 400).map((m) => ({ code: m.code, name: m.name, uf: m.uf, lat: m.lat, lng: m.lng })),
   };
   if (!municipios.length) return Response.json({ items: [], nextCursor: null, total: 0, ...resumo });
 
-  const filter: CompanyFilter = { municipalities: municipios.map((m) => m.code) };
+  // no estado inteiro, filtrar por UF é mais leve que mandar centenas de cidades
+  const filter: CompanyFilter = escopo === "estado" ? { ufs: ufsEstado } : { municipalities: municipios.map((m) => m.code) };
   if (cnaes.length) filter.cnaes = cnaes;
   if (portes.length) filter.sizes = portes;
   if (body.temEmail === true) filter.has_email = true;
