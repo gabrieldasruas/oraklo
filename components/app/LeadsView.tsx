@@ -1,13 +1,24 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, Trash2, Mail, Phone } from "lucide-react";
+import { CalendarDays, KanbanSquare, List, Mail, Phone, Search, Trash2 } from "lucide-react";
 import { STATUSES, useLeads, type Status } from "@/lib/leads";
 import PageHeader from "@/components/app/PageHeader";
 import LeadForm from "@/components/app/LeadForm";
 import { Aura, Glass, Micro, Pill, WireArt } from "@/components/app/ui";
 import { LeadsConstellation } from "@/components/three/lazy";
 import CountUp from "@/components/motion/CountUp";
+import { useReunioes } from "@/lib/meetings";
+import Pipeline from "@/components/crm/Pipeline";
+import Calendario from "@/components/crm/Calendario";
+import ReuniaoModal, { type AberturaReuniao } from "@/components/crm/ReuniaoModal";
+
+type Aba = "pipeline" | "calendario" | "lista";
+const ABAS: { v: Aba; t: string; icon: typeof List }[] = [
+  { v: "pipeline", t: "Pipeline", icon: KanbanSquare },
+  { v: "calendario", t: "Calendário", icon: CalendarDays },
+  { v: "lista", t: "Lista", icon: List },
+];
 
 const statusDot: Record<string, string> = {
   Novo: "bg-night/30",
@@ -31,6 +42,10 @@ export default function LeadsView() {
   const [query, setQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
+  const [aba, setAba] = useState<Aba>("pipeline");
+  const { reunioes, erro: erroReunioes, agendar, alterar, cancelar } = useReunioes();
+  const [abertura, setAbertura] = useState<AberturaReuniao | null>(null);
+  const proximasReunioes = reunioes.filter((r) => new Date(r.end) >= new Date()).length;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -48,7 +63,7 @@ export default function LeadsView() {
       value: leads.filter((l) => l.status === "Respondeu" || l.status === "Reunião marcada").length,
       tone: "sun" as const,
     },
-    { label: "Reuniões", value: leads.filter((l) => l.status === "Reunião marcada").length, tone: "mint" as const },
+    { label: "Reuniões agendadas", value: proximasReunioes, tone: "mint" as const },
   ];
 
   // Vindo da constelação 3D: limpa a busca, rola até o lead e destaca a linha.
@@ -70,14 +85,14 @@ export default function LeadsView() {
       <PageHeader
         index="02"
         title="Leads"
-        description="Cadastre e acompanhe seus contatos. Os leads ficam salvos no workspace da sua equipe."
+        description="Seu CRM: leads no pipeline, reuniões no calendário e tudo salvo no workspace da equipe — sem planilha."
         action={<Pill onClick={() => setFormOpen(true)}>Novo lead</Pill>}
       />
 
       <div className="space-y-4">
-        {error && (
+        {(error || erroReunioes) && (
           <p role="alert" className="rounded-2xl bg-rose-100 px-5 py-3 text-sm text-rose-900">
-            {error}
+            {error ?? erroReunioes}
           </p>
         )}
         <section aria-label="Resumo" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -95,6 +110,42 @@ export default function LeadsView() {
           ))}
         </section>
 
+        {/* abas do CRM */}
+        <div role="tablist" aria-label="Visões do CRM" className="flex w-fit gap-1 rounded-full bg-white/60 p-1 backdrop-blur">
+          {ABAS.map(({ v, t, icon: Icon }) => (
+            <button
+              key={v}
+              type="button"
+              role="tab"
+              aria-selected={aba === v}
+              onClick={() => setAba(v)}
+              className={`flex min-h-10 cursor-pointer items-center gap-2 rounded-full px-5 text-sm transition-colors ${
+                aba === v ? "bg-night font-medium text-white" : "hover:bg-white"
+              }`}
+            >
+              <Icon size={15} aria-hidden /> {t}
+            </button>
+          ))}
+        </div>
+
+        {aba === "pipeline" && (
+          <Pipeline leads={leads} reunioes={reunioes} onMover={updateStatus} onAgendar={(l) => setAbertura({ leadId: l.id })} />
+        )}
+
+        {aba === "calendario" && (
+          <Calendario
+            leads={leads}
+            reunioes={reunioes}
+            onNova={(inicio) => setAbertura({ inicio })}
+            onEditar={(r) => setAbertura({ reuniao: r })}
+            onCancelar={(r) => {
+              if (window.confirm(`Cancelar a reunião "${r.title}"?`)) void cancelar(r);
+            }}
+          />
+        )}
+
+        {aba === "lista" && (
+          <>
         {/* constelação 3D dos leads: clicar num ponto leva até a linha da tabela */}
         <LeadsConstellation leads={leads} onPick={pick} />
 
@@ -215,9 +266,25 @@ export default function LeadsView() {
             </p>
           )}
         </Glass>
+          </>
+        )}
       </div>
 
       <LeadForm open={formOpen} onClose={() => setFormOpen(false)} onSave={addLead} />
+      {abertura && (
+        <ReuniaoModal
+          abertura={abertura}
+          leads={leads}
+          onFechar={() => setAbertura(null)}
+          onSalvar={async (input) => {
+            const r = await agendar(input);
+            // agendou → o lead vai para "Reunião marcada" no pipeline (se a opção estiver marcada)
+            const lead = leads.find((l) => l.id === input.leadId);
+            if (r && input.marcarLead !== false && lead && lead.status !== "Reunião marcada") void updateStatus(input.leadId, "Reunião marcada");
+          }}
+          onAlterar={alterar}
+        />
+      )}
     </>
   );
 }
