@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import SideNav from "@/components/app/SideNav";
 import TopPanel from "@/components/app/TopPanel";
 import CardFX from "@/components/motion/CardFX";
 import AmbientDots from "@/components/motion/AmbientDots";
@@ -9,11 +11,17 @@ import { getUser } from "@/lib/auth";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser();
+  // teste do menu lateral: escolha guardada num cookie (MenuToggle)
+  const lateral = (await cookies()).get("oraklo-menu")?.value === "lateral";
+  const u = user && { name: user.name, workspaceName: user.workspaceName };
   return (
     <div className="app-canvas min-h-screen font-display text-night">
       <AmbientDots />
-      <div className="relative z-10 mx-auto max-w-[1440px] p-3 md:p-4">
-        <TopPanel user={user && { name: user.name, workspaceName: user.workspaceName }} />
+      {lateral && <SideNav user={u} />}
+      <div className={`relative z-10 mx-auto max-w-[1440px] p-3 md:p-4 ${lateral ? "lg:ml-[272px] lg:mr-0 lg:max-w-[1360px]" : ""}`}>
+        <div className={lateral ? "lg:hidden" : ""}>
+          <TopPanel user={u} />
+        </div>
         <main className="app-main pt-6 md:pt-8">{children}</main>
         <CardFX />
         <footer className="flex flex-wrap items-center justify-between gap-4 px-2 pb-4 pt-12">

@@ -235,24 +235,19 @@ export default function RelatorioView({ r, completo = true }: { r: Relatorio; co
   );
 }
 
-/** Seção do Premium: aparece desfocada, com o convite para liberar. */
+/** Seção do Premium: fica visível, com um selo pequeno no canto para liberar. */
 function Bloqueado({ ativo, className = "", children }: { ativo: boolean; className?: string; children: React.ReactNode }) {
   if (!ativo) return <div className={className}>{children}</div>;
   return (
     <div className={`relative ${className}`}>
-      <div aria-hidden className="pointer-events-none select-none blur-[6px] print:hidden">
-        {children}
-      </div>
-      <div className="absolute inset-0 flex items-center justify-center p-6">
-        <div className="max-w-sm rounded-[24px] bg-night p-6 text-center text-white shadow-[0_30px_60px_-30px_rgba(0,0,0,0.8)]">
-          <Lock size={18} aria-hidden className="mx-auto text-neon" />
-          <p className="mt-3 text-lg font-medium tracking-[-0.02em]">Disponível no Premium</p>
-          <p className="mt-1 text-xs text-white/60">Desempenho dos e-mails, melhores segmentos e score × resultado, com exportação em CSV e PDF.</p>
-          <a href="/pacotes" className="mt-4 inline-flex min-h-10 items-center rounded-full bg-neon px-5 text-xs font-medium text-night">
-            Ver pacotes
-          </a>
-        </div>
-      </div>
+      {children}
+      <a
+        href="/pacotes"
+        title="Exportação e dados completos no Premium"
+        className="absolute right-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-night py-1.5 pl-2.5 pr-3 text-[11px] font-medium text-white shadow-[0_10px_24px_-12px_rgba(0,0,0,0.7)] transition-transform hover:-translate-y-0.5 print:hidden"
+      >
+        <Lock size={11} aria-hidden className="text-neon" /> Premium
+      </a>
     </div>
   );
 }
