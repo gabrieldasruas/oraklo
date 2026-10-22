@@ -7,6 +7,7 @@ import { ChevronUp, ChevronDown, LogOut } from "lucide-react";
 import { signOut } from "@/app/entrar/actions";
 import { appNav } from "@/components/app/nav";
 import { Micro } from "@/components/app/ui";
+import MenuToggle from "./MenuToggle";
 import { site } from "@/content/site";
 
 // Painel enxuto no topo: serve para o usuário se localizar entre as seções principais.
@@ -50,10 +51,17 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
                   key={item.href}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-10 shrink-0 items-center rounded-full px-4 text-sm transition-colors ${
-                    active ? "bg-night font-medium text-white" : "hover:bg-white/80"
+                  className={`flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm transition-colors ${
+                    active
+                      ? item.destaque
+                        ? "bg-night font-medium text-neon"
+                        : "bg-night font-medium text-white"
+                      : item.destaque
+                        ? "bg-neon font-medium text-night shadow-[0_8px_20px_-10px_rgba(132,204,22,0.9)] hover:bg-[#c8ff63]"
+                        : "hover:bg-white/80"
                   }`}
                 >
+                  {item.destaque && <item.icon size={14} aria-hidden />}
                   {item.label}
                 </Link>
               );
@@ -67,6 +75,7 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
               <span className="size-1.5 rounded-full bg-neon ring-1 ring-night/40" /> Sistema online · BRT
             </Micro>
           )}
+          <MenuToggle para="lateral" className="hidden lg:flex" />
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
@@ -111,7 +120,7 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
 
       <div id="top-panel-body" hidden={open ? undefined : true}>
         {open && (
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
             {appNav.map((item, i) => {
               const active = pathname === item.href;
               const Icon = item.icon;
@@ -121,7 +130,7 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={`flex min-h-[104px] flex-col justify-between rounded-2xl border p-4 transition-all hover:-translate-y-0.5 ${
-                    active ? "border-night bg-night text-white" : "border-white/70 bg-white/55 hover:bg-white/90"
+                    active ? "border-night bg-night text-white" : item.destaque ? "border-night/10 bg-neon hover:bg-[#c8ff63]" : "border-white/70 bg-white/55 hover:bg-white/90"
                   }`}
                 >
                   <div className="flex items-center justify-between">

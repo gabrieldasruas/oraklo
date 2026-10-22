@@ -60,7 +60,7 @@ export default function PacotesView({ planoAtual = null, uso = null, emailContat
       )}
 
       {/* colunas */}
-      <section aria-label="Pacotes" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Pacotes" className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-4">
         {PACOTES.map((p) => {
           const escuro = p.tom === "night";
           const atual = planoAtual === p.plano && (p.id !== "premium3" || false);
@@ -75,10 +75,8 @@ export default function PacotesView({ planoAtual = null, uso = null, emailContat
                   p.destaque && <span className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest ${escuro ? "bg-neon text-night" : "bg-night text-neon"}`}>{p.destaque}</span>
                 )}
               </div>
-              <p className="relative mt-6 text-5xl font-semibold leading-none tracking-[-0.05em]">
-                {p.preco}
-                <span className={`ml-1.5 text-sm font-normal tracking-normal ${escuro ? "text-white/60" : "opacity-60"}`}>{p.periodo}</span>
-              </p>
+              <p className="relative mt-6 whitespace-nowrap text-[2.6rem] font-semibold leading-none tracking-[-0.05em]">{p.preco}</p>
+              <p className={`relative mt-1.5 text-sm ${escuro ? "text-white/60" : "opacity-60"}`}>{p.periodo}</p>
               {p.nota && <p className={`relative mt-2 font-mono text-[11px] ${escuro ? "text-neon" : ""}`}>{p.nota}</p>}
               <p className={`relative mt-3 text-sm ${escuro ? "text-white/65" : "opacity-70"}`}>{p.descricao}</p>
               <ul className="relative mt-6 flex-1 space-y-2.5 text-sm">

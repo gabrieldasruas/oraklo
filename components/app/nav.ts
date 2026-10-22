@@ -15,6 +15,8 @@ export type NavItem = {
   href: string;
   icon: LucideIcon;
   desc: string;
+  /** item em destaque (verde) no menu */
+  destaque?: boolean;
 };
 
 // Seções principais, exibidas no painel do topo.
@@ -26,7 +28,7 @@ export const appNav: NavItem[] = [
   { label: "Busca avançada", href: "/busca-avancada", icon: MapPinned, desc: "Raio no mapa" },
   { label: "Portfólio", href: "/portfolio", icon: Presentation, desc: "Suas soluções" },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3, desc: "Desempenho" },
-  { label: "Pacotes", href: "/pacotes", icon: Gem, desc: "Free, Premium e Ultra" },
+  { label: "Pacotes", href: "/pacotes", icon: Gem, desc: "Free, Premium e Ultra", destaque: true },
 ];
 
 // Páginas de apoio: continuam existindo, mas ficam fora do painel para não poluir.
