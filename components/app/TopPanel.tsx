@@ -120,7 +120,7 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
 
       <div id="top-panel-body" hidden={open ? undefined : true}>
         {open && (
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 2xl:grid-cols-9">
             {appNav.map((item, i) => {
               const active = pathname === item.href;
               const Icon = item.icon;

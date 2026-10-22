@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Check, Download, Loader2, Plug, Plus, Send, Trash2, UserPlus, X } from "lucide-react";
+import { useState } from "react";
+import { Check, Loader2, Plug, UserPlus, X } from "lucide-react";
 import { Glass, Micro } from "@/components/app/ui";
-import { WhatsappIcon } from "@/components/brand/Icons";
-import { EVENTOS_CRM, type ConfigWorkspace, type EventoCrm } from "@/lib/config-workspace";
-import { renomearWorkspace, salvarConfig, salvarNome, testarWebhook } from "@/app/(app)/configuracoes/actions";
-import RdStationCard from "./RdStationCard";
+import type { ConfigWorkspace } from "@/lib/config-workspace";
+import { useConfigAutosave } from "@/lib/useConfigAutosave";
+import { renomearWorkspace, salvarNome } from "@/app/(app)/configuracoes/actions";
 import type { Limites } from "@/lib/pacotes";
 
 type Props = {
@@ -48,35 +47,11 @@ function BarraUso({ rotulo, usado, limite }: { rotulo: string; usado: number; li
 }
 
 export default function ConfiguracoesView({ inicial, usuario, plano, membros, emailContato }: Props) {
-  const [c, setC] = useState(inicial);
-  const [estado, setEstado] = useState<"ok" | "salvando" | "erro">("ok");
-  const [erro, setErro] = useState<string | null>(null);
-  const ultimo = useRef(JSON.stringify(inicial));
+  const { c, setC, estado, erro } = useConfigAutosave(inicial);
   // campos começam em branco: só o que a pessoa digitar é salvo
   const [nome, setNome] = useState("");
   const [empresa, setEmpresa] = useState("");
   const [perfilMsg, setPerfilMsg] = useState<string | null>(null);
-  const [teste, setTeste] = useState<null | "testando" | { ok: boolean; status: number | null }>(null);
-
-  // salva sozinho
-  useEffect(() => {
-    const atual = JSON.stringify(c);
-    if (atual === ultimo.current) return;
-    setEstado("salvando");
-    setErro(null);
-    const t = setTimeout(() => {
-      salvarConfig(c)
-        .then((salvo) => {
-          ultimo.current = JSON.stringify(salvo);
-          setEstado("ok");
-        })
-        .catch((e) => {
-          setEstado("erro");
-          setErro(e instanceof Error ? e.message : "Não foi possível salvar");
-        });
-    }, 900);
-    return () => clearTimeout(t);
-  }, [c]);
 
   async function salvarPerfil(e: React.FormEvent) {
     e.preventDefault();
@@ -92,10 +67,6 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
     }
   }
 
-  const alternarEvento = (ev: EventoCrm) =>
-    setC((s) => ({ ...s, crm: { ...s.crm, eventos: s.crm.eventos.includes(ev) ? s.crm.eventos.filter((x) => x !== ev) : [...s.crm.eventos, ev] } }));
-  const modelo = (i: number, campo: "nome" | "texto", v: string) =>
-    setC((s) => ({ ...s, whatsapp: { modelos: s.whatsapp.modelos.map((m, j) => (j === i ? { ...m, [campo]: v } : m)) } }));
 
   return (
     <div className="space-y-4">
@@ -176,142 +147,19 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
           </div>
         </Glass>
 
-        {/* CRM */}
-        <Glass className="p-7">
-          <div className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-2xl bg-night text-neon">
-              <Plug size={18} aria-hidden />
-            </span>
-            <div>
-              <Micro>04 · Integração com CRM</Micro>
-              <p className="text-sm opacity-60">Manda cada lead para o seu CRM automaticamente.</p>
-            </div>
+        {/* atalho para integrações */}
+        <a href="/integracoes" className="group relative flex flex-col justify-between overflow-hidden rounded-[28px] bg-night p-7 text-white transition-transform hover:-translate-y-0.5">
+          <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full opacity-40 blur-3xl" style={{ background: "radial-gradient(circle, rgba(184,255,60,0.6), transparent 70%)" }} />
+          <div className="relative">
+            <Micro className="!text-neon !opacity-90">04 · Integrações</Micro>
+            <p className="mt-3 text-3xl font-light tracking-[-0.04em]">Integrar CRM e WhatsApp</p>
+            <p className="mt-2 max-w-sm text-sm text-white/60">RD Station, Zapier, Make, n8n, planilhas por CRM e modelos de WhatsApp agora ficam numa aba própria.</p>
           </div>
-          {!plano.limites.integracoes && (
-            <p className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl bg-night px-4 py-3 text-xs text-white">
-              Integração com CRM (webhook, RD Station e planilhas por CRM) faz parte do Premium.
-              <a href="/pacotes" className="ml-auto rounded-full bg-neon px-3 py-1 font-medium text-night">
-                Ver pacotes
-              </a>
-            </p>
-          )}
-          <Interruptor rotulo="Enviar eventos para o meu CRM (webhook)" on={c.crm.ativo} onChange={(v) => setC((s) => ({ ...s, crm: { ...s.crm, ativo: v } }))} />
-          <label className="block text-sm font-medium">
-            Endereço do webhook
-            <input
-              className={campo}
-              value={c.crm.webhookUrl}
-              onChange={(e) => setC((s) => ({ ...s, crm: { ...s.crm, webhookUrl: e.target.value } }))}
-              placeholder="https://hooks.zapier.com/hooks/catch/…"
-            />
-          </label>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {EVENTOS_CRM.map((ev) => {
-              const on = c.crm.eventos.includes(ev.id);
-              return (
-                <button key={ev.id} type="button" onClick={() => alternarEvento(ev.id)} aria-pressed={on} className={`flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-xs ${on ? "border-night bg-night text-white" : "border-night/10 bg-white/70"}`}>
-                  {on && <Check size={11} className="text-neon" aria-hidden />} {ev.t}
-                </button>
-              );
-            })}
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              disabled={!c.crm.webhookUrl || teste === "testando"}
-              onClick={async () => {
-                setTeste("testando");
-                try {
-                  setTeste(await testarWebhook(c.crm.webhookUrl));
-                } catch {
-                  setTeste({ ok: false, status: null });
-                }
-              }}
-              className="flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-night/15 px-4 text-xs font-medium hover:bg-white disabled:opacity-40"
-            >
-              {teste === "testando" ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} aria-hidden />} Enviar teste
-            </button>
-            {teste && teste !== "testando" && (
-              <span className={`text-xs ${teste.ok ? "text-emerald-700" : "text-rose-700"}`}>{teste.ok ? `Recebido (HTTP ${teste.status})` : `Falhou${teste.status ? ` (HTTP ${teste.status})` : ""}`}</span>
-            )}
-          </div>
-          <details className="mt-4 rounded-2xl bg-night/5 p-4 text-xs leading-relaxed">
-            <summary className="cursor-pointer font-medium">Como ligar no RD Station, Pipedrive ou HubSpot</summary>
-            <ol className="mt-3 list-decimal space-y-1.5 pl-4 opacity-75">
-              <li>Crie uma automação no Zapier, Make ou n8n com o gatilho “Webhook” e copie o endereço.</li>
-              <li>Cole o endereço aqui, escolha os eventos e clique em “Enviar teste”.</li>
-              <li>Na automação, adicione a ação “Criar contato/negócio” do seu CRM e ligue os campos (nome, e-mail, telefone, empresa, etapa).</li>
-            </ol>
-          </details>
-          <div className="mt-5 border-t border-night/10 pt-4">
-            <Micro>Ou exporte uma planilha no formato do CRM</Micro>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {[
-                { f: "rd", t: "RD Station" },
-                { f: "pipedrive", t: "Pipedrive" },
-                { f: "hubspot", t: "HubSpot" },
-                { f: "completo", t: "Planilha completa" },
-              ].map((x) => (
-                <a key={x.f} href={`/api/leads/exportar?formato=${x.f}`} className="flex min-h-9 items-center gap-1.5 rounded-full bg-night px-3.5 text-xs font-medium text-white hover:bg-neon hover:text-night">
-                  <Download size={12} aria-hidden /> {x.t}
-                </a>
-              ))}
-            </div>
-          </div>
-        </Glass>
+          <span className="relative mt-6 flex w-fit items-center gap-2 rounded-full bg-neon px-5 py-2.5 text-sm font-medium text-night">
+            <Plug size={15} aria-hidden /> Abrir Integrar CRM
+          </span>
+        </a>
       </div>
-
-      {/* RD Station CRM (integração direta) */}
-      <RdStationCard
-        c={c}
-        setC={setC}
-        onServidor={(cfg) => {
-          ultimo.current = JSON.stringify(cfg);
-          setC(cfg);
-        }}
-      />
-
-      {/* WhatsApp */}
-      <Glass className="p-7">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-2xl bg-[#25d366] text-white">
-              <WhatsappIcon size={18} />
-            </span>
-            <div>
-              <Micro>05 · Modelos de WhatsApp</Micro>
-              <p className="text-sm opacity-60">Use {"{nome}"}, {"{empresa}"}, {"{meu_nome}"}, {"{minha_empresa}"} e {"{link_portfolio}"}.</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            disabled={c.whatsapp.modelos.length >= 12}
-            onClick={() => setC((s) => ({ ...s, whatsapp: { modelos: [...s.whatsapp.modelos, { id: Math.random().toString(36).slice(2, 8), nome: "Novo modelo", texto: "Oi, {nome}! " }] } }))}
-            className="flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border border-night/15 px-4 text-xs font-medium hover:bg-white disabled:opacity-40"
-          >
-            <Plus size={13} aria-hidden /> Novo modelo
-          </button>
-        </div>
-        <ul className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {c.whatsapp.modelos.map((m, i) => (
-            <li key={m.id} className="rounded-[20px] border border-white/80 bg-white/60 p-4">
-              <div className="flex items-center gap-2">
-                <input value={m.nome} onChange={(e) => modelo(i, "nome", e.target.value)} maxLength={40} className="min-w-0 flex-1 bg-transparent text-sm font-medium outline-none" aria-label="Nome do modelo" />
-                <button
-                  type="button"
-                  aria-label={`Remover ${m.nome}`}
-                  disabled={c.whatsapp.modelos.length <= 1}
-                  onClick={() => setC((s) => ({ ...s, whatsapp: { modelos: s.whatsapp.modelos.filter((_, j) => j !== i) } }))}
-                  className="flex size-8 cursor-pointer items-center justify-center rounded-full opacity-50 hover:bg-rose-500 hover:text-white hover:opacity-100 disabled:opacity-20"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-              <textarea value={m.texto} onChange={(e) => modelo(i, "texto", e.target.value)} rows={4} maxLength={1000} className="mt-2 w-full resize-y rounded-xl bg-night/5 p-3 text-xs leading-relaxed outline-none" aria-label="Texto do modelo" />
-            </li>
-          ))}
-        </ul>
-      </Glass>
     </div>
   );
 }

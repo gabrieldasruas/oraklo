@@ -7,6 +7,7 @@ import {
   BarChart3,
   MapPinned,
   Gem,
+  Plug,
   type LucideIcon,
 } from "lucide-react";
 
@@ -28,6 +29,7 @@ export const appNav: NavItem[] = [
   { label: "Busca avançada", href: "/busca-avancada", icon: MapPinned, desc: "Raio no mapa" },
   { label: "Portfólio", href: "/portfolio", icon: Presentation, desc: "Suas soluções" },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3, desc: "Desempenho" },
+  { label: "Integrar CRM", href: "/integracoes", icon: Plug, desc: "RD Station e WhatsApp" },
   { label: "Pacotes", href: "/pacotes", icon: Gem, desc: "Free, Premium e Ultra", destaque: true },
 ];
 
