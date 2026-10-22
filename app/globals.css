@@ -533,7 +533,7 @@ body {
     size: A4 landscape;
     margin: 0;
   }
-  body * {
+  body:has(#portfolio-slides) * {
     visibility: hidden;
   }
   #portfolio-slides,
@@ -587,5 +587,51 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .barra-sobe {
     animation: none;
+  }
+}
+
+/* barras horizontais (funil, score) crescem da esquerda */
+@keyframes barra-larga {
+  from {
+    transform: scaleX(0);
+  }
+}
+.barra-larga {
+  transform-origin: left;
+  animation: barra-larga 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .barra-larga {
+    animation: none;
+  }
+}
+
+/* ====== Relatórios: "Baixar PDF" imprime só o relatório ====== */
+@media print {
+  body:has(#relatorio) * {
+    visibility: hidden;
+  }
+  body:has(#relatorio) #relatorio,
+  body:has(#relatorio) #relatorio * {
+    visibility: visible;
+  }
+  body:has(#relatorio) #relatorio {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    padding: 12mm;
+  }
+  body:has(#relatorio) #relatorio .glass,
+  body:has(#relatorio) #relatorio [class*="aura-"] {
+    break-inside: avoid;
+  }
+  body:has(#relatorio) .barra-larga,
+  body:has(#relatorio) .barra-sobe {
+    animation: none;
+  }
+  body:has(#relatorio) {
+    background: #fff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
