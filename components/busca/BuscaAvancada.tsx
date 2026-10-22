@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
-import { Building2, Check, ChevronDown, Crosshair, Loader2, Locate, MapPin, Radio, Search, X } from "lucide-react";
+import { Building2, Check, ChevronDown, Crosshair, ListPlus, Loader2, Locate, MapPin, Plus, Radio, Search, X } from "lucide-react";
 import { Glass, Micro } from "@/components/app/ui";
 import ContactCell from "@/components/app/ContactCell";
 import PreviaEmpresa from "./PreviaEmpresa";
+import { adicionarEmpresasAoPipeline, salvarEmpresasComoLista } from "@/app/(app)/leads/empresas";
+import { calcularScore, faixaScore } from "@/lib/score";
 import {
   cidadeMaisProxima,
   centroNoBrasil,
@@ -43,6 +45,7 @@ type Item = {
   zip: string | null;
   address: string | null;
   district: string | null;
+  openedAt: string | null;
 };
 type Resultado = {
   items: Item[];
@@ -109,6 +112,10 @@ export default function BuscaAvancada({
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const pedidoAtual = useRef(0);
+  // seleção para mandar ao pipeline / salvar como lista
+  const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
+  const [acao, setAcao] = useState<null | "pipeline" | "lista">(null);
+  const [retorno, setRetorno] = useState<{ tipo: "ok" | "erro"; texto: string; link?: { href: string; t: string } } | null>(null);
   // a busca só roda no botão; guardamos o que foi buscado para avisar quando os filtros mudarem
   const assinaturaAtual = JSON.stringify([centro, raioKm, escopo, ufsFiltro, cnaesSel, portes, temEmail, matriz, principal]);
   const [assinaturaBuscada, setAssinaturaBuscada] = useState<string | null>(null);
@@ -229,7 +236,10 @@ export default function BuscaAvancada({
       if (id !== pedidoAtual.current) return; // chegou uma busca mais nova
       if (!r.ok) throw new Error(j.error ?? "Falha na busca");
       setRes((prev) => (cursor && prev ? { ...j, total: prev.total, items: [...prev.items, ...j.items] } : j));
-      if (!cursor) setAssinaturaBuscada(assinaturaAtual);
+      if (!cursor) {
+        setAssinaturaBuscada(assinaturaAtual);
+        setSelecionadas(new Set());
+      }
     } catch (e) {
       if (id === pedidoAtual.current) setErro(e instanceof Error ? e.message : "Falha na busca");
     } finally {
@@ -237,6 +247,48 @@ export default function BuscaAvancada({
     }
   }
 
+
+  // ---------- seleção ----------
+  const alternar = (cnpj: string) =>
+    setSelecionadas((s) => {
+      const n = new Set(s);
+      if (n.has(cnpj)) n.delete(cnpj);
+      else n.add(cnpj);
+      return n;
+    });
+  const todasMarcadas = !!res?.items.length && res.items.every((i) => selecionadas.has(i.cnpj));
+
+  async function mandarAoPipeline() {
+    setAcao("pipeline");
+    setRetorno(null);
+    try {
+      const r = await adicionarEmpresasAoPipeline([...selecionadas]);
+      const partes = [`${r.criados} adicionada${r.criados === 1 ? "" : "s"} ao pipeline`];
+      if (r.jaExistiam) partes.push(`${r.jaExistiam} já estava${r.jaExistiam === 1 ? "" : "m"} lá`);
+      if (r.falharam) partes.push(`${r.falharam} com erro`);
+      setRetorno({ tipo: r.criados || r.jaExistiam ? "ok" : "erro", texto: partes.join(" · "), link: { href: "/leads", t: "Abrir pipeline" } });
+      setSelecionadas(new Set());
+    } catch {
+      setRetorno({ tipo: "erro", texto: "Não foi possível adicionar ao pipeline." });
+    } finally {
+      setAcao(null);
+    }
+  }
+  async function salvarLista() {
+    const nome = window.prompt("Nome da lista", `${cnaesSel.length ? nomeCnae(cnaesSel[0]) : "Empresas"} · ${alcanceTexto}`);
+    if (nome === null) return;
+    setAcao("lista");
+    setRetorno(null);
+    try {
+      const r = await salvarEmpresasComoLista(nome, [...selecionadas]);
+      setRetorno({ tipo: "ok", texto: `Lista criada com ${r.total} empresas`, link: { href: `/listas/${r.id}`, t: "Ver lista" } });
+      setSelecionadas(new Set());
+    } catch (e) {
+      setRetorno({ tipo: "erro", texto: e instanceof Error ? e.message : "Não foi possível salvar a lista." });
+    } finally {
+      setAcao(null);
+    }
+  }
 
   // Sugestões de alcance.
   function ampliarRaio(km: number) {
@@ -750,6 +802,57 @@ export default function BuscaAvancada({
             </p>
           )}
 
+          {/* seleção: mandar ao pipeline / salvar como lista */}
+          {res && res.items.length > 0 && (
+            <div className={`flex flex-wrap items-center gap-2 border-b border-night/10 px-5 py-3 ${selecionadas.size ? "bg-night text-white" : "bg-white/40"}`}>
+              <label className="flex cursor-pointer items-center gap-2.5 text-sm">
+                <input
+                  type="checkbox"
+                  checked={todasMarcadas}
+                  onChange={() => setSelecionadas(todasMarcadas ? new Set() : new Set(res.items.map((i) => i.cnpj)))}
+                  className="size-4 accent-[#b8ff3c]"
+                />
+                {selecionadas.size ? `${selecionadas.size} selecionada${selecionadas.size > 1 ? "s" : ""}` : `Selecionar todas (${res.items.length})`}
+              </label>
+              {selecionadas.size > 0 && (
+                <div className="ml-auto flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void mandarAoPipeline()}
+                    disabled={!!acao}
+                    className="flex min-h-9 cursor-pointer items-center gap-2 rounded-full bg-neon px-4 text-xs font-medium text-night disabled:opacity-60"
+                  >
+                    {acao === "pipeline" ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} aria-hidden />} Adicionar ao pipeline
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void salvarLista()}
+                    disabled={!!acao}
+                    className="flex min-h-9 cursor-pointer items-center gap-2 rounded-full border border-white/25 px-4 text-xs font-medium hover:bg-white/10 disabled:opacity-60"
+                  >
+                    {acao === "lista" ? <Loader2 size={13} className="animate-spin" /> : <ListPlus size={13} aria-hidden />} Salvar como lista
+                  </button>
+                  <button type="button" onClick={() => setSelecionadas(new Set())} className="min-h-9 cursor-pointer rounded-full px-3 text-xs text-white/60 hover:text-white">
+                    Limpar
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {retorno && (
+            <p role="status" className={`flex flex-wrap items-center gap-3 px-5 py-2.5 text-sm ${retorno.tipo === "ok" ? "bg-neon/40" : "bg-rose-100 text-rose-900"}`}>
+              {retorno.texto}
+              {retorno.link && (
+                <a href={retorno.link.href} className="font-medium underline underline-offset-4">
+                  {retorno.link.t} →
+                </a>
+              )}
+              <button type="button" aria-label="Fechar" onClick={() => setRetorno(null)} className="ml-auto cursor-pointer opacity-60 hover:opacity-100">
+                <X size={14} />
+              </button>
+            </p>
+          )}
+
           <ul className={`max-h-[640px] divide-y divide-night/10 overflow-y-auto [scrollbar-width:thin] ${carregando && !res ? "opacity-60" : ""}`}>
             {!res && carregando &&
               Array.from({ length: 6 }, (_, i) => (
@@ -763,13 +866,23 @@ export default function BuscaAvancada({
               ))}
             {res?.items.map((c, idx) => {
               const pin = noMapa.get(c.cnpj);
+              const marcada = selecionadas.has(c.cnpj);
+              const sc = calcularScore(c);
+              const faixa = faixaScore(sc.score);
               return (
                 <li
                   key={c.cnpj}
                   onMouseEnter={() => setFoco(c.cnpj)}
                   onMouseLeave={() => setFoco(null)}
-                  className={`group flex gap-3 p-4 transition-colors ${foco === c.cnpj ? "bg-neon/25" : "hover:bg-white/60"}`}
+                  className={`group flex gap-3 p-4 transition-colors ${marcada ? "bg-neon/15" : foco === c.cnpj ? "bg-neon/25" : "hover:bg-white/60"}`}
                 >
+                  <input
+                    type="checkbox"
+                    checked={marcada}
+                    onChange={() => alternar(c.cnpj)}
+                    aria-label={`Selecionar ${c.name}`}
+                    className="mt-3 size-4 shrink-0 cursor-pointer accent-[#0b0b0c]"
+                  />
                   {/* posição + estado no mapa */}
                   <button
                     type="button"
@@ -785,7 +898,16 @@ export default function BuscaAvancada({
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                       <PreviaEmpresa empresa={c} />
-                      <span className="font-mono text-xs tabular-nums">{formatMoney(c.shareCapital)}</span>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="rounded-full px-2 py-0.5 font-mono text-[10px] font-medium text-night"
+                          style={{ background: faixa.cor }}
+                          title={`Score ${sc.score} (${faixa.rotulo}): ${sc.motivos.join(", ") || "poucos dados"}`}
+                        >
+                          {sc.score} · {faixa.rotulo}
+                        </span>
+                        <span className="font-mono text-xs tabular-nums">{formatMoney(c.shareCapital)}</span>
+                      </span>
                     </div>
                     <p className="mt-0.5 text-xs opacity-60">
                       {[c.address, c.district].filter(Boolean).join(" · ")}

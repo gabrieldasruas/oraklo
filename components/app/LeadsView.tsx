@@ -12,6 +12,8 @@ import { useReunioes } from "@/lib/meetings";
 import Pipeline from "@/components/crm/Pipeline";
 import Calendario from "@/components/crm/Calendario";
 import ReuniaoModal, { type AberturaReuniao } from "@/components/crm/ReuniaoModal";
+import LeadDrawer from "@/components/crm/LeadDrawer";
+import CampanhaModal from "@/components/crm/CampanhaModal";
 
 type Aba = "pipeline" | "calendario" | "lista";
 const ABAS: { v: Aba; t: string; d: string; icon: typeof List }[] = [
@@ -38,7 +40,10 @@ const initials = (name: string) =>
     .toUpperCase();
 
 export default function LeadsView() {
-  const { leads, loaded, error, addLead, removeLead, updateStatus } = useLeads();
+  const { leads, loaded, error, addLead, removeLead, updateStatus, substituir, marcarEmSequencia } = useLeads();
+  const [abertoId, setAbertoId] = useState<string | null>(null);
+  const [campanha, setCampanha] = useState<string[] | null>(null);
+  const aberto = leads.find((l) => l.id === abertoId) ?? null;
   const [query, setQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
@@ -86,7 +91,14 @@ export default function LeadsView() {
         index="02"
         title="Leads"
         description="Seu CRM: leads no pipeline, reuniões no calendário e tudo salvo no workspace da equipe — sem planilha."
-        action={<Pill onClick={() => setFormOpen(true)}>Novo lead</Pill>}
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Pill tone="ghost" onClick={() => setCampanha([])}>
+              Disparar e-mails
+            </Pill>
+            <Pill onClick={() => setFormOpen(true)}>Novo lead</Pill>
+          </div>
+        }
       />
 
       <div className="space-y-4">
@@ -160,7 +172,14 @@ export default function LeadsView() {
         </div>
 
         {aba === "pipeline" && (
-          <Pipeline leads={leads} reunioes={reunioes} onMover={updateStatus} onAgendar={(l) => setAbertura({ leadId: l.id })} />
+          <Pipeline
+            leads={leads}
+            reunioes={reunioes}
+            onMover={updateStatus}
+            onAgendar={(l) => setAbertura({ leadId: l.id })}
+            onAbrir={(l) => setAbertoId(l.id)}
+            onEmail={setCampanha}
+          />
         )}
 
         {aba === "calendario" && (
@@ -223,7 +242,9 @@ export default function LeadsView() {
                           {initials(l.name)}
                         </span>
                         <span className="min-w-0">
-                          <span className="block font-medium tracking-[-0.01em]">{l.name}</span>
+                          <button type="button" onClick={() => setAbertoId(l.id)} className="block cursor-pointer text-left font-medium tracking-[-0.01em] underline-offset-4 hover:underline">
+                            {l.name}
+                          </button>
                           <span className="block text-xs opacity-55">{l.role || "—"}</span>
                           {(l.email || l.phone) && (
                             <span className="mt-0.5 flex flex-wrap gap-x-3 text-xs opacity-55">
@@ -301,6 +322,17 @@ export default function LeadsView() {
         )}
       </div>
 
+      {aberto && (
+        <LeadDrawer
+          lead={aberto}
+          onFechar={() => setAbertoId(null)}
+          onAtualizado={substituir}
+          onStatus={updateStatus}
+          onAgendar={(l) => setAbertura({ leadId: l.id })}
+          onEmail={(l) => setCampanha([l.id])}
+        />
+      )}
+      {campanha && <CampanhaModal leads={leads} inicial={campanha} onFechar={() => setCampanha(null)} onEnviado={marcarEmSequencia} />}
       <LeadForm open={formOpen} onClose={() => setFormOpen(false)} onSave={addLead} />
       {abertura && (
         <ReuniaoModal

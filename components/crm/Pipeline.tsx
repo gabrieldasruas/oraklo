@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarPlus, GripVertical, Mail, Phone, UserRound } from "lucide-react";
+import { CalendarPlus, GripVertical, Mail, Phone, Send, UserRound } from "lucide-react";
 import { WhatsappIcon } from "@/components/brand/Icons";
 import { STATUSES, type Lead, type Status } from "@/lib/lead-types";
 import { categoria, type Reuniao } from "@/lib/meeting-types";
@@ -39,11 +39,15 @@ export default function Pipeline({
   reunioes,
   onMover,
   onAgendar,
+  onAbrir,
+  onEmail,
 }: {
   leads: Lead[];
   reunioes: Reuniao[];
   onMover: (id: string, status: Status) => void;
   onAgendar: (lead: Lead) => void;
+  onAbrir: (lead: Lead) => void;
+  onEmail: (ids: string[]) => void;
 }) {
   const [arrastando, setArrastando] = useState<string | null>(null);
   const [sobre, setSobre] = useState<Status | null>(null);
@@ -99,7 +103,19 @@ export default function Pipeline({
                 <h3 className="text-sm font-medium tracking-[-0.01em]">{etapa}</h3>
                 <span className="rounded-full bg-night/8 px-2 py-0.5 font-mono text-[10px] tabular-nums">{lista.length}</span>
               </div>
-              <span className="text-[10px] opacity-50">{DICA_ETAPA[etapa]}</span>
+              <span className="flex items-center gap-1.5">
+                <span className="text-[10px] opacity-50">{DICA_ETAPA[etapa]}</span>
+                {lista.some((l) => l.email) && (
+                  <button
+                    type="button"
+                    onClick={() => onEmail(lista.filter((l) => l.email).map((l) => l.id))}
+                    title={`Enviar e-mail para os leads de "${etapa}"`}
+                    className="flex size-6 cursor-pointer items-center justify-center rounded-full opacity-40 hover:bg-night hover:text-neon hover:opacity-100"
+                  >
+                    <Send size={11} aria-hidden />
+                  </button>
+                )}
+              </span>
             </header>
 
             <ul className="flex max-h-[620px] min-h-24 flex-col gap-2 overflow-y-auto pr-0.5 [scrollbar-width:thin]">
@@ -132,7 +148,9 @@ export default function Pipeline({
                         </span>
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium leading-tight">{l.name}</p>
+                        <button type="button" onClick={() => onAbrir(l)} className="block max-w-full cursor-pointer truncate text-left text-sm font-medium leading-tight underline-offset-4 hover:underline">
+                          {l.name}
+                        </button>
                         <p className="truncate text-[11px] opacity-60">
                           {l.role ? `${l.role} · ` : ""}
                           {l.company}
@@ -181,9 +199,9 @@ export default function Pipeline({
                         )
                       )}
                       {l.email && (
-                        <a href={`mailto:${l.email}`} title={l.email} className="flex size-8 items-center justify-center rounded-full border border-night/15 hover:bg-night hover:text-white">
+                        <button type="button" onClick={() => onEmail([l.id])} title={`E-mail para ${l.email}`} className="flex size-8 cursor-pointer items-center justify-center rounded-full border border-night/15 hover:bg-night hover:text-white">
                           <Mail size={13} aria-hidden />
-                        </a>
+                        </button>
                       )}
                       {/* mover sem arrastar (teclado / celular) */}
                       <label className="ml-auto">

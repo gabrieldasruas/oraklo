@@ -2,7 +2,7 @@
 
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
-import { ARQUIVO_TAG, PORTFOLIO_TAG, completar, type ArquivoResumo, type Portfolio } from "@/lib/portfolio-types";
+import { ARQUIVO_TAG, PORTFOLIO_TAG, VISITAS_TAG, completar, type ArquivoResumo, type Portfolio } from "@/lib/portfolio-types";
 
 // Portfólio e arquivos ficam em `lists` (tags especiais), que já tem RLS por workspace.
 // Server Actions são endpoints públicos: cada uma confere a sessão; o RLS isola o workspace.
@@ -84,4 +84,18 @@ export async function removerArquivo(id: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.from("lists").delete().eq("id", id).eq("tag", ARQUIVO_TAG);
   if (error) throw new Error("Não foi possível remover o arquivo");
+}
+
+/** Id do portfólio (para o link público) e visitas registradas. */
+export async function estatisticasPortfolio(): Promise<{ id: string | null; total: number; semana: number; ultima: string | null }> {
+  await requireUser();
+  const supabase = await createClient();
+  const [{ data: port }, { data: vis }] = await Promise.all([
+    supabase.from("lists").select("id").eq("tag", PORTFOLIO_TAG).order("created_at").limit(1).maybeSingle(),
+    supabase.from("lists").select("filter").eq("tag", VISITAS_TAG).limit(1).maybeSingle(),
+  ]);
+  const f = (vis?.filter ?? {}) as { total?: number; porDia?: Record<string, number>; ultima?: string };
+  const desde = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
+  const semana = Object.entries(f.porDia ?? {}).reduce((s, [d, n]) => (d >= desde ? s + n : s), 0);
+  return { id: (port?.id as string) ?? null, total: f.total ?? 0, semana, ultima: f.ultima ?? null };
 }
