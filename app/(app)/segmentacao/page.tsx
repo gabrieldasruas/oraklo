@@ -20,7 +20,7 @@ export default async function SegmentacaoPage() {
       />
       <SegmentExplorer
         niches={niches}
-        abaixoDoAnel={<VitrinePerfil perfil={perfil} nomesNichos={niches.filter((n) => perfil.nichos.includes(n.id)).map((n) => n.name)} />}
+        acimaDoAnel={<VitrinePerfil perfil={perfil} nomesNichos={niches.filter((n) => perfil.nichos.includes(n.id)).map((n) => n.name)} />}
       />
       <FocoNichos niches={niches} inicial={perfil} />
     </>

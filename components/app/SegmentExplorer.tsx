@@ -55,7 +55,7 @@ const fmt = (n: number) => n.toLocaleString("pt-BR");
 
 // Anel 3D de nichos: gira sozinho, pausa ao passar o mouse e pré-visualiza o nicho.
 // A lista vem do servidor e não muda durante a visita, por isso os efeitos leem N/STEP só na montagem.
-export default function SegmentExplorer({ niches, abaixoDoAnel }: { niches: Niche[]; abaixoDoAnel?: React.ReactNode }) {
+export default function SegmentExplorer({ niches, acimaDoAnel }: { niches: Niche[]; acimaDoAnel?: React.ReactNode }) {
   const N = niches.length;
   const STEP = 360 / N;
   const [group, setGroup] = useState("Todos");
@@ -224,6 +224,7 @@ export default function SegmentExplorer({ niches, abaixoDoAnel }: { niches: Nich
 
       <div className="grid gap-4 xl:grid-cols-[1fr_400px] xl:items-start">
         <div className="min-w-0 space-y-4">
+        {acimaDoAnel}
         {/* Palco do anel 3D */}
         <div className="glass no-fx relative overflow-hidden">
           {/* vórtice de partículas 3D que gira junto com o anel */}
@@ -343,7 +344,6 @@ export default function SegmentExplorer({ niches, abaixoDoAnel }: { niches: Nich
             </div>
           </div>
         </div>
-        {abaixoDoAnel}
         </div>
 
         {/* Pré-visualização do nicho */}
