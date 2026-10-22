@@ -6,11 +6,12 @@ import SegmentExplorer from "@/components/app/SegmentExplorer";
 import FocoNichos from "@/components/segmentacao/FocoNichos";
 import VitrinePerfil from "@/components/segmentacao/VitrinePerfil";
 import { carregarPerfil } from "./perfil";
+import { getFacets } from "@/lib/companies";
 
 export const metadata: Metadata = { title: `Segmentação — ${site.name}` };
 
 export default async function SegmentacaoPage() {
-  const [niches, perfil] = await Promise.all([getNiches(), carregarPerfil()]);
+  const [niches, perfil, facets] = await Promise.all([getNiches(), carregarPerfil(), getFacets().catch(() => null)]);
   return (
     <>
       <PageHeader
@@ -20,9 +21,9 @@ export default async function SegmentacaoPage() {
       />
       <SegmentExplorer
         niches={niches}
-        acimaDoAnel={<VitrinePerfil perfil={perfil} nomesNichos={niches.filter((n) => perfil.nichos.includes(n.id)).map((n) => n.name)} />}
+        acimaDoAnel={<VitrinePerfil perfil={perfil} nomesNichos={[...niches.filter((n) => perfil.nichos.includes(n.id)).map((n) => n.name), ...perfil.atividades.map((a) => a.descricao)]} />}
       />
-      <FocoNichos niches={niches} inicial={perfil} />
+      <FocoNichos niches={niches} inicial={perfil} atividades={facets?.cnaes ?? []} />
     </>
   );
 }

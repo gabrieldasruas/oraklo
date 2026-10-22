@@ -35,6 +35,8 @@ export type Aprendizado = {
 
 export type PerfilBusca = {
   nichos: string[];
+  /** atividades (CNAE) escolhidas na pesquisa, fora dos nichos de exemplo */
+  atividades: { code: string; descricao: string }[];
   portes: string[];
   capitalMin: number | null;
   anosMin: number | null;
@@ -49,6 +51,7 @@ export type PerfilBusca = {
 
 export const PERFIL_VAZIO: PerfilBusca = {
   nichos: [],
+  atividades: [],
   portes: [],
   capitalMin: null,
   anosMin: null,
@@ -65,6 +68,12 @@ export function completarPerfil(p: Partial<PerfilBusca> | null | undefined): Per
   const a = p.aprendizado ?? v.aprendizado;
   return {
     nichos: Array.isArray(p.nichos) ? p.nichos.filter((n) => typeof n === "string").slice(0, 30) : [],
+    atividades: Array.isArray(p.atividades)
+      ? p.atividades
+          .filter((a) => a && /^d{7}$/.test(String(a.code)))
+          .slice(0, 40)
+          .map((a) => ({ code: String(a.code), descricao: String(a.descricao ?? "").slice(0, 160) }))
+      : [],
     portes: Array.isArray(p.portes) ? p.portes.filter((x) => ["ME", "EPP", "DEMAIS"].includes(x)) : [],
     capitalMin: typeof p.capitalMin === "number" && p.capitalMin > 0 ? p.capitalMin : null,
     anosMin: typeof p.anosMin === "number" && p.anosMin > 0 ? Math.min(50, Math.round(p.anosMin)) : null,
@@ -78,11 +87,14 @@ export function completarPerfil(p: Partial<PerfilBusca> | null | undefined): Per
 }
 
 /** CNAEs de todos os nichos escolhidos. */
-export const cnaesDoPerfil = (p: PerfilBusca) => [...new Set(p.nichos.flatMap((n) => CNAES_DO_NICHO[n] ?? []))];
+export const cnaesDoPerfil = (p: PerfilBusca) => [...new Set([...p.nichos.flatMap((n) => CNAES_DO_NICHO[n] ?? []), ...(p.atividades ?? []).map((a) => a.code)])];
+
+/** O perfil tem algum foco (nicho de exemplo ou atividade pesquisada)? */
+export const temFoco = (p: PerfilBusca | null | undefined) => !!p && (p.nichos.length > 0 || (p.atividades ?? []).length > 0);
 
 /** Quantas preferências o perfil tem (para mostrar "perfil 4/6"). */
 export function forcaDoPerfil(p: PerfilBusca) {
-  const itens = [p.nichos.length > 0, p.portes.length > 0, p.capitalMin !== null, p.anosMin !== null, p.temEmail || p.temWhatsapp, p.aprendizado.sinais >= 5];
+  const itens = [temFoco(p), p.portes.length > 0, p.capitalMin !== null, p.anosMin !== null, p.temEmail || p.temWhatsapp, p.aprendizado.sinais >= 5];
   return { feitos: itens.filter(Boolean).length, total: itens.length };
 }
 
