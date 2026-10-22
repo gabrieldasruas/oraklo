@@ -9,6 +9,8 @@ import { titleCase } from "@/lib/format";
 // Mesmo formato do `filter` dos nichos (ver niche_companies no banco).
 export type CompanyFilter = {
   cnaes?: string[];
+  /** só a atividade principal conta (ignora a secundária) */
+  cnae_main_only?: boolean;
   ufs?: string[];
   municipalities?: string[];
   sizes?: string[];
@@ -32,6 +34,9 @@ type Row = {
   receita_email: string | null;
   receita_phones: string[];
   website: string | null;
+  zip: string | null;
+  address: string | null;
+  district: string | null;
 };
 
 export type CompanyItem = {
@@ -48,6 +53,10 @@ export type CompanyItem = {
   email: string | null;
   phones: string[];
   website: string | null;
+  /** CEP (8 dígitos) — usado para localizar a empresa no mapa */
+  zip: string | null;
+  address: string | null;
+  district: string | null;
 };
 
 const list = (v: string | string[] | undefined) =>
@@ -106,11 +115,14 @@ function toItem(r: Row, cities: Map<string, string>): CompanyItem {
     email: r.receita_email,
     phones: r.receita_phones ?? [],
     website: r.website,
+    zip: r.zip ? r.zip.replace(/D/g, "").padStart(8, "0") : null,
+    address: r.address ? titleCase(r.address) : null,
+    district: r.district ? titleCase(r.district) : null,
   };
 }
 
 const COLUMNS =
-  "cnpj, legal_name, trade_name, is_headquarters, opened_at, cnae_main, uf, municipality_code, size, share_capital, receita_email, receita_phones, website";
+  "cnpj, legal_name, trade_name, is_headquarters, opened_at, cnae_main, uf, municipality_code, size, share_capital, receita_email, receita_phones, website, zip, address, district";
 
 export async function searchCompanies(filter: CompanyFilter, cursor?: string, limit = 50) {
   const after = decodeCursor(cursor);
@@ -146,7 +158,7 @@ export type CompanyDetail = CompanyItem & {
   address: string | null;
   zip: string | null;
   legalNature: string | null;
-  partners: { name: string; kind: string | null; enteredAt: string | null }[];
+  partners: { name: string; kind: string | null; role: string | null; enteredAt: string | null }[];
   sourcePeriod: string;
 };
 
@@ -155,7 +167,7 @@ export async function getCompany(cnpj: string): Promise<CompanyDetail | null> {
   const db = createAdminClient();
   const { data: c, error } = await db
     .from("companies")
-    .select(`${COLUMNS}, status, cnae_secondary, district, address, zip, legal_nature, cnpj_root, source_period`)
+    .select(`${COLUMNS}, status, cnae_secondary, legal_nature, cnpj_root, source_period`)
     .eq("cnpj", cnpj)
     .maybeSingle<Row & { status: string; cnae_secondary: string[]; district: string | null; address: string | null; zip: string | null; legal_nature: string | null; cnpj_root: string; source_period: string }>();
   if (error) throw new Error(`Falha ao ler empresa: ${error.message}`);
@@ -164,7 +176,7 @@ export async function getCompany(cnpj: string): Promise<CompanyDetail | null> {
   const codes = [c.cnae_main, ...c.cnae_secondary].filter(Boolean) as string[];
   const [cnaes, partners, cities] = await Promise.all([
     db.from("cnaes").select("code, description").in("code", codes),
-    db.from("partners").select("name, kind, entered_at").eq("cnpj_root", c.cnpj_root).order("entered_at"),
+    db.from("partners").select("name, kind, role, entered_at").eq("cnpj_root", c.cnpj_root).order("entered_at"),
     municipalityNames([c.municipality_code ?? ""]),
   ]);
   if (cnaes.error || partners.error) throw new Error("Falha ao ler detalhes da empresa");
@@ -180,7 +192,7 @@ export async function getCompany(cnpj: string): Promise<CompanyDetail | null> {
     zip: c.zip,
     legalNature: c.legal_nature,
     // Só nome e qualificação do sócio (LGPD); o CPF nem é importado.
-    partners: partners.data.map((p) => ({ name: titleCase(p.name as string), kind: p.kind as string | null, enteredAt: p.entered_at as string | null })),
+    partners: partners.data.map((p) => ({ name: titleCase(p.name as string), kind: p.kind as string | null, role: (p.role as string | null) ?? null, enteredAt: p.entered_at as string | null })),
     sourcePeriod: c.source_period,
   };
 }

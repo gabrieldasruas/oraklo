@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Mail, MessageCircle, Phone } from "lucide-react";
+import { Check, Copy, Mail, Phone } from "lucide-react";
+import { WhatsappIcon } from "@/components/brand/Icons";
 import { formatPhone } from "@/lib/format";
 
 // Botão de copiar com confirmação visual.
@@ -33,7 +34,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
  * Contato de uma empresa: e-mail e telefone em "chips" clicáveis
  * (abrem o e-mail / ligação / WhatsApp) com botão de copiar.
  */
-export default function ContactCell({ email, phones }: { email: string | null; phones: string[] }) {
+export default function ContactCell({ email, phones, inline = false }: { email: string | null; phones: string[]; /** chips lado a lado (listas compactas) */ inline?: boolean }) {
   const [first, ...rest] = phones;
   const digits = first?.replace(/\D/g, "") ?? "";
   // celulares (11 dígitos com 9 na frente) podem abrir no WhatsApp
@@ -48,7 +49,7 @@ export default function ContactCell({ email, phones }: { email: string | null; p
   }
 
   return (
-    <div className="flex min-w-[15rem] flex-col gap-1.5">
+    <div className={inline ? "flex flex-wrap gap-1.5" : "flex min-w-[15rem] flex-col gap-1.5"}>
       {email && (
         <div className="group/chip flex items-center gap-1 rounded-full border border-night/10 bg-white/70 py-1 pl-1 pr-1 transition-colors hover:border-night/25 hover:bg-white">
           <a href={`mailto:${email}`} className="flex min-w-0 flex-1 items-center gap-2.5" title={`Enviar e-mail para ${email}`}>
@@ -83,9 +84,9 @@ export default function ContactCell({ email, phones }: { email: string | null; p
               rel="noopener noreferrer"
               aria-label="Abrir no WhatsApp"
               title="Abrir no WhatsApp"
-              className="flex size-8 shrink-0 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-500 hover:text-white"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full text-[#25d366] hover:bg-[#25d366] hover:text-white"
             >
-              <MessageCircle size={14} aria-hidden />
+              <WhatsappIcon size={15} />
             </a>
           )}
           <CopyButton value={formatPhone(first)} label="telefone" />

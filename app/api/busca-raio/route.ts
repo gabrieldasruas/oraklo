@@ -6,7 +6,7 @@ import { centroNoBrasil, cidadeMaisProxima, MUNICIPIOS, municipiosNoRaio, RAIO_M
 const PORTES = ["ME", "EPP", "DEMAIS", "NAO_INFORMADO"];
 
 // POST /api/busca-raio
-// { lat, lng, raioKm, escopo?: "raio" | "cidade" | "estado", ufs?: string[], cnaes?: string[], portes?: string[], temEmail?: boolean, matriz?: boolean, cursor?: string }
+// { lat, lng, raioKm, principal?: boolean (padrão true), escopo?: "raio" | "cidade" | "estado", ufs?: string[], cnaes?: string[], portes?: string[], temEmail?: boolean, matriz?: boolean, cursor?: string }
 export async function POST(request: NextRequest) {
   if (!(await getUser())) return Response.json({ error: "Não autenticado" }, { status: 401 });
 
@@ -54,7 +54,11 @@ export async function POST(request: NextRequest) {
 
   // no estado inteiro, filtrar por UF é mais leve que mandar centenas de cidades
   const filter: CompanyFilter = escopo === "estado" ? { ufs: ufsEstado } : { municipalities: municipios.map((m) => m.code) };
-  if (cnaes.length) filter.cnaes = cnaes;
+  if (cnaes.length) {
+    filter.cnaes = cnaes;
+    // padrão: só a atividade principal (quem tem a atividade só como secundária fica de fora)
+    if (body.principal !== false) filter.cnae_main_only = true;
+  }
   if (portes.length) filter.sizes = portes;
   if (body.temEmail === true) filter.has_email = true;
   if (body.matriz === true) filter.headquarters_only = true;

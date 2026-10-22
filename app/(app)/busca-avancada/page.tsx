@@ -17,7 +17,7 @@ export default async function BuscaAvancadaPage() {
         title="Busca avançada"
         description="Desenhe um raio no mapa e encontre as empresas da atividade (CNAE) que você quer, só dentro daquela região do Brasil."
       />
-      <BuscaAvancada cnaes={facets.cnaes} />
+      <BuscaAvancada cnaes={facets.cnaes} ufsComDados={Object.fromEntries(facets.ufs.map((u) => [u.code, u.count]))} />
     </>
   );
 }
