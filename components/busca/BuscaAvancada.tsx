@@ -55,8 +55,6 @@ type Override = { escopo?: Escopo; raioKm?: number; ufs?: string[]; centro?: Cen
 
 /** Fração das empresas localizadas que ganham pin neon (1 = todas as empresas buscadas). */
 const FRACAO_DESTAQUE = 1;
-/** Espera depois da última mudança antes de atualizar a lista (ms). */
-const ESPERA_AO_VIVO = 600;
 
 const INICIO: Centro = [-23.5505, -46.6333]; // São Paulo
 const fmt = (n: number) => n.toLocaleString("pt-BR");
@@ -90,6 +88,8 @@ export default function BuscaAvancada({
   const [portes, setPortes] = useState<string[]>([]);
   const [temEmail, setTemEmail] = useState(false);
   const [matriz, setMatriz] = useState(false);
+  // por padrão só a atividade PRINCIPAL conta (evita JBS/Fedex que têm transporte como secundária)
+  const [principal, setPrincipal] = useState(true);
   const [aberto, setAberto] = useState<null | "cnae" | "estados" | "cidade" | "cidade-barra" | "porte">(null);
 
   // ---------- resultados ----------
@@ -97,8 +97,13 @@ export default function BuscaAvancada({
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const pedidoAtual = useRef(0);
+  // a busca só roda no botão; guardamos o que foi buscado para avisar quando os filtros mudarem
+  const assinaturaAtual = JSON.stringify([centro, raioKm, escopo, ufsFiltro, cnaesSel, portes, temEmail, matriz, principal]);
+  const [assinaturaBuscada, setAssinaturaBuscada] = useState<string | null>(null);
+  const desatualizada = assinaturaBuscada !== null && assinaturaBuscada !== assinaturaAtual;
 
   // ---------- empresas no mapa (CEP → coordenada) ----------
+  // coordenadas por CNPJ (o mesmo CEP pode ter várias empresas)
   const [coords, setCoords] = useState<Record<string, { lat: number; lng: number }>>({});
   const [localizando, setLocalizando] = useState(false);
   const [foco, setFoco] = useState<string | null>(null);
@@ -201,6 +206,7 @@ export default function BuscaAvancada({
           portes,
           temEmail,
           matriz,
+          principal,
           cursor,
         }),
       });
@@ -208,6 +214,7 @@ export default function BuscaAvancada({
       if (id !== pedidoAtual.current) return; // chegou uma busca mais nova
       if (!r.ok) throw new Error(j.error ?? "Falha na busca");
       setRes((prev) => (cursor && prev ? { ...j, total: prev.total, items: [...prev.items, ...j.items] } : j));
+      if (!cursor) setAssinaturaBuscada(assinaturaAtual);
     } catch (e) {
       if (id === pedidoAtual.current) setErro(e instanceof Error ? e.message : "Falha na busca");
     } finally {
@@ -215,12 +222,6 @@ export default function BuscaAvancada({
     }
   }
 
-  // Lista ao vivo: qualquer mudança no círculo ou nos filtros atualiza os resultados.
-  useEffect(() => {
-    const t = setTimeout(() => void buscar(), ESPERA_AO_VIVO);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [centro, raioKm, escopo, ufsFiltro, cnaesSel, portes, temEmail, matriz]);
 
   // Sugestões de alcance.
   function ampliarRaio(km: number) {
@@ -237,13 +238,12 @@ export default function BuscaAvancada({
 
   // Assim que chegam resultados, localiza pelo CEP as empresas que ainda não têm coordenada.
   useEffect(() => {
-    const faltando = (res?.items ?? [])
-      .map((i) => i.zip)
-      .filter((z): z is string => !!z && !coords[z] && !pedidosCep.current.has(z));
+    const faltando = (res?.items ?? []).filter((i) => !coords[i.cnpj] && !pedidosCep.current.has(i.cnpj) && (i.zip || i.address));
     if (!faltando.length) return;
-    faltando.forEach((z) => pedidosCep.current.add(z));
+    faltando.forEach((i) => pedidosCep.current.add(i.cnpj));
     setLocalizando(true);
-    fetch("/api/geo-cep", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ceps: faltando.slice(0, 60) }) })
+    const itens = faltando.slice(0, 60).map((i) => ({ id: i.cnpj, cep: i.zip, endereco: i.address, cidade: i.city, uf: i.uf }));
+    fetch("/api/geo-cep", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ itens }) })
       .then((r) => (r.ok ? r.json() : { coords: {} }))
       .then((j) => setCoords((c) => ({ ...c, ...(j.coords ?? {}) })))
       .catch(() => {})
@@ -253,15 +253,22 @@ export default function BuscaAvancada({
 
   // Empresas localizadas → pins. As de maior capital (resultado já vem ordenado) ganham destaque.
   const empresasNoMapa: EmpresaNoMapa[] = useMemo(() => {
-    const localizadas = (res?.items ?? []).filter((i) => i.zip && coords[i.zip]);
+    const localizadas = (res?.items ?? []).filter((i) => coords[i.cnpj]);
     const corte = Math.max(1, Math.ceil(localizadas.length * FRACAO_DESTAQUE));
+    // várias empresas no mesmo ponto (mesmo CEP/rua): espalha em espiral para todas aparecerem
+    const noPonto = new Map<string, number>();
     return localizadas.map((i, idx) => {
-      const c = coords[i.zip!];
+      const c = coords[i.cnpj];
+      const chave = `${c.lat.toFixed(4)},${c.lng.toFixed(4)}`;
+      const k = noPonto.get(chave) ?? 0;
+      noPonto.set(chave, k + 1);
+      const ang = k * 2.4; // ângulo de ouro
+      const dist = k ? 0.00035 * Math.sqrt(k) : 0; // ~40 m por anel
       return {
         cnpj: i.cnpj,
         name: i.name,
-        lat: c.lat,
-        lng: c.lng,
+        lat: c.lat + Math.sin(ang) * dist,
+        lng: c.lng + Math.cos(ang) * dist,
         destaque: idx < corte,
         local: [i.address, i.district, i.city && `${i.city}/${i.uf}`].filter(Boolean).join(" · "),
         capital: i.shareCapital,
@@ -488,24 +495,15 @@ export default function BuscaAvancada({
             Só matrizes
           </button>
 
-          {/* buscar agora (a lista também atualiza sozinha a cada mudança) */}
-          <div className="ml-auto flex items-center gap-3">
-            <span className="hidden items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] opacity-60 xl:flex" title="A lista atualiza sozinha quando você muda o mapa ou os filtros">
-              {carregando ? <Loader2 size={12} className="animate-spin" aria-hidden /> : <Radio size={12} className="text-emerald-600" aria-hidden />}
-              {carregando ? "Atualizando" : "Ao vivo"}
-            </span>
-            <button
-              type="button"
-              onClick={() => void buscar()}
-              disabled={carregando}
-              className="group flex min-h-11 cursor-pointer items-center gap-3 rounded-full bg-neon py-1 pl-5 pr-1 text-sm font-medium text-night shadow-[0_10px_30px_-12px_rgba(120,190,20,0.9)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait"
-            >
-              Buscar empresas
-              <span className="flex size-9 items-center justify-center rounded-full bg-night text-neon">
-                {carregando ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Search size={16} aria-hidden />}
-              </span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setPrincipal((v) => !v)}
+            aria-pressed={principal}
+            title="Ligado: só empresas cuja atividade PRINCIPAL é a escolhida. Desligado: inclui quem tem a atividade como secundária."
+            className={chip(principal)}
+          >
+            Só atividade principal
+          </button>
         </div>
 
         {/* atividades escolhidas */}
@@ -530,14 +528,35 @@ export default function BuscaAvancada({
         )}
       </Glass>
 
+      {/* Buscar empresas: centralizado, a busca só roda aqui */}
+      <div className="flex flex-col items-center gap-2 py-1 text-center">
+        <button
+          type="button"
+          onClick={() => void buscar()}
+          disabled={carregando}
+          className={`group flex min-h-16 cursor-pointer items-center gap-5 rounded-full bg-neon py-2 pl-9 pr-2 text-lg font-medium text-night shadow-[0_18px_45px_-15px_rgba(120,190,20,0.95)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait ${
+            desatualizada || !res ? "buscar-pulsa" : ""
+          }`}
+        >
+          {carregando ? "Buscando empresas…" : desatualizada ? "Atualizar busca" : "Buscar empresas"}
+          <span className="flex size-12 items-center justify-center rounded-full bg-night text-neon transition-transform group-hover:rotate-12">
+            {carregando ? <Loader2 size={20} className="animate-spin" aria-hidden /> : <Search size={20} aria-hidden />}
+          </span>
+        </button>
+        <p className="text-xs opacity-60">
+          {cnaesSel.length ? `${cnaesSel.length} atividade${cnaesSel.length > 1 ? "s" : ""}` : "Todas as atividades"} · {alcanceTexto}
+          {desatualizada && <span className="ml-2 rounded-full bg-night px-2 py-0.5 text-[10px] text-neon">filtros alterados</span>}
+        </p>
+      </div>
+
       {/* fecha os menus ao clicar fora */}
       {aberto && <div aria-hidden className="fixed inset-0 z-10" onClick={() => setAberto(null)} />}
 
       {/* ================= Mapa + lista ================= */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:items-start">
         {/* -------- Mapa -------- */}
         <Glass className={`no-fx overflow-hidden lg:sticky lg:top-24 ${aberto === "cidade-barra" ? "relative z-20" : ""}`}>
-          <div className="relative isolate h-[380px] md:h-[480px]">
+          <div className="relative isolate h-[340px] md:h-[400px]">
             <RadiusMap
               centro={centro}
               raioKm={raioKm}
@@ -621,10 +640,10 @@ export default function BuscaAvancada({
 
           {/* ampliar */}
           <div className="flex flex-wrap items-center gap-2 border-t border-night/10 bg-white/40 px-4 py-3">
-            <span className="mr-1 text-xs font-medium">Ampliar:</span>
+            <span className="mr-0.5 text-xs font-medium">Ampliar:</span>
             {[10, 25, 50, 100, 200, 400]
               .filter((km) => escopo !== "raio" || km > raioKm)
-              .slice(0, 2)
+              .slice(0, 1)
               .map((km) => (
                 <button key={km} type="button" onClick={() => ampliarRaio(km)} className="min-h-8 cursor-pointer rounded-full border border-night/15 bg-white px-3 text-[11px] font-medium hover:bg-night hover:text-white">
                   {km} km
@@ -749,6 +768,14 @@ export default function BuscaAvancada({
               );
             })}
           </ul>
+
+          {!res && !carregando && (
+            <div className="px-6 py-16 text-center">
+              <Search size={28} aria-hidden className="mx-auto mb-3 opacity-30" />
+              <p className="text-sm font-medium">Escolha a região e a atividade</p>
+              <p className="mt-1 text-sm opacity-60">Depois clique em <b>Buscar empresas</b> para ver a lista e os pins no mapa.</p>
+            </div>
+          )}
 
           {res && !res.items.length && !carregando && (
             <div className="px-6 py-14 text-center text-sm opacity-70">

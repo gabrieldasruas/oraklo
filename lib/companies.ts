@@ -9,6 +9,8 @@ import { titleCase } from "@/lib/format";
 // Mesmo formato do `filter` dos nichos (ver niche_companies no banco).
 export type CompanyFilter = {
   cnaes?: string[];
+  /** só a atividade principal conta (ignora a secundária) */
+  cnae_main_only?: boolean;
   ufs?: string[];
   municipalities?: string[];
   sizes?: string[];
