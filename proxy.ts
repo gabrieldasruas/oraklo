@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 // Seções que exigem login. Produto, Histórias e Preços continuam públicas.
-const PROTECTED = ["/painel", "/leads", "/segmentacao", "/empresas", "/busca-avancada", "/listas", "/sequencias", "/portfolio", "/relatorios", "/configuracoes", "/api"];
+const PROTECTED = ["/painel", "/leads", "/segmentacao", "/empresas", "/busca-avancada", "/listas", "/sequencias", "/portfolio", "/relatorios", "/configuracoes", "/integracoes", "/api"];
 
 // Rotas de API chamadas por serviços (cron da Vercel, webhook da Resend): validam o próprio segredo.
 const PUBLICAS = ["/api/cron/", "/api/webhooks/"];

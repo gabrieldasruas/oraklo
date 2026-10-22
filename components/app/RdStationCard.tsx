@@ -72,7 +72,7 @@ export default function RdStationCard({ c, setC, onServidor }: Props) {
         <div className="flex items-center gap-3">
           <span className="flex size-10 items-center justify-center rounded-2xl bg-[#1b2b5b] font-semibold text-white">RD</span>
           <div>
-            <Micro>06 · RD Station CRM</Micro>
+            <Micro>RD Station CRM · integração direta</Micro>
             <p className="text-sm opacity-60">Integração direta: cada lead vira empresa, contato e negociação no seu RD.</p>
           </div>
         </div>

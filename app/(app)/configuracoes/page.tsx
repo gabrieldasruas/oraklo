@@ -20,7 +20,7 @@ export default async function ConfiguracoesPage() {
   ]);
   return (
     <>
-      <PageHeader index="07" title="Configurações" description="Seu perfil, plano, assinatura de e-mail, integração com CRM e modelos de WhatsApp." />
+      <PageHeader index="07" title="Configurações" description="Seu perfil, pacote, assinatura de e-mail e notificações. Integrações e WhatsApp ficam em Integrar CRM." />
       <ConfiguracoesView
         inicial={config}
         usuario={{ nome: user.name, email: user.email, workspace: user.workspaceName }}
