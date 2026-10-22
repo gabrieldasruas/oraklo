@@ -514,3 +514,14 @@ body {
     animation: none;
   }
 }
+
+/* pin aproximado: empresa ainda na sede da cidade, esperando o endereço exato */
+.company-pin--aprox {
+  background: #fff;
+  border-color: #0b0b0c;
+  opacity: 0.9;
+}
+.company-pin--aprox > span {
+  background: #0b0b0c;
+  inset: 10px;
+}

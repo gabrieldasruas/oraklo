@@ -20,6 +20,8 @@ export type EmpresaNoMapa = {
   lat: number;
   lng: number;
   destaque: boolean;
+  /** ainda na sede da cidade, esperando o endereço exato */
+  aproximado?: boolean;
   local: string;
   capital: number | null;
 };
@@ -28,13 +30,13 @@ const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 const ATRIB = "Mapa &copy; Esri, Maxar, Earthstar Geographics, HERE, Garmin, &copy; colaboradores do OpenStreetMap";
 
 // Pin neon (gota) para as empresas em destaque.
-const pinIcon = (foco: boolean) =>
+const pinIcon = (foco: boolean, aproximado = false) =>
   L.divIcon({
     className: "",
     iconSize: [30, 38],
     iconAnchor: [15, 36],
     popupAnchor: [0, -34],
-    html: `<span class="company-pin ${foco ? "company-pin--foco" : ""}"><span></span></span>`,
+    html: `<span class="company-pin ${aproximado ? "company-pin--aprox" : ""} ${foco ? "company-pin--foco" : ""}"><span></span></span>`,
   });
 
 // Alças brancas com borda escura (centro + 4 pontos cardeais).
@@ -83,9 +85,9 @@ function FitOnRadius({ centro, raioKm, token }: { centro: Centro; raioKm: number
 }
 
 // Quando um novo conjunto de empresas é localizado, aproxima o mapa para mostrar todas.
-function FitToEmpresas({ empresas }: { empresas: EmpresaNoMapa[] }) {
+function FitToEmpresas({ empresas, chave }: { empresas: EmpresaNoMapa[]; chave: string }) {
   const map = useMap();
-  const assinatura = empresas.length ? `${empresas[0].cnpj}:${empresas.length}` : "";
+  const assinatura = empresas.length ? chave : "";
   useEffect(() => {
     if (!empresas.length) return;
     const b = L.latLngBounds(empresas.map((e) => [e.lat, e.lng] as [number, number]));
@@ -116,6 +118,7 @@ export default function RadiusMap({
   onFoco,
   modo = "auto",
   voar = null,
+  chaveEnquadrar = "",
   onChange,
 }: {
   centro: Centro;
@@ -134,6 +137,8 @@ export default function RadiusMap({
   modo?: ModoMapa;
   /** aproxima até este ponto (muda `token` para repetir) */
   voar?: { lat: number; lng: number; token: number } | null;
+  /** quando muda, o mapa reenquadra todas as empresas */
+  chaveEnquadrar?: string;
   onChange: (centro: Centro, raioKm: number) => void;
 }) {
   const [zoom, setZoom] = useState(7);
@@ -143,6 +148,8 @@ export default function RadiusMap({
   const edgeIcon = useMemo(() => handleIcon(false), []);
   const pin = useMemo(() => pinIcon(false), []);
   const pinFoco = useMemo(() => pinIcon(true), []);
+  const pinAprox = useMemo(() => pinIcon(false, true), []);
+  const pinAproxFoco = useMemo(() => pinIcon(true, true), []);
   const [voarLocal, setVoarLocal] = useState<{ lat: number; lng: number; token: number } | null>(null);
   const temEmpresas = empresas.length > 0;
 
@@ -161,6 +168,7 @@ export default function RadiusMap({
       <span className="block text-[13px] font-medium leading-tight">{e.name}</span>
       <span className="block text-[11px] opacity-60">{e.local}</span>
       <span className="mt-0.5 block font-mono text-[11px]">{formatMoney(e.capital)}</span>
+      {e.aproximado && <span className="mt-1 block text-[10px] text-neon">posição aproximada · buscando o endereço…</span>}
     </Tooltip>
   );
   const popup = (e: EmpresaNoMapa) => (
@@ -197,7 +205,7 @@ export default function RadiusMap({
       <ZoomControl position="bottomright" zoomInTitle="Aproximar" zoomOutTitle="Afastar" />
       <Eventos onMove={(c) => onChange(c, raioKm)} onZoom={setZoom} />
       <FitOnRadius centro={centro} raioKm={raioKm} token={fitToken} />
-      <FitToEmpresas empresas={empresas} />
+      <FitToEmpresas empresas={empresas} chave={chaveEnquadrar} />
       <VoarPara alvo={voar} />
       <VoarPara alvo={voarLocal} />
 
@@ -212,17 +220,13 @@ export default function RadiusMap({
         interactive={false}
       />
 
-      {/* cidades que entram na busca (discretas quando já há empresas no mapa) */}
+      {/* cidades que entram na busca: pontinhos cinza discretos (pin neon é só para empresa) */}
       {cidades.map((m) => (
         <CircleMarker
           key={m.code}
           center={[m.lat, m.lng]}
-          radius={temEmpresas ? 2 : 3.5}
-          pathOptions={
-            temEmpresas
-              ? { color: "#0b0b0c", weight: 0, fillColor: "#0b0b0c", fillOpacity: 0.2 }
-              : { color: "#0b0b0c", weight: 1, fillColor: "#b8ff3c", fillOpacity: 1 }
-          }
+          radius={temEmpresas ? 1.5 : 2.5}
+          pathOptions={{ color: "#0b0b0c", weight: 0, fillColor: "#0b0b0c", fillOpacity: temEmpresas ? 0.15 : 0.35 }}
         >
           <Tooltip direction="top" offset={[0, -4]}>
             {m.name}/{m.uf}
@@ -253,7 +257,7 @@ export default function RadiusMap({
           <Marker
             key={e.cnpj}
             position={[e.lat, e.lng]}
-            icon={foco === e.cnpj ? pinFoco : pin}
+            icon={e.aproximado ? (foco === e.cnpj ? pinAproxFoco : pinAprox) : foco === e.cnpj ? pinFoco : pin}
             zIndexOffset={foco === e.cnpj ? 1000 : 500}
             eventHandlers={{ mouseover: () => onFoco?.(e.cnpj), mouseout: () => onFoco?.(null) }}
           >

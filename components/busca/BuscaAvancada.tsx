@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { Building2, Check, ChevronDown, Crosshair, Loader2, Locate, MapPin, Radio, Search, X } from "lucide-react";
 import { Glass, Micro } from "@/components/app/ui";
@@ -20,6 +21,7 @@ import {
 } from "@/lib/geo/radius";
 import { formatCnae, formatCnpj, formatMoney, SIZE_LABEL } from "@/lib/format";
 import type { Centro, EmpresaNoMapa, ModoMapa } from "./RadiusMap";
+import { localizarEmpresas } from "@/lib/geo/localizar";
 
 // O Leaflet usa `window`: carrega só no navegador.
 const RadiusMap = dynamic(() => import("./RadiusMap"), {
@@ -58,6 +60,16 @@ const FRACAO_DESTAQUE = 1;
 
 const INICIO: Centro = [-23.5505, -46.6333]; // São Paulo
 const fmt = (n: number) => n.toLocaleString("pt-BR");
+
+// Sede do município pelo nome (a Receita escreve sem acento: "ITAJAI").
+const semAcentoNome = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+const sedesPorNome = new Map(MUNICIPIOS.map((m) => [`${semAcentoNome(m.name)}|${m.uf}`, m]));
+const sedeDaCidade = (cidade: string, uf: string) => sedesPorNome.get(`${semAcentoNome(cidade)}|${uf}`) ?? null;
 const semAcento = (s: string) =>
   s
     .toLowerCase()
@@ -105,9 +117,12 @@ export default function BuscaAvancada({
   // ---------- empresas no mapa (CEP → coordenada) ----------
   // coordenadas por CNPJ (o mesmo CEP pode ter várias empresas)
   const [coords, setCoords] = useState<Record<string, { lat: number; lng: number }>>({});
-  const [localizando, setLocalizando] = useState(false);
+  const [progresso, setProgresso] = useState<{ feitas: number; total: number } | null>(null);
+  const localizando = !!progresso && progresso.feitas < progresso.total;
+  // menu "Outro lugar…" (estado ou cidade), aberto por cima da página
+  const botaoLugar = useRef<HTMLButtonElement>(null);
+  const [posLugar, setPosLugar] = useState<{ left: number; bottom: number } | null>(null);
   const [foco, setFoco] = useState<string | null>(null);
-  const pedidosCep = useRef(new Set<string>());
 
   // ---------- seletor de cidade ----------
   const [ufCidade, setUfCidade] = useState<string | null>(null);
@@ -236,37 +251,50 @@ export default function BuscaAvancada({
     setUfsFiltro([uf]);
   }
 
-  // Assim que chegam resultados, localiza pelo CEP as empresas que ainda não têm coordenada.
+  // Assim que chegam resultados, localiza cada empresa pelo endereço (no navegador, aos poucos:
+  // cada pin aparece assim que a empresa é encontrada).
   useEffect(() => {
-    const faltando = (res?.items ?? []).filter((i) => !coords[i.cnpj] && !pedidosCep.current.has(i.cnpj) && (i.zip || i.address));
-    if (!faltando.length) return;
-    faltando.forEach((i) => pedidosCep.current.add(i.cnpj));
-    setLocalizando(true);
-    const itens = faltando.slice(0, 60).map((i) => ({ id: i.cnpj, cep: i.zip, endereco: i.address, cidade: i.city, uf: i.uf }));
-    fetch("/api/geo-cep", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ itens }) })
-      .then((r) => (r.ok ? r.json() : { coords: {} }))
-      .then((j) => setCoords((c) => ({ ...c, ...(j.coords ?? {}) })))
-      .catch(() => {})
-      .finally(() => setLocalizando(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const itens = (res?.items ?? []).filter((i) => i.address && i.city && i.uf);
+    if (!itens.length) {
+      setProgresso(null);
+      return;
+    }
+    const ctrl = new AbortController();
+    let feitas = 0;
+    setProgresso({ feitas: 0, total: itens.length });
+    void localizarEmpresas(
+      itens.map((i) => ({ id: i.cnpj, endereco: i.address, bairro: i.district, cidade: i.city, uf: i.uf })),
+      (id, c) => setCoords((prev) => (prev[id] ? prev : { ...prev, [id]: c })),
+      () => setProgresso({ feitas: ++feitas, total: itens.length }),
+      ctrl.signal,
+    );
+    return () => ctrl.abort();
   }, [res?.items]);
 
   // Empresas localizadas → pins. As de maior capital (resultado já vem ordenado) ganham destaque.
   const empresasNoMapa: EmpresaNoMapa[] = useMemo(() => {
-    const localizadas = (res?.items ?? []).filter((i) => coords[i.cnpj]);
-    const corte = Math.max(1, Math.ceil(localizadas.length * FRACAO_DESTAQUE));
-    // várias empresas no mesmo ponto (mesmo CEP/rua): espalha em espiral para todas aparecerem
+    // TODA empresa filtrada vira pin: no endereço exato quando já foi localizada,
+    // ou perto da sede da cidade (pin "aproximado") enquanto o endereço não é encontrado.
+    const itens = (res?.items ?? []).flatMap((i) => {
+      const exato = coords[i.cnpj];
+      if (exato) return [{ i, c: exato, aproximado: false }];
+      const sede = sedeDaCidade(i.city, i.uf);
+      return sede ? [{ i, c: { lat: sede.lat, lng: sede.lng }, aproximado: true }] : [];
+    });
+    const corte = Math.max(1, Math.ceil(itens.length * FRACAO_DESTAQUE));
+    // várias empresas no mesmo ponto: espalha em espiral para todas aparecerem
     const noPonto = new Map<string, number>();
-    return localizadas.map((i, idx) => {
-      const c = coords[i.cnpj];
+    return itens.map(({ i, c, aproximado }, idx) => {
       const chave = `${c.lat.toFixed(4)},${c.lng.toFixed(4)}`;
       const k = noPonto.get(chave) ?? 0;
       noPonto.set(chave, k + 1);
       const ang = k * 2.4; // ângulo de ouro
-      const dist = k ? 0.00035 * Math.sqrt(k) : 0; // ~40 m por anel
+      const passo = aproximado ? 0.0025 : 0.00035; // ~250 m (aproximado) ou ~40 m (exato) por anel
+      const dist = k ? passo * Math.sqrt(k) : 0;
       return {
         cnpj: i.cnpj,
         name: i.name,
+        aproximado,
         lat: c.lat + Math.sin(ang) * dist,
         lng: c.lng + Math.cos(ang) * dist,
         destaque: idx < corte,
@@ -276,6 +304,7 @@ export default function BuscaAvancada({
     });
   }, [res?.items, coords]);
   const noMapa = new Map(empresasNoMapa.map((e) => [e.cnpj, e]));
+  const exatas = empresasNoMapa.filter((e) => !e.aproximado).length;
 
   // ====== UI ======
   const chip = (on: boolean) =>
@@ -550,12 +579,12 @@ export default function BuscaAvancada({
       </div>
 
       {/* fecha os menus ao clicar fora */}
-      {aberto && <div aria-hidden className="fixed inset-0 z-10" onClick={() => setAberto(null)} />}
+      {aberto && <div aria-hidden className={`fixed inset-0 ${aberto === "cidade-barra" ? "z-[999]" : "z-10"}`} onClick={() => setAberto(null)} />}
 
       {/* ================= Mapa + lista ================= */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:items-start">
         {/* -------- Mapa -------- */}
-        <Glass className={`no-fx overflow-hidden lg:sticky lg:top-24 ${aberto === "cidade-barra" ? "relative z-20" : ""}`}>
+        <Glass className="no-fx overflow-hidden lg:sticky lg:top-24">
           <div className="relative isolate h-[340px] md:h-[400px]">
             <RadiusMap
               centro={centro}
@@ -568,6 +597,7 @@ export default function BuscaAvancada({
               onFoco={setFoco}
               modo={modoMapa}
               voar={voar}
+              chaveEnquadrar={`${res?.items[0]?.cnpj ?? ""}:${res?.items.length ?? 0}:${localizando ? "buscando" : "pronto"}`}
               onChange={mover}
             />
 
@@ -659,33 +689,39 @@ export default function BuscaAvancada({
             >
               Todo {perto.uf}
             </button>
-            <label className="relative">
-              <span className="sr-only">Buscar em outro estado</span>
-              <select
-                value=""
-                onChange={(e) => e.target.value && outroEstado(e.target.value)}
-                className="min-h-8 cursor-pointer appearance-none rounded-full border border-night/15 bg-white py-1 pl-3 pr-7 text-[11px] font-medium hover:border-night/40"
-              >
-                <option value="">Outro estado…</option>
-                {UFS.filter((u) => u !== perto.uf).map((u) => (
-                  <option key={u} value={u}>
-                    {u} · {nomeEstado(u)}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={12} aria-hidden className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 opacity-60" />
-            </label>
-            <div className="relative">
-              <button
-                type="button"
-                aria-expanded={aberto === "cidade-barra"}
-                onClick={() => setAberto(aberto === "cidade-barra" ? null : "cidade-barra")}
-                className="flex min-h-8 cursor-pointer items-center gap-1 rounded-full border border-night/15 bg-white px-3 text-[11px] font-medium hover:border-night/40"
-              >
-                Outra cidade… <ChevronDown size={12} aria-hidden className="rotate-180 opacity-60" />
-              </button>
-              {aberto === "cidade-barra" && <div className="absolute bottom-full right-0 z-40 mb-2">{seletorCidade(escolherCidade)}</div>}
-            </div>
+            <button
+              ref={botaoLugar}
+              type="button"
+              aria-expanded={aberto === "cidade-barra"}
+              onClick={() => {
+                const r = botaoLugar.current?.getBoundingClientRect();
+                if (r) setPosLugar({ left: Math.max(12, Math.min(r.left, window.innerWidth - 348)), bottom: window.innerHeight - r.top + 8 });
+                setAberto(aberto === "cidade-barra" ? null : "cidade-barra");
+              }}
+              className="flex min-h-8 cursor-pointer items-center gap-1 rounded-full border border-night/15 bg-white px-3 text-[11px] font-medium hover:border-night/40"
+            >
+              Outra cidade ou estado… <ChevronDown size={12} aria-hidden className="rotate-180 opacity-60" />
+            </button>
+            {aberto === "cidade-barra" &&
+              posLugar &&
+              createPortal(
+                <div className="fixed z-[1000]" style={{ left: posLugar.left, bottom: posLugar.bottom }}>
+                  <div className="font-display text-night">
+                    {seletorCidade(escolherCidade)}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        outroEstado(ufLista);
+                        setAberto(null);
+                      }}
+                      className="mt-2 flex w-80 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-night px-4 py-3 text-xs font-medium text-white shadow-2xl hover:bg-neon hover:text-night"
+                    >
+                      Buscar em todo o estado de {nomeEstado(ufLista)}
+                    </button>
+                  </div>
+                </div>,
+                document.body,
+              )}
           </div>
         </Glass>
 
@@ -702,7 +738,8 @@ export default function BuscaAvancada({
             {res && res.items.length > 0 && (
               <span className="flex items-center gap-2 rounded-full bg-night px-3 py-1.5 text-[11px] text-white">
                 {localizando ? <Loader2 size={12} className="animate-spin text-neon" aria-hidden /> : <MapPin size={12} className="text-neon" aria-hidden />}
-                {localizando ? "Localizando pelo CEP…" : `${fmt(empresasNoMapa.length)} de ${fmt(res.items.length)} no mapa`}
+                {`${fmt(empresasNoMapa.length)} no mapa · ${fmt(exatas)} no endereço`}
+                {localizando && progresso && <span className="text-white/60">· localizando {fmt(progresso.feitas)}/{fmt(progresso.total)}</span>}
               </span>
             )}
           </div>
@@ -738,9 +775,9 @@ export default function BuscaAvancada({
                     type="button"
                     disabled={!pin}
                     onClick={() => pin && setVoar({ lat: pin.lat, lng: pin.lng, token: Date.now() })}
-                    title={pin ? "Ver a rua no mapa" : "Sem localização pelo CEP"}
+                    title={pin ? (pin.aproximado ? "Ver no mapa (posição aproximada, buscando o endereço…)" : "Ver a rua no mapa") : "Sem localização"}
                     className={`flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full font-mono text-[11px] disabled:cursor-default ${
-                      pin?.destaque ? "bg-neon text-night ring-1 ring-night" : pin ? "bg-night text-white" : "bg-night/10 text-night/50"
+                      pin && !pin.aproximado ? "bg-neon text-night ring-1 ring-night" : pin ? "bg-white text-night ring-1 ring-night/30" : "bg-night/10 text-night/50"
                     }`}
                   >
                     {pin ? <Locate size={15} aria-hidden /> : idx + 1}
