@@ -20,11 +20,6 @@ export const LeadsConstellation = dynamic(() => import("./scenes/LeadsConstellat
   loading: dark("h-[460px] md:h-[540px]"),
 });
 
-export const CompanySkyline = dynamic(() => import("./scenes/CompanySkyline"), {
-  ssr: false,
-  loading: dark("h-[440px] md:h-[520px]"),
-});
-
 export const RingVortex = dynamic(() => import("./scenes/NicheScenes").then((m) => m.RingVortex), { ssr: false });
 
 export const NicheShape = dynamic(() => import("./scenes/NicheScenes").then((m) => m.NicheShape), {

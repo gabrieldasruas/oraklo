@@ -9,7 +9,7 @@ import PageHeader from "@/components/app/PageHeader";
 import SaveListForm from "@/components/app/SaveListForm";
 import ContactCell from "@/components/app/ContactCell";
 import { Glass, Micro } from "@/components/app/ui";
-import { CompanySkyline } from "@/components/three/lazy";
+import CapitalChart from "@/components/app/CapitalChart";
 
 export const metadata: Metadata = { title: `Empresas — ${site.name}` };
 
@@ -54,9 +54,9 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Pro
         description="Busque na base da Receita Federal por atividade, região, porte e capital. Salve o resultado como lista para exportar."
       />
 
-      {/* skyline 3D: um prédio por empresa da página, altura = capital social */}
+      {/* capital social das empresas da página (barras, escala log) */}
       <div className="reveal mb-4">
-        <CompanySkyline
+        <CapitalChart
           total={total}
           companies={page.items.map((c) => ({
             cnpj: c.cnpj,
