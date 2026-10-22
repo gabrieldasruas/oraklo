@@ -4,6 +4,8 @@
 
 export const PORTFOLIO_TAG = "__portfolio__";
 export const ARQUIVO_TAG = "__portfolio_file__";
+/** contador de visitas do link público */
+export const VISITAS_TAG = "__portfolio_views__";
 export const TAG_INTERNA = "__";
 
 export type Solucao = { id: string; titulo: string; descricao: string; preco: string };
@@ -32,6 +34,8 @@ export type Portfolio = {
   cases: Case[];
   clientes: string[];
   email: { assunto: string; corpo: string };
+  /** link público /p/[id] (com contagem de visitas) */
+  compartilhar?: { ativo: boolean };
   atualizadoEm?: string;
 };
 
@@ -91,6 +95,7 @@ export function completar(p: Partial<Portfolio> | null | undefined): Portfolio {
     cases: p.cases ?? d.cases,
     clientes: p.clientes ?? d.clientes,
     email: { ...d.email, ...(p.email ?? {}) },
+    compartilhar: { ativo: !!p.compartilhar?.ativo },
     atualizadoEm: p.atualizadoEm,
   };
 }

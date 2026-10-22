@@ -4,6 +4,9 @@ import { createServerClient } from "@supabase/ssr";
 // Seções que exigem login. Produto, Histórias e Preços continuam públicas.
 const PROTECTED = ["/painel", "/leads", "/segmentacao", "/empresas", "/busca-avancada", "/listas", "/sequencias", "/portfolio", "/relatorios", "/configuracoes", "/api"];
 
+// Rotas de API chamadas por serviços (cron da Vercel, webhook da Resend): validam o próprio segredo.
+const PUBLICAS = ["/api/cron/", "/api/webhooks/"];
+
 // Renova a sessão do Supabase a cada requisição e faz o redirecionamento otimista para o login.
 // A autorização de verdade acontece no servidor (lib/auth.ts e RLS).
 export async function proxy(request: NextRequest) {
@@ -25,7 +28,7 @@ export async function proxy(request: NextRequest) {
   const loggedIn = Boolean(data?.claims?.sub);
   const { pathname, search } = request.nextUrl;
 
-  if (!loggedIn && PROTECTED.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+  if (!loggedIn && !PUBLICAS.some((p) => pathname.startsWith(p)) && PROTECTED.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     if (pathname.startsWith("/api/")) return Response.json({ error: "Não autenticado" }, { status: 401 });
     const url = request.nextUrl.clone();
     url.pathname = "/entrar";

@@ -73,5 +73,12 @@ export function useLeads() {
     }
   }, []);
 
-  return { leads, loaded, error, addLead, removeLead, updateStatus };
+  // alterações já salvas no servidor (painel do lead, disparo de e-mail): só reflete na tela
+  const substituir = useCallback((lead: Lead) => setLeads((prev) => prev.map((l) => (l.id === lead.id ? lead : l))), []);
+  const marcarEmSequencia = useCallback(
+    (ids: string[]) => setLeads((prev) => prev.map((l) => (ids.includes(l.id) && l.status === "Novo" ? { ...l, status: "Em sequência" } : l))),
+    [],
+  );
+
+  return { leads, loaded, error, addLead, removeLead, updateStatus, substituir, marcarEmSequencia };
 }

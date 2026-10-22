@@ -5,7 +5,9 @@ import {
   Check,
   Copy,
   Download,
+  Eye,
   FileText,
+  Link2,
   ImagePlus,
   Loader2,
   Mail,
@@ -21,7 +23,7 @@ import {
 } from "lucide-react";
 import { Glass, Micro } from "@/components/app/ui";
 import Slides from "./Slides";
-import { baixarArquivo, enviarArquivo, removerArquivo, salvarPortfolio } from "@/app/(app)/portfolio/actions";
+import { baixarArquivo, enviarArquivo, estatisticasPortfolio, removerArquivo, salvarPortfolio } from "@/app/(app)/portfolio/actions";
 import { listLeads } from "@/app/(app)/leads/actions";
 import type { Lead } from "@/lib/lead-types";
 import { interpretarCsv, lerCsv, novoId, preencherEmail, type ArquivoResumo, type Portfolio } from "@/lib/portfolio-types";
@@ -29,7 +31,7 @@ import { iniciais } from "@/lib/crm";
 
 type Aba = "portfolio" | "solucoes";
 const CORES = ["#b8ff3c", "#ffe14d", "#7ee8fa", "#c9b6ff", "#ff9a7a", "#0b0b0c"];
-const VARIAVEIS = ["{nome}", "{empresa}", "{meu_nome}", "{minha_empresa}", "{solucoes}", "{meu_telefone}", "{meu_site}"];
+const VARIAVEIS = ["{nome}", "{empresa}", "{meu_nome}", "{minha_empresa}", "{solucoes}", "{meu_telefone}", "{meu_site}", "{link_portfolio}"];
 
 const tamanho = (b: number) => (b > 1_000_000 ? `${(b / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1000))} KB`);
 
@@ -128,6 +130,8 @@ export default function PortfolioStudio({ inicial, arquivosIniciais }: { inicial
   const [leads, setLeads] = useState<Lead[]>([]);
   const [leadEmail, setLeadEmail] = useState<string>("");
   const [copiado, setCopiado] = useState(false);
+  const [stats, setStats] = useState<{ id: string | null; total: number; semana: number; ultima: string | null } | null>(null);
+  const [linkCopiado, setLinkCopiado] = useState(false);
   // último conteúdo salvo: só salva de novo quando algo mudou de verdade
   const ultimoSalvo = useRef(JSON.stringify(inicial));
   const inputArquivo = useRef<HTMLInputElement>(null);
@@ -147,6 +151,11 @@ export default function PortfolioStudio({ inicial, arquivosIniciais }: { inicial
     }, 1200);
     return () => clearTimeout(t);
   }, [p]);
+
+  useEffect(() => {
+    if (salvo !== "ok") return;
+    estatisticasPortfolio().then(setStats).catch(() => {});
+  }, [salvo]);
 
   useEffect(() => {
     listLeads()
@@ -222,8 +231,10 @@ export default function PortfolioStudio({ inicial, arquivosIniciais }: { inicial
 
   // ---------- e-mail ----------
   const lead = leads.find((l) => l.id === leadEmail);
-  const assunto = useMemo(() => preencherEmail(p.email.assunto, p, lead), [p, lead]);
-  const corpo = useMemo(() => preencherEmail(p.email.corpo, p, lead), [p, lead]);
+  // link do portfólio com o lead marcado (registra a visita no histórico dele)
+  const link = stats?.id && p.compartilhar?.ativo && typeof window !== "undefined" ? `${window.location.origin}/p/${stats.id}${lead ? `?l=${lead.id}` : ""}` : "";
+  const assunto = useMemo(() => preencherEmail(p.email.assunto.replaceAll("{link_portfolio}", link), p, lead), [p, lead, link]);
+  const corpo = useMemo(() => preencherEmail(p.email.corpo.replaceAll("{link_portfolio}", link), p, lead), [p, lead, link]);
 
   const ABAS: { v: Aba; t: string; d: string; icon: typeof Mail }[] = [
     { v: "portfolio", t: "Crie seu portfólio", d: "Identidade, sobre você, cases e clientes", icon: Palette },
@@ -513,7 +524,67 @@ export default function PortfolioStudio({ inicial, arquivosIniciais }: { inicial
         </div>
 
         {/* ================= Prévia ================= */}
-        <div className="lg:sticky lg:top-24">
+        <div className="space-y-4 lg:sticky lg:top-24">
+          {/* link público com contagem de visitas */}
+          <div className={`overflow-hidden rounded-[24px] p-4 transition-colors ${p.compartilhar?.ativo ? "bg-night text-white" : "border border-white/80 bg-white/70"}`}>
+            <div className="flex items-center gap-3">
+              <span className={`flex size-10 shrink-0 items-center justify-center rounded-2xl ${p.compartilhar?.ativo ? "bg-neon text-night" : "bg-night/5"}`}>
+                <Link2 size={18} aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium leading-tight">Link público</p>
+                <p className={`text-xs ${p.compartilhar?.ativo ? "text-white/55" : "opacity-55"}`}>Mande o portfólio por link e veja quem abriu</p>
+              </div>
+              <label className="relative inline-flex cursor-pointer items-center">
+                <span className="sr-only">Ativar link público</span>
+                <input type="checkbox" className="peer sr-only" checked={!!p.compartilhar?.ativo} onChange={(e) => setP((s) => ({ ...s, compartilhar: { ativo: e.target.checked } }))} />
+                <span className="h-6 w-11 rounded-full bg-night/15 transition-colors peer-checked:bg-neon" />
+                <span className="absolute left-0.5 top-0.5 size-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5 peer-checked:bg-night" />
+              </label>
+            </div>
+            {p.compartilhar?.ativo && (
+              <div className="mt-4 space-y-3">
+                {stats?.id ? (
+                  <div className="flex gap-2">
+                    <a href={`/p/${stats.id}`} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate rounded-full bg-white/10 px-4 py-2.5 font-mono text-[11px] text-neon hover:bg-white/15">
+                      {typeof window !== "undefined" ? window.location.host : ""}/p/{stats.id}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(`${window.location.origin}/p/${stats.id}`);
+                        setLinkCopiado(true);
+                        setTimeout(() => setLinkCopiado(false), 1800);
+                      }}
+                      className="flex min-h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-neon px-4 text-xs font-medium text-night"
+                    >
+                      {linkCopiado ? <Check size={13} /> : <Copy size={13} aria-hidden />} {linkCopiado ? "Copiado" : "Copiar"}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="flex items-center gap-2 text-xs text-white/60">
+                    <Loader2 size={12} className="animate-spin" /> Gerando link…
+                  </p>
+                )}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-2xl bg-white/5 p-3">
+                    <p className="font-mono text-[9px] uppercase tracking-widest text-white/45">Visitas</p>
+                    <p className="mt-1 flex items-center gap-2 text-2xl font-light tracking-[-0.04em]">
+                      <Eye size={15} aria-hidden className="text-neon" /> {stats?.total ?? 0}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white/5 p-3">
+                    <p className="font-mono text-[9px] uppercase tracking-widest text-white/45">Últimos 7 dias</p>
+                    <p className="mt-1 text-2xl font-light tracking-[-0.04em]">{stats?.semana ?? 0}</p>
+                  </div>
+                </div>
+                <p className="text-[11px] leading-relaxed text-white/50">
+                  Use <code className="font-mono text-neon">{"{link_portfolio}"}</code> no e-mail: cada lead recebe um link próprio e a visita aparece no histórico dele.
+                </p>
+              </div>
+            )}
+          </div>
+
           <Glass className="no-fx p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>

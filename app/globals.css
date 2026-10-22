@@ -557,3 +557,19 @@ body {
     -webkit-print-color-adjust: exact;
   }
 }
+
+/* painel lateral do lead */
+@keyframes drawer-in {
+  from {
+    translate: 40px 0;
+    opacity: 0;
+  }
+}
+.drawer-in {
+  animation: drawer-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer-in {
+    animation: none;
+  }
+}

@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
-import { getCompany } from "@/lib/companies";
+import { adicionarEmpresasAoPipeline } from "./empresas";
 import { STATUSES, type Lead, type LeadInput, type Status } from "@/lib/lead-types";
 
 type LeadRow = {
@@ -85,28 +85,25 @@ export async function deleteLead(id: string): Promise<void> {
   if (error) throw new Error("Não foi possível excluir o lead");
 }
 
-// "Adicionar aos leads" no detalhe da empresa: usa o primeiro sócio como contato (decisor do QSA).
+// "Adicionar aos leads" no detalhe da empresa: decisor do QSA como contato e score automático.
 export async function addCompanyAsLead(form: FormData): Promise<void> {
-  const user = await requireUser();
-  const company = await getCompany(String(form.get("cnpj") ?? ""));
-  if (!company) throw new Error("Empresa não encontrada");
-  const partner = company.partners.find((p) => p.kind === "PF") ?? company.partners[0];
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("leads")
-    .insert({
-      workspace_id: user.workspaceId,
-      cnpj: company.cnpj,
-      name: (partner?.name ?? "Contato principal").slice(0, 80),
-      role: partner ? "Sócio" : "",
-      company: company.name.slice(0, 80),
-      email: company.email ?? "",
-      phone: company.phones[0] ?? "",
-      place: [company.city, company.uf].filter(Boolean).join(", "),
-    })
-    .select("id")
-    .single();
-  if (error) throw new Error("Não foi possível criar o lead");
-  await supabase.from("lead_events").insert({ lead_id: data.id, workspace_id: user.workspaceId, type: "created", payload: { from: "company" } });
+  const r = await adicionarEmpresasAoPipeline([String(form.get("cnpj") ?? "")]);
+  if (!r.criados && !r.jaExistiam) throw new Error("Não foi possível criar o lead");
   redirect("/leads");
+}
+
+/** Edita os dados de contato do lead (painel do lead / enriquecimento). */
+export async function atualizarLead(id: string, campos: Partial<Pick<Lead, "name" | "role" | "email" | "phone" | "place">>): Promise<Lead> {
+  await requireUser();
+  const row: Record<string, string> = {};
+  if (campos.name !== undefined) row.name = text(campos.name, 80);
+  if (campos.role !== undefined) row.role = text(campos.role, 80);
+  if (campos.email !== undefined) row.email = text(campos.email, 120);
+  if (campos.phone !== undefined) row.phone = text(campos.phone, 30);
+  if (campos.place !== undefined) row.place = text(campos.place, 80);
+  if (row.name === "") throw new Error("O nome não pode ficar vazio");
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("leads").update(row).eq("id", id).select(COLUMNS).single();
+  if (error) throw new Error("Não foi possível salvar o lead");
+  return toLead(data as LeadRow);
 }
