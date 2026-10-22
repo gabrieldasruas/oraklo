@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarDays, KanbanSquare, List, Mail, Phone, Search, Trash2 } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock3, KanbanSquare, List, Mail, MousePointerClick, Phone, Search, Send, Trash2 } from "lucide-react";
+import { faixaScore } from "@/lib/score";
 import { STATUSES, useLeads, type Status } from "@/lib/leads";
 import PageHeader from "@/components/app/PageHeader";
 import LeadForm from "@/components/app/LeadForm";
@@ -51,6 +52,8 @@ export default function LeadsView() {
   const { reunioes, erro: erroReunioes, agendar, alterar, cancelar } = useReunioes();
   const [abertura, setAbertura] = useState<AberturaReuniao | null>(null);
   const proximasReunioes = reunioes.filter((r) => new Date(r.end) >= new Date()).length;
+  const comEmail = useMemo(() => leads.filter((l) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(l.email.trim())), [leads]);
+  const prontos = useMemo(() => comEmail.filter((l) => l.status === "Novo"), [comEmail]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -91,14 +94,7 @@ export default function LeadsView() {
         index="02"
         title="Leads"
         description="Seu CRM: leads no pipeline, reuniões no calendário e tudo salvo no workspace da equipe — sem planilha."
-        action={
-          <div className="flex flex-wrap gap-2">
-            <Pill tone="ghost" onClick={() => setCampanha([])}>
-              Disparar e-mails
-            </Pill>
-            <Pill onClick={() => setFormOpen(true)}>Novo lead</Pill>
-          </div>
-        }
+        action={<Pill onClick={() => setFormOpen(true)}>Novo lead</Pill>}
       />
 
       <div className="space-y-4">
@@ -120,6 +116,61 @@ export default function LeadsView() {
               </p>
             </Aura>
           ))}
+        </section>
+
+        {/* destaque: disparo de e-mails */}
+        <section
+          aria-label="Disparar e-mails"
+          className="relative overflow-hidden rounded-[28px] bg-night p-6 text-white shadow-[0_30px_60px_-30px_rgba(10,10,10,0.8)] md:p-7"
+        >
+          <span aria-hidden className="pointer-events-none absolute -left-20 -top-24 size-72 rounded-full opacity-40 blur-3xl" style={{ background: "radial-gradient(circle, rgba(184,255,60,0.7), transparent 70%)" }} />
+          <span aria-hidden className="pointer-events-none absolute -bottom-28 right-10 size-72 rounded-full opacity-25 blur-3xl" style={{ background: "radial-gradient(circle, rgba(184,255,60,0.8), transparent 70%)" }} />
+          <WireArt kind="waves" className="pointer-events-none absolute -right-10 top-0 h-full w-1/2 text-neon opacity-10" />
+
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center">
+            <div className="flex min-w-0 flex-1 items-start gap-4">
+              <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-neon text-night shadow-[0_0_40px_-6px_rgba(184,255,60,0.9)]">
+                <Send size={24} aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <Micro className="!text-neon !opacity-90">Novo · E-mail com follow-up</Micro>
+                <h2 className="mt-1 whitespace-nowrap text-3xl font-light leading-tight tracking-[-0.04em] md:text-4xl">Disparar e-mails</h2>
+                <p className="mt-1 max-w-xl text-sm text-white/60">
+                  Uma mensagem personalizada para cada lead, com o seu portfólio. Quem não responder recebe o follow-up sozinho.
+                </p>
+              </div>
+            </div>
+
+            <ul className="relative grid grid-cols-3 gap-2 text-center lg:w-[340px]">
+              {[
+                { icon: Mail, v: comEmail.length, t: "com e-mail" },
+                { icon: MousePointerClick, v: prontos.length, t: "prontos (Novo)" },
+                { icon: Clock3, v: "auto", t: "follow-up" },
+              ].map(({ icon: Icon, v, t }) => (
+                <li key={t} className="rounded-2xl border border-white/10 bg-white/5 px-2 py-3">
+                  <Icon size={14} aria-hidden className="mx-auto text-neon" />
+                  <p className="mt-1.5 text-2xl font-light leading-none tracking-[-0.04em] tabular-nums">{loaded ? v : "–"}</p>
+                  <p className="mt-1 font-mono text-[9px] uppercase tracking-widest text-white/45">{t}</p>
+                </li>
+              ))}
+            </ul>
+
+            <div className="relative flex flex-col gap-2 sm:flex-row lg:flex-col">
+              <button
+                type="button"
+                onClick={() => setCampanha(prontos.map((l) => l.id))}
+                className="group flex min-h-14 cursor-pointer items-center justify-center gap-3 rounded-full bg-neon pl-7 pr-3 text-base font-medium text-night shadow-[0_18px_40px_-14px_rgba(184,255,60,0.9)] transition-transform hover:-translate-y-0.5"
+              >
+                Disparar agora
+                <span className="flex size-9 items-center justify-center rounded-full bg-night text-neon transition-transform group-hover:translate-x-0.5">
+                  <ArrowRight size={16} aria-hidden />
+                </span>
+              </button>
+              <button type="button" onClick={() => setCampanha([])} className="min-h-10 cursor-pointer rounded-full border border-white/15 px-5 text-xs text-white/70 hover:bg-white/10 hover:text-white">
+                Escolher os leads
+              </button>
+            </div>
+          </div>
         </section>
 
         {/* abas do CRM */}
@@ -285,10 +336,12 @@ export default function LeadsView() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <span className="relative h-px w-20 bg-night/15">
+                        <span className="relative h-px w-16 bg-night/15">
                           <span className="absolute inset-y-0 left-0 h-[3px] -translate-y-px bg-night" style={{ width: `${l.score}%` }} />
                         </span>
-                        <span className="w-7 font-mono text-xs tabular-nums">{l.score}</span>
+                        <span className="whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[10px] font-medium text-night" style={{ background: faixaScore(l.score).cor }}>
+                          {l.score} · {faixaScore(l.score).rotulo}
+                        </span>
                       </div>
                     </td>
                     <td className="px-4 py-4 font-mono text-xs opacity-55">
