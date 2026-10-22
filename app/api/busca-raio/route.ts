@@ -62,6 +62,10 @@ export async function POST(request: NextRequest) {
   if (portes.length) filter.sizes = portes;
   if (body.temEmail === true) filter.has_email = true;
   if (body.matriz === true) filter.headquarters_only = true;
+  const capitalMin = Number(body.capitalMin);
+  if (Number.isFinite(capitalMin) && capitalMin > 0) filter.min_share_capital = capitalMin;
+  const anosMin = Number(body.anosMin);
+  if (Number.isFinite(anosMin) && anosMin > 0) filter.min_years_open = Math.min(50, Math.round(anosMin));
 
   try {
     const [page, total] = await Promise.all([searchCompanies(filter, cursor), cursor ? Promise.resolve(null) : countCompanies(filter)]);
