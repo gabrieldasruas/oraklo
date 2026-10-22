@@ -308,6 +308,7 @@ export default function BuscaAvancada({
       const partes = [`${r.criados} adicionada${r.criados === 1 ? "" : "s"} ao pipeline`];
       if (r.jaExistiam) partes.push(`${r.jaExistiam} já estava${r.jaExistiam === 1 ? "" : "m"} lá`);
       if (r.falharam) partes.push(`${r.falharam} com erro`);
+      if (r.limitados) partes.push(`${r.limitados} ficaram de fora pelo limite do plano Grátis`);
       setRetorno({ tipo: r.criados || r.jaExistiam ? "ok" : "erro", texto: partes.join(" · "), link: { href: "/leads", t: "Abrir pipeline" } });
       setSelecionadas(new Set());
     } catch {

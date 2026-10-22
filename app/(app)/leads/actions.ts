@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
 import { adicionarEmpresasAoPipeline } from "./empresas";
 import { avisarCrm } from "@/lib/crm-webhook";
+import { LIMITES, LimiteAtingido, planoDoWorkspace, restante, usoDoMes } from "@/lib/planos";
 import { STATUSES, type Lead, type LeadInput, type Status } from "@/lib/lead-types";
 
 type LeadRow = {
@@ -62,6 +63,8 @@ export async function createLead(input: LeadInput): Promise<Lead> {
   };
   if (!row.name || !row.company) throw new Error("Nome e empresa são obrigatórios");
   const supabase = await createClient();
+  const limite = LIMITES[await planoDoWorkspace(supabase, user.workspaceId)].pipelineMes;
+  if (restante(limite, (await usoDoMes(supabase)).pipeline) === 0) throw new LimiteAtingido("empresas no pipeline", limite!);
   const { data, error } = await supabase.from("leads").insert(row).select(COLUMNS).single();
   if (error) throw new Error("Não foi possível salvar o lead");
   await supabase.from("lead_events").insert({ lead_id: data.id, workspace_id: user.workspaceId, type: "created" });

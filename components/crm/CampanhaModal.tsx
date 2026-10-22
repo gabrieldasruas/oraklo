@@ -37,7 +37,7 @@ export default function CampanhaModal({
   const [followCorpo, setFollowCorpo] = useState(FOLLOWUP_PADRAO);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [feito, setFeito] = useState<{ enviados: number; semEmail: number; falharam: number } | null>(null);
+  const [feito, setFeito] = useState<{ enviados: number; semEmail: number; falharam: number; limitados: number } | null>(null);
   const corpoRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -129,6 +129,7 @@ export default function CampanhaModal({
               Aberturas e cliques aparecem no histórico de cada lead.
               {feito.falharam ? ` ${feito.falharam} falharam.` : ""}
               {feito.semEmail ? ` ${feito.semEmail} sem e-mail válido.` : ""}
+              {feito.limitados ? ` ${feito.limitados} ficaram para o próximo mês pelo limite do plano Grátis.` : ""}
             </p>
             <button type="button" onClick={onFechar} className="mt-3 min-h-11 cursor-pointer rounded-full bg-night px-6 text-sm font-medium text-white">
               Fechar

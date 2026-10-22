@@ -6,21 +6,27 @@ import { getCompany } from "@/lib/companies";
 import { ehDecisor, rotuloCargo } from "@/lib/crm";
 import { calcularScore } from "@/lib/score";
 import { avisarCrm } from "@/lib/crm-webhook";
+import { LIMITES, planoDoWorkspace, restante, usoDoMes } from "@/lib/planos";
 
 // Empresas da base → leads do workspace (um por empresa), com o decisor do QSA como contato
 // e o score calculado. Empresas que já estão no pipeline não são duplicadas.
 
 const MAX_POR_VEZ = 100;
 
-export async function adicionarEmpresasAoPipeline(cnpjs: string[]): Promise<{ criados: number; jaExistiam: number; falharam: number }> {
+export async function adicionarEmpresasAoPipeline(cnpjs: string[]): Promise<{ criados: number; jaExistiam: number; falharam: number; limitados: number }> {
   const user = await requireUser();
   const lista = [...new Set(cnpjs.map((c) => c.replace(/\D/g, "")).filter((c) => c.length === 14))].slice(0, MAX_POR_VEZ);
-  if (!lista.length) return { criados: 0, jaExistiam: 0, falharam: 0 };
+  if (!lista.length) return { criados: 0, jaExistiam: 0, falharam: 0, limitados: 0 };
 
   const supabase = await createClient();
   const { data: existentes } = await supabase.from("leads").select("cnpj").in("cnpj", lista);
   const ja = new Set((existentes ?? []).map((l) => (l.cnpj as string)?.trim()));
-  const novos = lista.filter((c) => !ja.has(c));
+  const todosNovos = lista.filter((c) => !ja.has(c));
+  // limite do plano Grátis (empresas por mês no pipeline)
+  const plano = await planoDoWorkspace(supabase, user.workspaceId);
+  const cabe = restante(LIMITES[plano].pipelineMes, (await usoDoMes(supabase)).pipeline);
+  const novos = cabe === null ? todosNovos : todosNovos.slice(0, cabe);
+  const limitados = todosNovos.length - novos.length;
 
   let criados = 0;
   let falharam = 0;
@@ -61,7 +67,7 @@ export async function adicionarEmpresasAoPipeline(cnpjs: string[]): Promise<{ cr
       .from("lead_events")
       .insert(data.map((l) => ({ lead_id: l.id, workspace_id: user.workspaceId, type: "created", payload: { from: "busca" } })));
   }
-  return { criados, jaExistiam: ja.size, falharam };
+  return { criados, jaExistiam: ja.size, falharam, limitados };
 }
 
 /** Salva empresas escolhidas como uma lista do workspace (para exportar depois). */

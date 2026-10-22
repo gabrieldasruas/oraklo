@@ -7,7 +7,9 @@ import { Aura, Glass, Micro, WireArt } from "@/components/app/ui";
 import Prospecta3D from "@/components/three/Prospecta3DLazy";
 import CountUp from "@/components/motion/CountUp";
 import { Reveal } from "@/components/motion/Reveal";
-import { FunnelHero } from "@/components/three/lazy";
+import PrimeirosPassos from "@/components/app/PrimeirosPassos";
+import { PORTFOLIO_TAG } from "@/lib/portfolio-types";
+import { carregarPerfil } from "../segmentacao/perfil";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
 import { descreverEvento, haQuanto, type EventoLead } from "@/lib/lead-events";
@@ -41,6 +43,21 @@ export default async function PainelPage() {
     resumoEmails().catch(() => ({ enviados: 0, abertos: 0, respondidos: 0, followups: 0 })),
     estatisticasPortfolio().catch(() => ({ id: null, total: 0, semana: 0, ultima: null })),
   ]);
+  // primeiros passos
+  const [perfil, { data: port }, { count: abordagens }, { count: reunioesFeitas }] = await Promise.all([
+    carregarPerfil().catch(() => null),
+    supabase.from("lists").select("filter").eq("tag", PORTFOLIO_TAG).limit(1).maybeSingle(),
+    supabase.from("lead_events").select("id", { count: "exact", head: true }).in("type", ["email_sent", "whatsapp_opened"]),
+    supabase.from("lead_events").select("id", { count: "exact", head: true }).eq("type", "meeting_created"),
+  ]);
+  const passos = [
+    { t: "Monte seu cliente ideal", d: "Escolha nichos e porte na Segmentação", href: "/segmentacao#foco", feito: !!perfil && perfil.nichos.length > 0 },
+    { t: "Mande empresas ao pipeline", d: "Busque no mapa e selecione as melhores", href: "/busca-avancada", feito: (leadsRaw ?? []).length > 0 },
+    { t: "Personalize seu portfólio", d: "Logo, soluções e cases em slides", href: "/portfolio", feito: !!port },
+    { t: "Ligue o link público", d: "Saiba quem abriu sua apresentação", href: "/portfolio", feito: !!(port?.filter as { compartilhar?: { ativo?: boolean } } | null)?.compartilhar?.ativo },
+    { t: "Faça a primeira abordagem", d: "E-mail com follow-up ou WhatsApp", href: "/leads", feito: (abordagens ?? 0) > 0 },
+    { t: "Marque a primeira reunião", d: "Leve para o Google Agenda", href: "/leads", feito: (reunioesFeitas ?? 0) > 0 },
+  ];
 
   const leads = leadsRaw ?? [];
   const nomes = new Map(leads.map((l) => [l.id as string, l as { name: string; company: string }]));
@@ -65,7 +82,6 @@ export default async function PainelPage() {
     { label: "Reuniões", value: comReuniao, pct: pct(comReuniao, leads.length) },
   ];
   const eventos: EventoLead[] = (eventosRaw ?? []).map((e) => ({ id: e.id, leadId: e.lead_id, type: e.type, payload: e.payload ?? {}, createdAt: e.created_at }));
-  const vazio = leads.length === 0;
 
   return (
     <>
@@ -76,22 +92,8 @@ export default async function PainelPage() {
         action={<Prospecta3D quality="low" className="-my-8 hidden size-[220px] md:block" />}
       />
 
-      {vazio && (
-        <Glass className="mb-4 flex flex-wrap items-center justify-between gap-4 p-6">
-          <div>
-            <p className="text-xl font-light tracking-[-0.03em]">Seu funil ainda está vazio.</p>
-            <p className="text-sm opacity-60">Encontre empresas na busca avançada e mande para o pipeline — os números aparecem aqui.</p>
-          </div>
-          <Link href="/busca-avancada" className="flex min-h-11 items-center gap-2 rounded-full bg-night px-5 text-sm font-medium text-white hover:bg-neon hover:text-night">
-            Buscar empresas <ArrowUpRight size={15} aria-hidden />
-          </Link>
-        </Glass>
-      )}
 
-      {/* funil em partículas 3D com os números reais */}
-      <div className="reveal mb-4">
-        <FunnelHero steps={funil} />
-      </div>
+      <PrimeirosPassos passos={passos} />
 
       <div className="grid gap-4 lg:grid-cols-12">
         {/* Destaque principal */}
