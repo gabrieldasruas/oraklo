@@ -6,6 +6,7 @@ import { WhatsappIcon } from "@/components/brand/Icons";
 import { STATUSES, type Lead, type Status } from "@/lib/lead-types";
 import { categoria, type Reuniao } from "@/lib/meeting-types";
 import { iniciais } from "@/lib/crm";
+import { faixaScore } from "@/lib/score";
 
 // Cor de cada etapa do funil (as mesmas da constelação de leads).
 export const COR_ETAPA: Record<Status, string> = {
@@ -160,11 +161,14 @@ export default function Pipeline({
                     </div>
 
                     {/* score */}
-                    <div className="mt-3 flex items-center gap-2">
+                    <div className="mt-3 flex items-center gap-2" title="Score automático: porte, capital social, contatos, matriz e tempo de mercado">
+                      <span className="font-mono text-[9px] uppercase tracking-widest opacity-45">Score</span>
                       <span className="relative h-1 flex-1 overflow-hidden rounded-full bg-night/10">
                         <span className="absolute inset-y-0 left-0 rounded-full bg-night" style={{ width: `${l.score}%` }} />
                       </span>
-                      <span className="w-6 text-right font-mono text-[10px] tabular-nums opacity-60">{l.score}</span>
+                      <span className="rounded-full px-2 py-0.5 font-mono text-[10px] font-medium tabular-nums text-night" style={{ background: faixaScore(l.score).cor }}>
+                        {l.score} · {faixaScore(l.score).rotulo}
+                      </span>
                     </div>
 
                     {/* próxima reunião */}
