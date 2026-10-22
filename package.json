@@ -11,6 +11,7 @@
     "test:rls": "node --env-file=.env.local scripts/test-rls.mts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.1.0",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
     "@supabase/ssr": "^0.12.7",

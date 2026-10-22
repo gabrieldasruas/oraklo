@@ -28,6 +28,10 @@ export function descreverEvento(e: EventoLead): { titulo: string; detalhe?: stri
       return { titulo: p.from === "busca" ? "Adicionado pela busca avançada" : "Lead criado", tom: "neutro" };
     case "status_changed":
       return { titulo: `Movido para ${str(p.status) || str(p.to)}`, tom: "ceu" };
+    case "whatsapp_opened":
+      return { titulo: "Mensagem de WhatsApp aberta", detalhe: str(p.text) || undefined, tom: "neon" };
+    case "ai_generated":
+      return { titulo: p.canal === "whatsapp" ? "Mensagem de WhatsApp escrita com IA" : "E-mail escrito com IA", tom: "ceu" };
     case "note":
       return { titulo: "Nota", detalhe: str(p.text), tom: "neutro" };
     case "task_created":

@@ -215,3 +215,21 @@ export const getFacets = unstable_cache(
   ["company-facets"],
   { revalidate: 300, tags: ["companies"] },
 );
+
+/** Empresas ativas abertas a partir de uma data (radar de novas empresas), mais recentes primeiro. */
+export async function empresasAbertasDesde(o: { desde: string; cnaes?: string[]; ufs?: string[]; limite?: number }): Promise<{ items: CompanyItem[]; total: number }> {
+  let q = createAdminClient()
+    .from("companies")
+    .select(COLUMNS, { count: "exact" })
+    .eq("status", "02")
+    .gte("opened_at", o.desde)
+    .order("opened_at", { ascending: false })
+    .limit(Math.min(o.limite ?? 20, 100));
+  if (o.cnaes?.length) q = q.in("cnae_main", o.cnaes);
+  if (o.ufs?.length) q = q.in("uf", o.ufs);
+  const { data, error, count } = await q;
+  if (error) throw new Error(`Falha no radar: ${error.message}`);
+  const rows = (data ?? []) as unknown as Row[];
+  const cities = await municipalityNames(rows.map((r) => r.municipality_code ?? ""));
+  return { items: rows.map((r) => toItem(r, cities)), total: count ?? rows.length };
+}

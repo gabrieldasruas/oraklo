@@ -7,6 +7,7 @@ import { completar, preencherEmail, type Portfolio } from "@/lib/portfolio-types
 import { VARIAVEIS_EMAIL } from "@/lib/lead-events";
 import { carregarPortfolio } from "@/app/(app)/portfolio/actions";
 import { configuracaoEmail, enviarEmails, type ConfigEmail } from "@/app/(app)/leads/emails";
+import { escreverComIA, iaDisponivel } from "@/app/(app)/leads/abordagem";
 import { COR_ETAPA } from "./Pipeline";
 
 const FOLLOWUP_PADRAO = "Oi, {nome}! Passando para saber se conseguiu ver minha mensagem anterior.\n\nSe fizer sentido, te mostro em 15 minutos como funcionaria na {empresa}. Qual o melhor horário?\n\n{meu_nome}";
@@ -39,6 +40,23 @@ export default function CampanhaModal({
   const [erro, setErro] = useState<string | null>(null);
   const [feito, setFeito] = useState<{ enviados: number; semEmail: number; falharam: number; limitados: number } | null>(null);
   const corpoRef = useRef<HTMLTextAreaElement>(null);
+  const [ia, setIa] = useState(false);
+  const [escrevendo, setEscrevendo] = useState(false);
+  const [pedidoIa, setPedidoIa] = useState("");
+
+  useEffect(() => {
+    iaDisponivel().then(setIa).catch(() => setIa(false));
+  }, []);
+
+  async function comIA() {
+    setEscrevendo(true);
+    setErro(null);
+    const r = await escreverComIA({ leadId: null, canal: "email", modelo: true, instrucao: pedidoIa }).catch(() => ({ ok: false as const, erro: "Não foi possível falar com a IA." }));
+    setEscrevendo(false);
+    if (!r.ok) return setErro(r.erro);
+    if (r.assunto) setAssunto(r.assunto);
+    setCorpo(r.texto);
+  }
 
   useEffect(() => {
     configuracaoEmail().then(setCfg).catch(() => setCfg({ configurado: false, remetente: null }));
@@ -212,6 +230,19 @@ export default function CampanhaModal({
                 </div>
               )}
 
+              {ia && (
+                <div className="flex flex-wrap gap-2 rounded-[18px] bg-night p-3">
+                  <input
+                    value={pedidoIa}
+                    onChange={(e) => setPedidoIa(e.target.value)}
+                    placeholder="Opcional: diga o foco (ex.: oferecer diagnóstico gratuito)"
+                    className="min-h-10 min-w-0 flex-1 rounded-full bg-white/10 px-4 text-xs text-white outline-none placeholder:text-white/40"
+                  />
+                  <button type="button" onClick={() => void comIA()} disabled={escrevendo} className="flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full bg-neon px-4 text-xs font-medium text-night disabled:opacity-50">
+                    {escrevendo ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} aria-hidden />} Escrever com IA
+                  </button>
+                </div>
+              )}
               <label className="block">
                 <span className="mb-1 block font-mono text-[10px] uppercase tracking-widest opacity-50">Assunto</span>
                 <input value={assunto} onChange={(e) => setAssunto(e.target.value)} className="min-h-11 w-full rounded-2xl border border-white bg-white px-4 text-sm outline-none focus:border-night/30" />
