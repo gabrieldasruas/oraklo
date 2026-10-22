@@ -27,6 +27,7 @@ import { marcarResposta } from "@/app/(app)/leads/emails";
 import { atualizarLead } from "@/app/(app)/leads/actions";
 import { buscarDecisores, dominioDoLead, hunterConfigurado, usarContato, type Pessoa } from "@/app/(app)/leads/enriquecer";
 import { COR_ETAPA } from "./Pipeline";
+import { enviarLeadsRd } from "@/app/(app)/configuracoes/rd";
 
 type Aba = "atividade" | "tarefas" | "contato";
 
@@ -410,6 +411,7 @@ function Contato({ lead, onAtualizado }: { lead: Lead; onAtualizado: (l: Lead) =
       </form>
 
       <Decisores lead={lead} onAtualizado={onAtualizado} />
+      <EnviarRd leadId={lead.id} />
     </div>
   );
 }
@@ -514,5 +516,32 @@ function Decisores({ lead, onAtualizado }: { lead: Lead; onAtualizado: (l: Lead)
         </ul>
       )}
     </section>
+  );
+}
+
+function EnviarRd({ leadId }: { leadId: string }) {
+  const [estado, setEstado] = useState<null | "enviando" | { ok: boolean; texto: string }>(null);
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-[20px] border border-white bg-white p-4">
+      <span className="flex size-9 items-center justify-center rounded-xl bg-[#1b2b5b] text-[11px] font-semibold text-white">RD</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">RD Station CRM</p>
+        <p className="text-xs opacity-55">Cria empresa, contato e negociação no seu RD.</p>
+      </div>
+      <button
+        type="button"
+        disabled={estado === "enviando"}
+        onClick={async () => {
+          setEstado("enviando");
+          const r = await enviarLeadsRd([leadId]).catch(() => ({ ok: false as const, erro: "Não foi possível enviar." }));
+          if (!r.ok) return setEstado({ ok: false, texto: r.erro });
+          setEstado(r.enviados ? { ok: true, texto: "Enviado ao RD Station" } : r.jaEstavam ? { ok: true, texto: "Já está no RD Station" } : { ok: false, texto: r.aviso ?? "Não foi possível enviar." });
+        }}
+        className="flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full bg-night px-4 text-xs font-medium text-white disabled:opacity-50"
+      >
+        {estado === "enviando" && <Loader2 size={12} className="animate-spin" />} Enviar ao RD
+      </button>
+      {estado && estado !== "enviando" && <p className={`w-full text-xs ${estado.ok ? "text-emerald-700" : "text-rose-700"}`}>{estado.texto}</p>}
+    </div>
   );
 }

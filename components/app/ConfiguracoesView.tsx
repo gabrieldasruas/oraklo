@@ -6,6 +6,7 @@ import { Glass, Micro } from "@/components/app/ui";
 import { WhatsappIcon } from "@/components/brand/Icons";
 import { EVENTOS_CRM, type ConfigWorkspace, type EventoCrm } from "@/lib/config-workspace";
 import { renomearWorkspace, salvarConfig, salvarNome, testarWebhook } from "@/app/(app)/configuracoes/actions";
+import RdStationCard from "./RdStationCard";
 
 type Limites = { pipelineMes: number | null; emailsMes: number | null; iaMes: number | null; radarItens: number | null };
 type Props = {
@@ -247,6 +248,16 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
           </div>
         </Glass>
       </div>
+
+      {/* RD Station CRM (integração direta) */}
+      <RdStationCard
+        c={c}
+        setC={setC}
+        onServidor={(cfg) => {
+          ultimo.current = JSON.stringify(cfg);
+          setC(cfg);
+        }}
+      />
 
       {/* WhatsApp */}
       <Glass className="p-7">

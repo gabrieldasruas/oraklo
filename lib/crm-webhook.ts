@@ -2,6 +2,7 @@ import "server-only";
 import { after } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CONFIG_TAG, completarConfig, webhookPermitido, type ConfigWorkspace, type EventoCrm } from "./config-workspace";
+import { agendarRd } from "./rd-sync";
 
 // Integração com CRM por webhook: a cada evento escolhido, o Oraklo manda um POST JSON para a URL
 // configurada (Zapier, Make, n8n, RD Station, Pipedrive, HubSpot via automação…).
@@ -43,6 +44,9 @@ export async function enviarWebhook(url: string, corpo: Record<string, unknown>)
  */
 export async function avisarCrm(db: SupabaseClient, workspace: string, evento: EventoCrm, leadIds: string[], extra: Record<string, unknown> = {}) {
   if (!leadIds.length) return;
+  // integração direta com o RD Station CRM (se conectado)
+  const reuniao = extra.reuniao as { titulo?: string; inicio?: string } | undefined;
+  await agendarRd(db, evento, leadIds, reuniao ? `Reunião marcada pelo Oraklo: ${reuniao.titulo ?? "Reunião"}${reuniao.inicio ? ` em ${new Date(reuniao.inicio).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" })}` : ""}` : undefined).catch(() => {});
   const { data: cfgRow } = await db.from("lists").select("filter").eq("tag", CONFIG_TAG).limit(1).maybeSingle();
   const cfg: ConfigWorkspace = completarConfig(cfgRow?.filter as Partial<ConfigWorkspace> | null);
   if (!cfg.crm.ativo || !cfg.crm.webhookUrl || !cfg.crm.eventos.includes(evento)) return;

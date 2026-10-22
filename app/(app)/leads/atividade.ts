@@ -3,6 +3,7 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
 import { montarTarefas, type EventoLead, type Tarefa } from "@/lib/lead-events";
+import { agendarRd } from "@/lib/rd-sync";
 
 // Histórico, notas e tarefas do lead — tudo como eventos em `lead_events` (sem tabela nova).
 // Server Actions são endpoints públicos: cada uma confere a sessão; o RLS isola o workspace.
@@ -42,7 +43,9 @@ export async function historicoDoLead(leadId: string): Promise<EventoLead[]> {
 export async function adicionarNota(leadId: string, nota: string): Promise<EventoLead> {
   const t = texto(nota, 2000);
   if (!t) throw new Error("Escreva a nota");
-  return registrar(leadId, "note", { text: t });
+  const ev = await registrar(leadId, "note", { text: t });
+  await agendarRd(await createClient(), "nota", [leadId], `Nota do Oraklo: ${t}`).catch(() => {});
+  return ev;
 }
 
 export async function criarTarefa(leadId: string, titulo: string, vence: string | null): Promise<EventoLead> {
