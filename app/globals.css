@@ -475,3 +475,19 @@ body {
 .leaflet-tooltip-top.pin-tooltip::before {
   border-top-color: #0b0b0c;
 }
+
+/* prévia da empresa ao passar o mouse */
+@keyframes previa-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+.previa-in {
+  animation: previa-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .previa-in {
+    animation: none;
+  }
+}

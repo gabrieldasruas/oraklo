@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { Building2, Check, ChevronDown, Crosshair, Loader2, Locate, MapPin, Radio, Search, X } from "lucide-react";
 import { Glass, Micro } from "@/components/app/ui";
 import ContactCell from "@/components/app/ContactCell";
+import PreviaEmpresa from "./PreviaEmpresa";
 import {
   cidadeMaisProxima,
   centroNoBrasil,
@@ -53,8 +53,8 @@ type Resultado = {
 };
 type Override = { escopo?: Escopo; raioKm?: number; ufs?: string[]; centro?: Centro };
 
-/** Fração das empresas localizadas (as de maior capital) que ganham pin neon; as demais, marcação leve. */
-const FRACAO_DESTAQUE = 0.6;
+/** Fração das empresas localizadas que ganham pin neon (1 = todas as empresas buscadas). */
+const FRACAO_DESTAQUE = 1;
 /** Espera depois da última mudança antes de atualizar a lista (ms). */
 const ESPERA_AO_VIVO = 600;
 
@@ -90,7 +90,7 @@ export default function BuscaAvancada({
   const [portes, setPortes] = useState<string[]>([]);
   const [temEmail, setTemEmail] = useState(false);
   const [matriz, setMatriz] = useState(false);
-  const [aberto, setAberto] = useState<null | "cnae" | "estados" | "cidade" | "cidade-barra">(null);
+  const [aberto, setAberto] = useState<null | "cnae" | "estados" | "cidade" | "cidade-barra" | "porte">(null);
 
   // ---------- resultados ----------
   const [res, setRes] = useState<Resultado | null>(null);
@@ -332,7 +332,7 @@ export default function BuscaAvancada({
   return (
     <div className="space-y-4">
       {/* ================= Barra de filtros ================= */}
-      <Glass className="no-fx relative z-30 p-3 md:p-4">
+      <Glass className="no-fx relative z-20 p-3 md:p-4">
         <div className="flex flex-wrap items-center gap-2">
           {/* Onde buscar */}
           <div role="radiogroup" aria-label="Onde buscar" className="flex rounded-full bg-night/5 p-1">
@@ -454,12 +454,33 @@ export default function BuscaAvancada({
             )}
           </div>
 
-          {/* Porte */}
-          {(["ME", "EPP", "DEMAIS"] as const).map((p) => (
-            <button key={p} type="button" onClick={() => setPortes((s) => toggle(s, p))} aria-pressed={portes.includes(p)} className={chip(portes.includes(p))}>
-              {SIZE_LABEL[p]}
+          {/* Porte (menu, para a barra caber numa linha) */}
+          <div className="relative">
+            <button type="button" onClick={() => setAberto(aberto === "porte" ? null : "porte")} className={chip(portes.length > 0)} aria-expanded={aberto === "porte"}>
+              Porte{portes.length ? ` · ${portes.length}` : ""} <ChevronDown size={12} className="ml-1 inline" aria-hidden />
             </button>
-          ))}
+            {aberto === "porte" && (
+              <div className="absolute left-0 top-full z-40 mt-2 w-56 rounded-2xl border border-night/10 bg-white p-2 shadow-2xl">
+                {(["ME", "EPP", "DEMAIS"] as const).map((p) => {
+                  const on = portes.includes(p);
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setPortes((s) => toggle(s, p))}
+                      aria-pressed={on}
+                      className={`flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs ${on ? "bg-neon/40" : "hover:bg-night/5"}`}
+                    >
+                      <span className={`flex size-4 shrink-0 items-center justify-center rounded border ${on ? "border-night bg-night text-neon" : "border-night/30"}`}>
+                        {on && <Check size={11} aria-hidden />}
+                      </span>
+                      {SIZE_LABEL[p]}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           <button type="button" onClick={() => setTemEmail((v) => !v)} aria-pressed={temEmail} className={chip(temEmail)}>
             Com e-mail
           </button>
@@ -467,11 +488,24 @@ export default function BuscaAvancada({
             Só matrizes
           </button>
 
-          {/* status ao vivo */}
-          <span className="ml-auto flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] opacity-60">
-            {carregando ? <Loader2 size={12} className="animate-spin" aria-hidden /> : <Radio size={12} className="text-emerald-600" aria-hidden />}
-            {carregando ? "Atualizando" : "Ao vivo"}
-          </span>
+          {/* buscar agora (a lista também atualiza sozinha a cada mudança) */}
+          <div className="ml-auto flex items-center gap-3">
+            <span className="hidden items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] opacity-60 xl:flex" title="A lista atualiza sozinha quando você muda o mapa ou os filtros">
+              {carregando ? <Loader2 size={12} className="animate-spin" aria-hidden /> : <Radio size={12} className="text-emerald-600" aria-hidden />}
+              {carregando ? "Atualizando" : "Ao vivo"}
+            </span>
+            <button
+              type="button"
+              onClick={() => void buscar()}
+              disabled={carregando}
+              className="group flex min-h-11 cursor-pointer items-center gap-3 rounded-full bg-neon py-1 pl-5 pr-1 text-sm font-medium text-night shadow-[0_10px_30px_-12px_rgba(120,190,20,0.9)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait"
+            >
+              Buscar empresas
+              <span className="flex size-9 items-center justify-center rounded-full bg-night text-neon">
+                {carregando ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Search size={16} aria-hidden />}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* atividades escolhidas */}
@@ -497,12 +531,12 @@ export default function BuscaAvancada({
       </Glass>
 
       {/* fecha os menus ao clicar fora */}
-      {aberto && <div aria-hidden className="fixed inset-0 z-20" onClick={() => setAberto(null)} />}
+      {aberto && <div aria-hidden className="fixed inset-0 z-10" onClick={() => setAberto(null)} />}
 
       {/* ================= Mapa + lista ================= */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
         {/* -------- Mapa -------- */}
-        <Glass className={`no-fx overflow-hidden lg:sticky lg:top-24 ${aberto === "cidade-barra" ? "relative z-30" : ""}`}>
+        <Glass className={`no-fx overflow-hidden lg:sticky lg:top-24 ${aberto === "cidade-barra" ? "relative z-20" : ""}`}>
           <div className="relative isolate h-[380px] md:h-[480px]">
             <RadiusMap
               centro={centro}
@@ -694,9 +728,7 @@ export default function BuscaAvancada({
                   </button>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                      <Link href={`/empresas/${c.cnpj}`} className="font-medium tracking-[-0.01em] underline-offset-4 hover:underline">
-                        {c.name}
-                      </Link>
+                      <PreviaEmpresa empresa={c} />
                       <span className="font-mono text-xs tabular-nums">{formatMoney(c.shareCapital)}</span>
                     </div>
                     <p className="mt-0.5 text-xs opacity-60">

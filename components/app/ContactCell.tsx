@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Mail, MessageCircle, Phone } from "lucide-react";
+import { Check, Copy, Mail, Phone } from "lucide-react";
+import { WhatsappIcon } from "@/components/brand/Icons";
 import { formatPhone } from "@/lib/format";
 
 // Botão de copiar com confirmação visual.
@@ -83,9 +84,9 @@ export default function ContactCell({ email, phones, inline = false }: { email: 
               rel="noopener noreferrer"
               aria-label="Abrir no WhatsApp"
               title="Abrir no WhatsApp"
-              className="flex size-8 shrink-0 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-500 hover:text-white"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full text-[#25d366] hover:bg-[#25d366] hover:text-white"
             >
-              <MessageCircle size={14} aria-hidden />
+              <WhatsappIcon size={15} />
             </a>
           )}
           <CopyButton value={formatPhone(first)} label="telefone" />
