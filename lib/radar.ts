@@ -1,7 +1,7 @@
 import "server-only";
 import { createAdminClient } from "./db/admin";
 import { empresasAbertasDesde, getFacets, type CompanyItem } from "./companies";
-import { CNAES_DO_NICHO, PERFIL_TAG, cnaesDoPerfil, completarPerfil, type PerfilBusca } from "./perfil-busca";
+import { CNAES_DO_NICHO, PERFIL_TAG, cnaesDoPerfil, completarPerfil, temFoco, type PerfilBusca } from "./perfil-busca";
 import { CONFIG_TAG, completarConfig, type ConfigWorkspace } from "./config-workspace";
 import { emailConfigurado, enviarLote, urlDoApp } from "./email";
 import { formatMoney, SIZE_LABEL } from "./format";
@@ -14,7 +14,7 @@ const DIA = 86_400_000;
 async function cnaesDoRadar(perfil: PerfilBusca | null) {
   const facets = await getFacets();
   const existentes = new Set(facets.cnaes.map((c) => c.code));
-  const base = perfil && perfil.nichos.length ? cnaesDoPerfil(perfil) : Object.values(CNAES_DO_NICHO).flat();
+  const base = temFoco(perfil) ? cnaesDoPerfil(perfil!) : Object.values(CNAES_DO_NICHO).flat();
   return { cnaes: [...new Set(base)].filter((c) => existentes.has(c)), ufs: facets.ufs.map((u) => u.code) };
 }
 

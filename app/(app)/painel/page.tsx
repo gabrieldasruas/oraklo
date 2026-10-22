@@ -13,6 +13,7 @@ import { radar } from "@/lib/radar";
 import { LIMITES, planoDoWorkspace } from "@/lib/planos";
 import { PORTFOLIO_TAG } from "@/lib/portfolio-types";
 import { carregarPerfil } from "../segmentacao/perfil";
+import { temFoco } from "@/lib/perfil-busca";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
 import { descreverEvento, haQuanto, type EventoLead } from "@/lib/lead-events";
@@ -53,9 +54,9 @@ export default async function PainelPage() {
     supabase.from("lead_events").select("id", { count: "exact", head: true }).in("type", ["email_sent", "whatsapp_opened"]),
     supabase.from("lead_events").select("id", { count: "exact", head: true }).eq("type", "meeting_created"),
   ]);
-  const [radarRes, plano] = await Promise.all([radar(perfil && perfil.nichos.length ? perfil : null).catch(() => null), planoDoWorkspace(supabase, user.workspaceId)]);
+  const [radarRes, plano] = await Promise.all([radar(temFoco(perfil) ? perfil : null).catch(() => null), planoDoWorkspace(supabase, user.workspaceId)]);
   const passos = [
-    { t: "Monte seu cliente ideal", d: "Escolha nichos e porte na Segmentação", href: "/segmentacao#foco", feito: !!perfil && perfil.nichos.length > 0 },
+    { t: "Monte seu cliente ideal", d: "Escolha nichos e porte na Segmentação", href: "/segmentacao#foco", feito: temFoco(perfil) },
     { t: "Mande empresas ao pipeline", d: "Busque no mapa e selecione as melhores", href: "/busca-avancada", feito: (leadsRaw ?? []).length > 0 },
     { t: "Personalize seu portfólio", d: "Logo, soluções e cases em slides", href: "/portfolio", feito: !!port },
     { t: "Ligue o link público", d: "Saiba quem abriu sua apresentação", href: "/portfolio", feito: !!(port?.filter as { compartilhar?: { ativo?: boolean } } | null)?.compartilhar?.ativo },
@@ -223,7 +224,7 @@ export default async function PainelPage() {
         {/* Radar de novas empresas */}
         {radarRes && (
           <Reveal index={6} className="lg:col-span-12">
-            <RadarCard items={radarRes.items} total={radarRes.total} dias={radarRes.dias} mostrar={LIMITES[plano].radarItens} temPerfil={!!perfil && perfil.nichos.length > 0} />
+            <RadarCard items={radarRes.items} total={radarRes.total} dias={radarRes.dias} mostrar={LIMITES[plano].radarItens} temPerfil={temFoco(perfil)} />
           </Reveal>
         )}
 

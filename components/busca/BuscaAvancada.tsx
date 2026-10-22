@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { Building2, Check, ChevronDown, Crosshair, ListPlus, Loader2, Locate, MapPin, Plus, Radio, Search, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import Link from "next/link";
-import { afinidade, aplicarSinal, cnaesDoPerfil, type PerfilBusca } from "@/lib/perfil-busca";
+import { afinidade, aplicarSinal, cnaesDoPerfil, temFoco, type PerfilBusca } from "@/lib/perfil-busca";
 import { registrarSinal } from "@/app/(app)/segmentacao/perfil";
 import { Glass, Micro } from "@/components/app/ui";
 import ContactCell from "@/components/app/ContactCell";
@@ -111,7 +111,7 @@ export default function BuscaAvancada({
     const existentes = new Set(cnaes.map((c) => c.code));
     return cnaesDoPerfil(perfil).filter((c) => existentes.has(c));
   }, [perfil, cnaes]);
-  const temPerfil = !!perfil && (perfil.nichos.length > 0 || perfil.portes.length > 0 || perfil.capitalMin !== null || perfil.anosMin !== null || perfil.temEmail || perfil.temWhatsapp || perfil.soMatriz || perfil.aprendizado.sinais > 0);
+  const temPerfil = !!perfil && (temFoco(perfil) || perfil.portes.length > 0 || perfil.capitalMin !== null || perfil.anosMin !== null || perfil.temEmail || perfil.temWhatsapp || perfil.soMatriz || perfil.aprendizado.sinais > 0);
   const [ordenarPerfil, setOrdenarPerfil] = useState(temPerfil);
 
   // ---------- filtros ----------

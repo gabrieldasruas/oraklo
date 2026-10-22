@@ -13,6 +13,7 @@ import {
   Loader2,
   Package,
   RotateCcw,
+  Search,
   Route,
   ShoppingCart,
   Snowflake,
@@ -28,7 +29,8 @@ import {
 import type { Niche } from "@/content/app";
 import { Glass, Micro } from "@/components/app/ui";
 import { SIZE_LABEL } from "@/lib/format";
-import { cnaesDoPerfil, forcaDoPerfil, type PerfilBusca } from "@/lib/perfil-busca";
+import { CNAES_DO_NICHO, forcaDoPerfil, type PerfilBusca } from "@/lib/perfil-busca";
+import { formatCnae } from "@/lib/format";
 import { esquecerAprendizado, salvarPerfil } from "@/app/(app)/segmentacao/perfil";
 
 const ICONES: Record<string, LucideIcon> = {
@@ -73,8 +75,37 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
 }
 
 /** "Quais nichos você deseja focar?" + preferências que deixam a Busca avançada mais certeira. */
-export default function FocoNichos({ niches, inicial }: { niches: Niche[]; inicial: PerfilBusca }) {
+type Atividade = { code: string; description: string; count: number };
+const norm = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+export default function FocoNichos({ niches, inicial, atividades = [] }: { niches: Niche[]; inicial: PerfilBusca; atividades?: Atividade[] }) {
   const [p, setP] = useState<PerfilBusca>(inicial);
+  const [busca, setBusca] = useState("");
+  const termo = norm(busca.trim());
+  // nichos de exemplo que batem com a pesquisa (nome, região, área ou descrição)
+  const nichosVisiveis = useMemo(
+    () => (termo ? niches.filter((n) => norm(`${n.name} ${n.region} ${n.group} ${n.description} ${n.tags.join(" ")}`).includes(termo)) : niches),
+    [niches, termo],
+  );
+  // atividades (CNAE) da base que batem com a pesquisa — para segmentos que não estão nos exemplos
+  const atividadesAchadas = useMemo(() => {
+    if (termo.length < 2) return [];
+    const digitos = termo.replace(/\D/g, "");
+    return atividades
+      .filter((a) => norm(a.description).includes(termo) || (digitos.length >= 3 && a.code.startsWith(digitos)))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12);
+  }, [atividades, termo]);
+  const escolhida = (code: string) => p.atividades.some((a) => a.code === code);
+  const alternarAtividade = (a: Atividade) =>
+    setP((s) => ({
+      ...s,
+      atividades: s.atividades.some((x) => x.code === a.code) ? s.atividades.filter((x) => x.code !== a.code) : [...s.atividades, { code: a.code, descricao: a.description }].slice(0, 40),
+    }));
   const [estado, setEstado] = useState<"ok" | "salvando" | "erro">("ok");
   const ultimo = useRef(JSON.stringify(inicial));
   const forca = forcaDoPerfil(p);
@@ -109,7 +140,8 @@ export default function FocoNichos({ niches, inicial }: { niches: Niche[]; inici
       .sort((x, y) => y[1] - x[1])
       .slice(0, n)
       .map(([k]) => k);
-  const nomeNichoPorCnae = (code: string) => niches.find((n) => cnaesDoPerfil({ ...p, nichos: [n.id] }).includes(code))?.name ?? `CNAE ${code}`;
+  const nomeNichoPorCnae = (code: string) =>
+    niches.find((n) => (CNAES_DO_NICHO[n.id] ?? []).includes(code))?.name ?? p.atividades.find((a) => a.code === code)?.descricao ?? atividades.find((a) => a.code === code)?.description ?? `CNAE ${code}`;
 
   return (
     <section aria-label="Foco e perfil de cliente ideal" className="mt-4 space-y-4">
@@ -120,13 +152,91 @@ export default function FocoNichos({ niches, inicial }: { niches: Niche[]; inici
           <h2 className="mt-3 text-4xl font-light leading-[1.05] tracking-[-0.04em] md:text-5xl">Quais nichos você deseja focar?</h2>
           <p className="mt-3 max-w-xl text-sm opacity-60">Escolha um ou mais. A Busca avançada já abre com as atividades (CNAE) desses nichos e coloca primeiro as empresas que mais combinam com você.</p>
 
+          {/* pesquisar nichos e atividades */}
+          <label className="relative mt-6 block max-w-2xl">
+            <span className="sr-only">Pesquisar nicho ou atividade</span>
+            <Search size={18} aria-hidden className="absolute left-5 top-1/2 -translate-y-1/2 opacity-45" />
+            <input
+              type="search"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Pesquisar nicho ou atividade (ex.: padaria, autopeças, software)"
+              className="min-h-14 w-full rounded-full border border-night/10 bg-white/80 pl-13 pr-12 text-base outline-none focus:border-night/30"
+              style={{ paddingLeft: "3.25rem" }}
+            />
+            {busca && (
+              <button type="button" aria-label="Limpar pesquisa" onClick={() => setBusca("")} className="absolute right-3 top-1/2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full hover:bg-night/5">
+                <X size={15} />
+              </button>
+            )}
+          </label>
+
+          {/* atividades escolhidas na pesquisa */}
+          {p.atividades.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] opacity-45">Atividades que você adicionou</p>
+              <ul className="flex flex-wrap gap-2">
+                {p.atividades.map((a) => (
+                  <li key={a.code}>
+                    <button
+                      type="button"
+                      onClick={() => setP((s) => ({ ...s, atividades: s.atividades.filter((x) => x.code !== a.code) }))}
+                      title="Remover"
+                      className="flex max-w-[24rem] cursor-pointer items-center gap-2 rounded-full bg-night py-1.5 pl-3 pr-2 text-xs text-white"
+                    >
+                      <span className="truncate">{a.descricao || formatCnae(a.code)}</span>
+                      <X size={12} aria-hidden className="shrink-0 text-neon" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* resultados de atividades da base */}
+          {termo.length >= 2 && (
+            <div className="mt-5 rounded-[24px] border border-white/80 bg-white/50 p-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-50">Atividades na base de empresas</p>
+              {atividadesAchadas.length ? (
+                <ul className="mt-3 grid gap-2 md:grid-cols-2">
+                  {atividadesAchadas.map((a) => {
+                    const on = escolhida(a.code);
+                    return (
+                      <li key={a.code}>
+                        <button
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => alternarAtividade(a)}
+                          className={`flex w-full cursor-pointer items-center gap-3 rounded-2xl border p-3 text-left transition-colors ${on ? "border-night bg-night text-white" : "border-white bg-white hover:border-night/20"}`}
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-medium leading-tight" title={a.description}>
+                              {a.description}
+                            </span>
+                            <span className={`block font-mono text-[10px] ${on ? "text-white/55" : "opacity-50"}`}>
+                              {formatCnae(a.code)} · {a.count.toLocaleString("pt-BR")} empresas
+                            </span>
+                          </span>
+                          <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-medium ${on ? "bg-neon text-night" : "bg-night/5"}`}>{on ? "Adicionada" : "Adicionar"}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm opacity-60">Nenhuma atividade com esse nome na base ainda. Hoje a base cobre empresas de SC; outros segmentos chegam com a importação de novos dados.</p>
+              )}
+            </div>
+          )}
+
           <div className="mt-6 space-y-5">
-            {grupos.map((g) => (
+            {termo && !nichosVisiveis.length && <p className="text-sm opacity-60">Nenhum nicho de exemplo com esse nome — use as atividades acima.</p>}
+            {grupos.filter((g) => nichosVisiveis.some((n) => n.group === g)).map((g) => (
               <div key={g}>
                 <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] opacity-45">{g}</p>
                 <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   {niches
-                    .filter((n) => n.group === g)
+                    .filter((n) => n.group === g && nichosVisiveis.includes(n))
                     .map((n) => {
                       const on = p.nichos.includes(n.id);
                       const Icone = ICONES[n.icon] ?? Building2;
