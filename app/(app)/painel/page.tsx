@@ -8,6 +8,9 @@ import Prospecta3D from "@/components/three/Prospecta3DLazy";
 import CountUp from "@/components/motion/CountUp";
 import { Reveal } from "@/components/motion/Reveal";
 import PrimeirosPassos from "@/components/app/PrimeirosPassos";
+import RadarCard from "@/components/app/RadarCard";
+import { radar } from "@/lib/radar";
+import { LIMITES, planoDoWorkspace } from "@/lib/planos";
 import { PORTFOLIO_TAG } from "@/lib/portfolio-types";
 import { carregarPerfil } from "../segmentacao/perfil";
 import { requireUser } from "@/lib/auth";
@@ -27,7 +30,7 @@ const sinal = (n: number) => (n > 0 ? `+${n}` : String(n));
 const TOM: Record<string, string> = { neutro: "bg-night/30", neon: "bg-neon ring-1 ring-night", sol: "bg-amber-400", rosa: "bg-rose-400", ceu: "bg-sky-400" };
 
 export default async function PainelPage() {
-  await requireUser();
+  const user = await requireUser();
   const supabase = await createClient();
   const agora = Date.now();
   const [{ data: leadsRaw }, { data: eventosRaw }, reunioes, tarefas, emails, portfolio] = await Promise.all([
@@ -50,6 +53,7 @@ export default async function PainelPage() {
     supabase.from("lead_events").select("id", { count: "exact", head: true }).in("type", ["email_sent", "whatsapp_opened"]),
     supabase.from("lead_events").select("id", { count: "exact", head: true }).eq("type", "meeting_created"),
   ]);
+  const [radarRes, plano] = await Promise.all([radar(perfil && perfil.nichos.length ? perfil : null).catch(() => null), planoDoWorkspace(supabase, user.workspaceId)]);
   const passos = [
     { t: "Monte seu cliente ideal", d: "Escolha nichos e porte na Segmentação", href: "/segmentacao#foco", feito: !!perfil && perfil.nichos.length > 0 },
     { t: "Mande empresas ao pipeline", d: "Busque no mapa e selecione as melhores", href: "/busca-avancada", feito: (leadsRaw ?? []).length > 0 },
@@ -215,6 +219,13 @@ export default async function PainelPage() {
             )}
           </Glass>
         </Reveal>
+
+        {/* Radar de novas empresas */}
+        {radarRes && (
+          <Reveal index={6} className="lg:col-span-12">
+            <RadarCard items={radarRes.items} total={radarRes.total} dias={radarRes.dias} mostrar={LIMITES[plano].radarItens} temPerfil={!!perfil && perfil.nichos.length > 0} />
+          </Reveal>
+        )}
 
         {/* Próximas reuniões */}
         <Reveal index={6} className="lg:col-span-6">

@@ -14,6 +14,7 @@ import Calendario from "@/components/crm/Calendario";
 import ReuniaoModal, { type AberturaReuniao } from "@/components/crm/ReuniaoModal";
 import LeadDrawer from "@/components/crm/LeadDrawer";
 import CampanhaModal from "@/components/crm/CampanhaModal";
+import WhatsappModal from "@/components/crm/WhatsappModal";
 
 type Aba = "pipeline" | "calendario" | "lista";
 const ABAS: { v: Aba; t: string; d: string; icon: typeof List }[] = [
@@ -43,6 +44,7 @@ export default function LeadsView() {
   const { leads, loaded, error, addLead, removeLead, updateStatus, substituir, marcarEmSequencia } = useLeads();
   const [abertoId, setAbertoId] = useState<string | null>(null);
   const [campanha, setCampanha] = useState<string[] | null>(null);
+  const [zapLead, setZapLead] = useState<string | null>(null);
   const aberto = leads.find((l) => l.id === abertoId) ?? null;
   const [query, setQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -222,6 +224,7 @@ export default function LeadsView() {
             onAgendar={(l) => setAbertura({ leadId: l.id })}
             onAbrir={(l) => setAbertoId(l.id)}
             onEmail={setCampanha}
+            onWhatsapp={(l) => setZapLead(l.id)}
           />
         )}
 
@@ -413,7 +416,11 @@ export default function LeadsView() {
           onStatus={updateStatus}
           onAgendar={(l) => setAbertura({ leadId: l.id })}
           onEmail={(l) => setCampanha([l.id])}
+          onWhatsapp={(l) => setZapLead(l.id)}
         />
+      )}
+      {zapLead && leads.find((l) => l.id === zapLead) && (
+        <WhatsappModal lead={leads.find((l) => l.id === zapLead)!} onFechar={() => setZapLead(null)} onMoveu={(id) => marcarEmSequencia([id])} />
       )}
       {campanha && <CampanhaModal leads={leads} inicial={campanha} onFechar={() => setCampanha(null)} onEnviado={marcarEmSequencia} />}
       <LeadForm open={formOpen} onClose={() => setFormOpen(false)} onSave={addLead} />

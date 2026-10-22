@@ -42,6 +42,7 @@ export default function Pipeline({
   onAgendar,
   onAbrir,
   onEmail,
+  onWhatsapp,
 }: {
   leads: Lead[];
   reunioes: Reuniao[];
@@ -49,6 +50,7 @@ export default function Pipeline({
   onAgendar: (lead: Lead) => void;
   onAbrir: (lead: Lead) => void;
   onEmail: (ids: string[]) => void;
+  onWhatsapp: (lead: Lead) => void;
 }) {
   const [arrastando, setArrastando] = useState<string | null>(null);
   const [sobre, setSobre] = useState<Status | null>(null);
@@ -192,9 +194,9 @@ export default function Pipeline({
                         <CalendarPlus size={12} aria-hidden /> Agendar
                       </button>
                       {zap ? (
-                        <a href={`https://wa.me/55${zap}`} target="_blank" rel="noopener noreferrer" title="WhatsApp" className="flex size-8 items-center justify-center rounded-full bg-[#25d366] text-white">
+                        <button type="button" onClick={() => onWhatsapp(l)} title="WhatsApp com modelo ou IA" className="flex size-8 cursor-pointer items-center justify-center rounded-full bg-[#25d366] text-white">
                           <WhatsappIcon size={14} />
-                        </a>
+                        </button>
                       ) : (
                         l.phone && (
                           <a href={`tel:+55${l.phone.replace(/\D/g, "")}`} title="Ligar" className="flex size-8 items-center justify-center rounded-full border border-night/15 hover:bg-night hover:text-white">

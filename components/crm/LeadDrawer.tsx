@@ -52,6 +52,7 @@ export default function LeadDrawer({
   onStatus,
   onAgendar,
   onEmail,
+  onWhatsapp,
 }: {
   lead: Lead;
   onFechar: () => void;
@@ -59,6 +60,7 @@ export default function LeadDrawer({
   onStatus: (id: string, status: Status) => void;
   onAgendar: (lead: Lead) => void;
   onEmail: (lead: Lead) => void;
+  onWhatsapp: (lead: Lead) => void;
 }) {
   const [aba, setAba] = useState<Aba>("atividade");
   const [eventos, setEventos] = useState<EventoLead[] | null>(null);
@@ -163,9 +165,9 @@ export default function LeadDrawer({
               </button>
             )}
             {zap && (
-              <a href={`https://wa.me/55${zap}`} target="_blank" rel="noopener noreferrer" title="WhatsApp" className="flex size-9 items-center justify-center rounded-full bg-[#25d366] text-white">
+              <button type="button" onClick={() => onWhatsapp(lead)} title="WhatsApp com modelo ou IA" className="flex size-9 cursor-pointer items-center justify-center rounded-full bg-[#25d366] text-white">
                 <WhatsappIcon size={15} />
-              </a>
+              </button>
             )}
             {lead.phone && !zap && (
               <a href={`tel:+55${lead.phone.replace(/\D/g, "")}`} title="Ligar" className="flex size-9 items-center justify-center rounded-full bg-white/10 hover:bg-white/20">

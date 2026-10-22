@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/db/admin";
 import { emailConfigurado, enviarLote } from "@/lib/email";
 import { rodapeDescadastro } from "@/lib/descadastro";
+import { enviarResumoRadar } from "@/lib/radar";
 
 // Cron da Vercel (vercel.json): envia os follow-ups vencidos para quem ainda não respondeu.
 // A Vercel manda "Authorization: Bearer $CRON_SECRET". Sem CRON_SECRET a rota fica fechada.
@@ -16,6 +17,8 @@ export async function GET(req: Request) {
   const segredo = process.env.CRON_SECRET;
   if (!segredo || req.headers.get("authorization") !== `Bearer ${segredo}`) return Response.json({ error: "Não autorizado" }, { status: 401 });
   if (!emailConfigurado()) return Response.json({ enviados: 0, motivo: "e-mail não configurado" });
+  // segundas-feiras: resumo semanal do radar de novas empresas
+  const radar = new Date().getUTCDay() === 1 ? await enviarResumoRadar().catch(() => ({ enviados: 0 })) : null;
 
   const db = createAdminClient();
   const desde = new Date(Date.now() - 45 * 86_400_000).toISOString();
@@ -41,7 +44,7 @@ export async function GET(req: Request) {
     const parou = parados.get(e.lead_id);
     return !(parou && parou >= new Date(e.created_at).getTime());
   });
-  if (!vencidos.length) return Response.json({ enviados: 0 });
+  if (!vencidos.length) return Response.json({ enviados: 0, radar });
 
   // só quem ainda está em aberto no funil
   const { data: leads } = await db.from("leads").select("id, status").in("id", [...new Set(vencidos.map((e) => e.lead_id))]);
@@ -67,5 +70,5 @@ export async function GET(req: Request) {
       : [],
   );
   if (novos.length) await db.from("lead_events").insert(novos);
-  return Response.json({ enviados: novos.length, falharam: enviar.length - novos.length });
+  return Response.json({ enviados: novos.length, falharam: enviar.length - novos.length, radar });
 }
