@@ -7,12 +7,12 @@ import { WhatsappIcon } from "@/components/brand/Icons";
 import { EVENTOS_CRM, type ConfigWorkspace, type EventoCrm } from "@/lib/config-workspace";
 import { renomearWorkspace, salvarConfig, salvarNome, testarWebhook } from "@/app/(app)/configuracoes/actions";
 import RdStationCard from "./RdStationCard";
+import type { Limites } from "@/lib/pacotes";
 
-type Limites = { pipelineMes: number | null; emailsMes: number | null; iaMes: number | null; radarItens: number | null };
 type Props = {
   inicial: ConfigWorkspace;
   usuario: { nome: string; email: string; workspace: string };
-  plano: { id: "gratis" | "pro"; nome: string; limites: Limites; uso: { pipeline: number; emails: number; ia: number } };
+  plano: { id: "gratis" | "premium" | "ultra"; nome: string; limites: Limites; uso: { pipeline: number; emails: number; ia: number; buscas: number } };
   membros: number;
   emailContato: string;
 };
@@ -52,8 +52,9 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
   const [estado, setEstado] = useState<"ok" | "salvando" | "erro">("ok");
   const [erro, setErro] = useState<string | null>(null);
   const ultimo = useRef(JSON.stringify(inicial));
-  const [nome, setNome] = useState(usuario.nome);
-  const [empresa, setEmpresa] = useState(usuario.workspace);
+  // campos começam em branco: só o que a pessoa digitar é salvo
+  const [nome, setNome] = useState("");
+  const [empresa, setEmpresa] = useState("");
   const [perfilMsg, setPerfilMsg] = useState<string | null>(null);
   const [teste, setTeste] = useState<null | "testando" | { ok: boolean; status: number | null }>(null);
 
@@ -81,8 +82,10 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
     e.preventDefault();
     setPerfilMsg(null);
     try {
-      if (nome !== usuario.nome) await salvarNome(nome);
-      if (empresa !== usuario.workspace) await renomearWorkspace(empresa);
+      if (nome.trim()) await salvarNome(nome);
+      if (empresa.trim()) await renomearWorkspace(empresa);
+      setNome("");
+      setEmpresa("");
       setPerfilMsg("Salvo");
     } catch (err) {
       setPerfilMsg(err instanceof Error ? err.message : "Não foi possível salvar");
@@ -108,7 +111,7 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
           <form onSubmit={salvarPerfil} className="mt-5 space-y-4">
             <label className="block text-sm font-medium">
               Seu nome
-              <input className={campo} value={nome} onChange={(e) => setNome(e.target.value)} maxLength={80} />
+              <input className={campo} value={nome} onChange={(e) => setNome(e.target.value)} maxLength={80} placeholder="Como você quer ser chamado" />
             </label>
             <label className="block text-sm font-medium">
               E-mail
@@ -116,10 +119,10 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
             </label>
             <label className="block text-sm font-medium">
               Empresa (nome do workspace)
-              <input className={campo} value={empresa} onChange={(e) => setEmpresa(e.target.value)} maxLength={80} />
+              <input className={campo} value={empresa} onChange={(e) => setEmpresa(e.target.value)} maxLength={80} placeholder="Nome da sua empresa" />
             </label>
             <div className="flex items-center gap-3">
-              <button type="submit" disabled={nome === usuario.nome && empresa === usuario.workspace} className="min-h-11 cursor-pointer rounded-full bg-night px-5 text-sm font-medium text-white disabled:opacity-40">
+              <button type="submit" disabled={!nome.trim() && !empresa.trim()} className="min-h-11 cursor-pointer rounded-full bg-night px-5 text-sm font-medium text-white disabled:opacity-40">
                 Salvar perfil
               </button>
               {perfilMsg && <span className="text-xs opacity-70">{perfilMsg}</span>}
@@ -135,12 +138,13 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
               <p className="mt-3 text-4xl font-light tracking-[-0.04em]">{plano.nome}</p>
             </div>
             {plano.id === "gratis" && (
-              <a href={`mailto:${emailContato}?subject=${encodeURIComponent("Quero o plano Profissional")}`} className="min-h-10 rounded-full bg-neon px-4 py-2.5 text-xs font-medium text-night">
-                Liberar Profissional
+              <a href="/pacotes" className="min-h-10 rounded-full bg-neon px-4 py-2.5 text-xs font-medium text-night">
+                Ver pacotes
               </a>
             )}
           </div>
           <div className="mt-6 space-y-5">
+            <BarraUso rotulo="Buscas na Busca avançada" usado={plano.uso.buscas} limite={plano.limites.buscasMes} />
             <BarraUso rotulo="Empresas no pipeline" usado={plano.uso.pipeline} limite={plano.limites.pipelineMes} />
             <BarraUso rotulo="E-mails disparados" usado={plano.uso.emails} limite={plano.limites.emailsMes} />
             <BarraUso rotulo="Textos escritos com IA" usado={plano.uso.ia} limite={plano.limites.iaMes} />
@@ -162,7 +166,7 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
             onChange={(e) => setC((s) => ({ ...s, assinatura: e.target.value }))}
             rows={5}
             maxLength={600}
-            placeholder={"Gabriel Senhas\nOraklo · (47) 99999-0000\noraklo.vercel.app"}
+            placeholder={"Seu nome\nSua empresa · (00) 00000-0000\nseusite.com.br"}
             className="mt-4 w-full resize-y rounded-2xl border border-night/10 bg-white/70 p-4 text-sm leading-relaxed outline-none focus:border-night/30"
           />
           <div className="mt-4 border-t border-night/10 pt-2">
@@ -183,6 +187,14 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
               <p className="text-sm opacity-60">Manda cada lead para o seu CRM automaticamente.</p>
             </div>
           </div>
+          {!plano.limites.integracoes && (
+            <p className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl bg-night px-4 py-3 text-xs text-white">
+              Integração com CRM (webhook, RD Station e planilhas por CRM) faz parte do Premium.
+              <a href="/pacotes" className="ml-auto rounded-full bg-neon px-3 py-1 font-medium text-night">
+                Ver pacotes
+              </a>
+            </p>
+          )}
           <Interruptor rotulo="Enviar eventos para o meu CRM (webhook)" on={c.crm.ativo} onChange={(v) => setC((s) => ({ ...s, crm: { ...s.crm, ativo: v } }))} />
           <label className="block text-sm font-medium">
             Endereço do webhook

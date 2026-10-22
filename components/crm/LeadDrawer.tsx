@@ -418,6 +418,7 @@ function Contato({ lead, onAtualizado }: { lead: Lead; onAtualizado: (l: Lead) =
 
 function Decisores({ lead, onAtualizado }: { lead: Lead; onAtualizado: (l: Lead) => void }) {
   const [configurado, setConfigurado] = useState<boolean | null>(null);
+  const [liberado, setLiberado] = useState(true);
   const [dominio, setDominio] = useState("");
   const [buscando, setBuscando] = useState(false);
   const [res, setRes] = useState<{ pessoas: Pessoa[]; organizacao: string | null } | null>(null);
@@ -425,7 +426,12 @@ function Decisores({ lead, onAtualizado }: { lead: Lead; onAtualizado: (l: Lead)
   const [usando, setUsando] = useState<string | null>(null);
 
   useEffect(() => {
-    hunterConfigurado().then(setConfigurado).catch(() => setConfigurado(false));
+    hunterConfigurado()
+      .then((r) => {
+        setConfigurado(r.configurado);
+        setLiberado(r.liberado);
+      })
+      .catch(() => setConfigurado(false));
     dominioDoLead(lead.id).then((d) => d && setDominio(d)).catch(() => {});
   }, [lead.id]);
 
@@ -464,7 +470,17 @@ function Decisores({ lead, onAtualizado }: { lead: Lead; onAtualizado: (l: Lead)
         </div>
       </div>
 
-      {configurado === false ? (
+      {!liberado ? (
+        <div className="border-t border-white/10 p-4 text-sm text-white/70">
+          <p className="flex items-start gap-2">
+            <Sparkles size={14} aria-hidden className="mt-0.5 shrink-0 text-neon" />
+            <span>Encontrar decisores faz parte do pacote Premium.</span>
+          </p>
+          <a href="/pacotes" className="mt-3 inline-flex items-center gap-1.5 text-xs text-neon underline-offset-4 hover:underline">
+            Ver pacotes
+          </a>
+        </div>
+      ) : configurado === false ? (
         <div className="border-t border-white/10 p-4 text-sm text-white/70">
           <p className="flex items-start gap-2">
             <Sparkles size={14} aria-hidden className="mt-0.5 shrink-0 text-neon" />

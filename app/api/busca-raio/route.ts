@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 import { getUser } from "@/lib/auth";
+import { createClient } from "@/lib/db/server";
+import { consumirBusca } from "@/lib/planos";
 import { countCompanies, searchCompanies, type CompanyFilter } from "@/lib/companies";
 import { centroNoBrasil, cidadeMaisProxima, MUNICIPIOS, municipiosNoRaio, RAIO_MAX_KM, RAIO_MIN_KM, UFS, type Escopo } from "@/lib/geo/radius";
 
@@ -8,7 +10,8 @@ const PORTES = ["ME", "EPP", "DEMAIS", "NAO_INFORMADO"];
 // POST /api/busca-raio
 // { lat, lng, raioKm, principal?: boolean (padrão true), escopo?: "raio" | "cidade" | "estado", ufs?: string[], cnaes?: string[], portes?: string[], temEmail?: boolean, matriz?: boolean, cursor?: string }
 export async function POST(request: NextRequest) {
-  if (!(await getUser())) return Response.json({ error: "Não autenticado" }, { status: 401 });
+  const user = await getUser();
+  if (!user) return Response.json({ error: "Não autenticado" }, { status: 401 });
 
   let body: Record<string, unknown>;
   try {
@@ -30,6 +33,11 @@ export async function POST(request: NextRequest) {
   const cnaes = arr(body.cnaes).map((c) => c.replace(/\D/g, "")).filter((c) => c.length === 7);
   const portes = arr(body.portes).filter((p) => PORTES.includes(p));
   const cursor = typeof body.cursor === "string" ? body.cursor : undefined;
+  // limite do pacote: cada busca nova conta uma (carregar mais resultados não conta)
+  if (!cursor) {
+    const uso = await consumirBusca(await createClient(), user.workspaceId);
+    if (!uso.ok) return Response.json({ error: `Você usou as ${uso.limite} buscas do seu pacote este mês. Veja os pacotes para liberar mais (o Ultra não tem limite).`, limite: true }, { status: 402 });
+  }
 
   const escopo: Escopo = body.escopo === "cidade" || body.escopo === "estado" ? body.escopo : "raio";
   const centro = cidadeMaisProxima(lat, lng).municipio;

@@ -60,7 +60,10 @@ export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semE
   const descadastrados = new Set((saiu ?? []).map((e) => e.lead_id as string));
   const todosComEmail = (leads ?? []).filter((l) => emailValido(String(l.email).trim()) && !descadastrados.has(l.id));
   // limite do plano Grátis (e-mails por mês)
-  const limiteEmails = LIMITES[await planoDoWorkspace(supabase, user.workspaceId)].emailsMes;
+  const lim = LIMITES[await planoDoWorkspace(supabase, user.workspaceId)];
+  const limiteEmails = lim.emailsMes;
+  // follow-up automático é recurso do Premium/Ultra
+  if (!lim.followup) d = { ...d, followup: null };
   const cabe = restante(limiteEmails, (await usoDoMes(supabase)).emails);
   const comEmail = cabe === null ? todosComEmail : todosComEmail.slice(0, cabe);
   const limitados = todosComEmail.length - comEmail.length;

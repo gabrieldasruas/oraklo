@@ -1,5 +1,6 @@
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
+import { LIMITES, planoDoWorkspace } from "@/lib/planos";
 
 // Leads em CSV no formato de importação de cada CRM. O RLS limita ao workspace do usuário.
 // ?formato=rd | pipedrive | hubspot | completo
@@ -38,9 +39,11 @@ const celula = (v: string | number) => {
 export async function GET(req: Request) {
   const user = await getUser();
   if (!user) return Response.json({ error: "Não autenticado" }, { status: 401 });
-  const formato = new URL(req.url).searchParams.get("formato") ?? "completo";
-  const f = FORMATOS[formato] ?? FORMATOS.completo;
   const db = await createClient();
+  // formatos de CRM (RD, Pipedrive, HubSpot) são do Premium/Ultra; o Free exporta a planilha simples
+  const pedido = new URL(req.url).searchParams.get("formato") ?? "completo";
+  const formato = LIMITES[await planoDoWorkspace(db, user.workspaceId)].integracoes ? pedido : "completo";
+  const f = FORMATOS[formato] ?? FORMATOS.completo;
   const { data, error } = await db.from("leads").select("name, role, company, email, phone, place, status, score, cnpj, created_at").order("created_at", { ascending: false }).limit(10000);
   if (error) return Response.json({ error: "Falha ao exportar" }, { status: 500 });
   // vírgula: é o que os importadores dos CRMs esperam

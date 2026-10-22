@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowDownRight, ArrowUpRight, Clock3, Mail, MailOpen, MessageSquareReply, MousePointerClick, Repeat2, TriangleAlert } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Lock, Clock3, Mail, MailOpen, MessageSquareReply, MousePointerClick, Repeat2, TriangleAlert } from "lucide-react";
 import { Aura, Glass, Micro, WireArt } from "@/components/app/ui";
 import type { Relatorio } from "@/lib/relatorios";
 import { GraficoAtividade, MapaHorarios } from "./Graficos";
@@ -26,7 +26,7 @@ function Variacao({ valor, anterior, formato, escuro }: { valor: number; anterio
   );
 }
 
-export default function RelatorioView({ r }: { r: Relatorio }) {
+export default function RelatorioView({ r, completo = true }: { r: Relatorio; completo?: boolean }) {
   const p = r.periodo;
   const e = r.email;
   const totalSerie = r.serie.reduce((s, b) => s + b.contatados + b.respostas + b.reunioes, 0);
@@ -143,7 +143,8 @@ export default function RelatorioView({ r }: { r: Relatorio }) {
         </Glass>
 
         {/* 5. score × resultado */}
-        <Glass className="p-7 lg:col-span-5">
+        <Bloqueado ativo={!completo} className="lg:col-span-5">
+        <Glass className="h-full p-7">
           <Micro>Score × resultado</Micro>
           <p className="mt-2 text-sm opacity-60">Os leads “Quentes” respondem mais? Taxa de resposta e de reunião por faixa.</p>
           {r.score.some((s) => s.leads) ? (
@@ -178,9 +179,11 @@ export default function RelatorioView({ r }: { r: Relatorio }) {
             <Vazio texto="Sem leads no período para comparar." />
           )}
         </Glass>
+        </Bloqueado>
       </div>
 
       {/* 3. e-mails */}
+      <Bloqueado ativo={!completo}>
       <Glass className="p-7">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -218,13 +221,38 @@ export default function RelatorioView({ r }: { r: Relatorio }) {
         </div>
         {!e.enviados && !e.followups && <p className="mt-4 text-xs opacity-55">Nenhum e-mail enviado pelo Oraklo nesse período. Use “Disparar e-mails” em Leads.</p>}
       </Glass>
+      </Bloqueado>
 
       {/* 4. segmento / cidade / porte */}
+      <Bloqueado ativo={!completo}>
       <Glass className="p-7">
         <Micro>Onde vale mais a pena prospectar</Micro>
         <p className="mb-5 mt-2 text-sm opacity-60">Resposta e reunião por segmento (CNAE), cidade e porte, dos leads que entraram no período.</p>
         <Agrupamentos segmentos={r.segmentos} cidades={r.cidades} portes={r.portes} />
       </Glass>
+      </Bloqueado>
+    </div>
+  );
+}
+
+/** Seção do Premium: aparece desfocada, com o convite para liberar. */
+function Bloqueado({ ativo, className = "", children }: { ativo: boolean; className?: string; children: React.ReactNode }) {
+  if (!ativo) return <div className={className}>{children}</div>;
+  return (
+    <div className={`relative ${className}`}>
+      <div aria-hidden className="pointer-events-none select-none blur-[6px] print:hidden">
+        {children}
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center p-6">
+        <div className="max-w-sm rounded-[24px] bg-night p-6 text-center text-white shadow-[0_30px_60px_-30px_rgba(0,0,0,0.8)]">
+          <Lock size={18} aria-hidden className="mx-auto text-neon" />
+          <p className="mt-3 text-lg font-medium tracking-[-0.02em]">Disponível no Premium</p>
+          <p className="mt-1 text-xs text-white/60">Desempenho dos e-mails, melhores segmentos e score × resultado, com exportação em CSV e PDF.</p>
+          <a href="/pacotes" className="mt-4 inline-flex min-h-10 items-center rounded-full bg-neon px-5 text-xs font-medium text-night">
+            Ver pacotes
+          </a>
+        </div>
+      </div>
     </div>
   );
 }

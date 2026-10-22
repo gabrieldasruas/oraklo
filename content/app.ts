@@ -309,33 +309,10 @@ export const productSteps = [
   { n: "04", title: "Meça e ajuste", text: "Os relatórios mostram o que responde mais por segmento, cidade, porte e score." },
 ];
 
-export const plans = [
-  {
-    name: "Grátis",
-    price: "R$ 0",
-    desc: "Para conhecer e começar a prospectar.",
-    features: ["Busca no mapa com score", "50 empresas por mês no pipeline", "CRM com pipeline e calendário", "Portfólio com link público"],
-    highlight: false,
-  },
-  {
-    name: "Profissional",
-    price: "R$ 149",
-    desc: "Para quem prospecta todo dia.",
-    features: ["Empresas ilimitadas no pipeline", "E-mail com follow-up automático", "Escrita com IA e radar de novas empresas", "Relatórios completos e exportação", "Integração com CRM"],
-    highlight: true,
-  },
-  {
-    name: "Equipe",
-    price: "Sob consulta",
-    desc: "Para times comerciais e outras regiões.",
-    features: ["Tudo do Profissional", "Base de outros estados sob demanda", "Vários usuários (em breve)", "Suporte prioritário"],
-    highlight: false,
-  },
-];
-
 export const faq = [
-  { q: "O plano grátis tem prazo?", a: "Não. Use à vontade dentro dos limites do plano, sem cartão de crédito." },
+  { q: "O Free tem prazo?", a: "Não. Use à vontade dentro dos limites do pacote (30 buscas, 50 empresas e 20 e-mails por mês), sem cartão de crédito." },
   { q: "De onde vêm os dados das empresas?", a: "Do cadastro público de CNPJ da Receita Federal. Hoje a base cobre Santa Catarina; outros estados estão a caminho." },
   { q: "Como fica a LGPD?", a: "Usamos dados públicos de empresas para contato comercial, e todo e-mail enviado pelo Oraklo tem link para a pessoa sair da lista. Veja a política de privacidade." },
-  { q: "Como pago?", a: "O pagamento por Pix e cartão está chegando. Até lá, fale com a gente para liberar o Profissional." },
+  { q: "Qual a diferença entre Premium e Ultra?", a: "O Premium tem 300 buscas por mês na Busca avançada, follow-up automático, decisores e integração com CRM. O Ultra libera a busca sem limite, empresas ilimitadas no pipeline e tira a marca Oraklo do portfólio." },
+  { q: "Como pago?", a: "O pagamento por Pix e cartão está chegando. Até lá, fale com a gente e ativamos seu pacote na hora." },
 ];
