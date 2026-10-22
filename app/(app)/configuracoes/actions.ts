@@ -21,7 +21,9 @@ export async function carregarConfig(): Promise<ConfigWorkspace> {
 
 export async function salvarConfig(c: ConfigWorkspace): Promise<ConfigWorkspace> {
   const user = await requireUser();
-  const dados = completarConfig(c);
+  const atual = (await linha()).config;
+  // conexão com o RD só muda pelas ações de conectar/desconectar (não pelo navegador)
+  const dados = completarConfig({ ...c, rd: { ...c.rd, conectado: atual.rd.conectado, conta: atual.rd.conta } });
   if (dados.crm.webhookUrl && !webhookPermitido(dados.crm.webhookUrl)) throw new Error("Use um endereço https público para o webhook");
   const { supabase, id } = await linha();
   const { error } = id

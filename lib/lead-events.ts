@@ -32,6 +32,10 @@ export function descreverEvento(e: EventoLead): { titulo: string; detalhe?: stri
       return { titulo: "Mensagem de WhatsApp aberta", detalhe: str(p.text) || undefined, tom: "neon" };
     case "ai_generated":
       return { titulo: p.canal === "whatsapp" ? "Mensagem de WhatsApp escrita com IA" : "E-mail escrito com IA", tom: "ceu" };
+    case "rd_synced":
+      return { titulo: "Enviado ao RD Station CRM", detalhe: "Empresa, contato e negociação criados", tom: "ceu" };
+    case "rd_sync_failed":
+      return { titulo: "Falha ao sincronizar com o RD Station", detalhe: str(p.erro) || undefined, tom: "rosa" };
     case "note":
       return { titulo: "Nota", detalhe: str(p.text), tom: "neutro" };
     case "task_created":

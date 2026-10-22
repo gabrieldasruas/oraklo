@@ -2,6 +2,21 @@
 // Compartilhado entre servidor e cliente.
 
 export const CONFIG_TAG = "__config__";
+/** token do RD Station, cifrado (linha separada, nunca vai para o navegador) */
+export const RD_TOKEN_TAG = "__rd_token__";
+
+const ETAPAS_OK = ["Novo", "Em sequência", "Respondeu", "Reunião marcada", "Sem interesse"];
+
+export type ConfigRd = {
+  conectado: boolean;
+  conta: { nome: string; email: string; organizacao: string } | null;
+  funilId: string;
+  /** etapa do Oraklo → id da etapa no RD */
+  etapas: Record<string, string>;
+  enviarNovos: boolean;
+  sincronizarEtapas: boolean;
+  anotacoes: boolean;
+};
 
 export type ModeloWhatsapp = { id: string; nome: string; texto: string };
 
@@ -18,6 +33,7 @@ export type ConfigWorkspace = {
   notificar: { resumoSemanal: boolean; radar: boolean };
   crm: { ativo: boolean; webhookUrl: string; eventos: EventoCrm[] };
   whatsapp: { modelos: ModeloWhatsapp[] };
+  rd: ConfigRd;
 };
 
 export const MODELOS_PADRAO: ModeloWhatsapp[] = [
@@ -31,6 +47,7 @@ export const CONFIG_PADRAO: ConfigWorkspace = {
   notificar: { resumoSemanal: false, radar: true },
   crm: { ativo: false, webhookUrl: "", eventos: ["lead.criado", "lead.etapa", "lead.respondeu", "reuniao.marcada"] },
   whatsapp: { modelos: MODELOS_PADRAO },
+  rd: { conectado: false, conta: null, funilId: "", etapas: {}, enviarNovos: true, sincronizarEtapas: true, anotacoes: true },
 };
 
 const eventoValido = (e: unknown): e is EventoCrm => EVENTOS_CRM.some((x) => x.id === e);
@@ -53,6 +70,15 @@ export function completarConfig(c: Partial<ConfigWorkspace> | null | undefined):
       eventos: Array.isArray(c.crm?.eventos) ? c.crm!.eventos.filter(eventoValido) : d.crm.eventos,
     },
     whatsapp: { modelos: modelos.length ? modelos : d.whatsapp.modelos },
+    rd: {
+      conectado: !!c.rd?.conectado,
+      conta: c.rd?.conta ? { nome: String(c.rd.conta.nome ?? "").slice(0, 80), email: String(c.rd.conta.email ?? "").slice(0, 120), organizacao: String(c.rd.conta.organizacao ?? "").slice(0, 120) } : null,
+      funilId: String(c.rd?.funilId ?? "").slice(0, 40),
+      etapas: Object.fromEntries(Object.entries(c.rd?.etapas ?? {}).filter(([k, v]) => ETAPAS_OK.includes(k) && typeof v === "string").map(([k, v]) => [k, String(v).slice(0, 40)])),
+      enviarNovos: c.rd?.enviarNovos !== false,
+      sincronizarEtapas: c.rd?.sincronizarEtapas !== false,
+      anotacoes: c.rd?.anotacoes !== false,
+    },
   };
 }
 
