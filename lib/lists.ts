@@ -3,6 +3,7 @@ import { createClient } from "@/lib/db/server";
 import { createAdminClient } from "@/lib/db/admin";
 import { formatCnae, formatCnpj, formatPhone, SIZE_LABEL, titleCase } from "@/lib/format";
 import type { CompanyFilter } from "@/lib/companies";
+import { TAG_INTERNA } from "@/lib/portfolio-types";
 
 // Listas são do workspace: lidas com o cliente do usuário (RLS). As empresas de cada lista
 // são lidas com a service role, depois que o RLS confirmou que a lista é visível ao usuário.
@@ -16,7 +17,8 @@ export async function getLists(userId: string): Promise<ListSummary[]> {
     .select("id, name, tag, niche_id, owner_id, created_at, list_items(count)")
     .order("created_at", { ascending: false });
   if (error) throw new Error("Não foi possível carregar as listas");
-  return data.map((l) => ({
+  // portfólio e arquivos do portfólio também moram em `lists`, com tags internas ("__…"): ficam de fora
+  return data.filter((l) => !l.tag?.startsWith(TAG_INTERNA)).map((l) => ({
     id: l.id,
     name: l.name,
     tag: l.tag,

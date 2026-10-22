@@ -3,7 +3,7 @@ import {
   Users,
   Layers,
   Building2,
-  Mail,
+  Presentation,
   BarChart3,
   MapPinned,
   type LucideIcon,
@@ -23,7 +23,7 @@ export const appNav: NavItem[] = [
   { label: "Segmentação", href: "/segmentacao", icon: Layers, desc: "Nichos de mercado" },
   { label: "Empresas", href: "/empresas", icon: Building2, desc: "Busca na base" },
   { label: "Busca avançada", href: "/busca-avancada", icon: MapPinned, desc: "Raio no mapa" },
-  { label: "Sequências", href: "/sequencias", icon: Mail, desc: "Cadências" },
+  { label: "Portfólio", href: "/portfolio", icon: Presentation, desc: "Suas soluções" },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3, desc: "Desempenho" },
 ];
 
