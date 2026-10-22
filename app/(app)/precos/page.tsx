@@ -16,7 +16,7 @@ export default function PrecosPage() {
       <PageHeader
         index="10"
         title="Preços"
-        description="Comece grátis por 14 dias. Valores ilustrativos nesta fase."
+        description="Comece grátis, sem cartão. Suba de plano quando precisar de mais."
       />
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -51,8 +51,12 @@ export default function PrecosPage() {
                   </li>
                 ))}
               </ul>
-              <Pill href="/leads" tone={p.highlight ? "neon" : "dark"} className="relative mt-8">
-                {p.price === "Sob consulta" ? "Falar com vendas" : "Começar grátis"}
+              <Pill
+                href={p.price === "R$ 0" ? "/entrar" : `mailto:${site.email}?subject=${encodeURIComponent(`Quero o plano ${p.name}`)}`}
+                tone={p.highlight ? "neon" : "dark"}
+                className="relative mt-8"
+              >
+                {p.price === "R$ 0" ? "Começar grátis" : p.price === "Sob consulta" ? "Falar com a gente" : "Quero esse plano"}
               </Pill>
             </Wrapper>
           );

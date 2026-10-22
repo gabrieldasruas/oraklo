@@ -32,6 +32,7 @@ export const secondaryNav = [
   { label: "Listas", href: "/listas" },
   { label: "Configurações", href: "/configuracoes" },
   { label: "Produto", href: "/produto" },
-  { label: "Histórias", href: "/historias" },
+  { label: "Guias", href: "/historias" },
   { label: "Preços", href: "/precos" },
+  { label: "Privacidade", href: "/privacidade" },
 ];

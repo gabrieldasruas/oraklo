@@ -10,8 +10,9 @@ import LogoMark from "@/components/brand/LogoMark";
 
 const links = [
   { label: "Produto", href: "/produto" },
-  { label: "Histórias", href: "/historias" },
+  { label: "Guias", href: "/historias" },
   { label: "Preços", href: "/precos" },
+  { label: "Privacidade", href: "/privacidade" },
 ];
 
 export default function WelcomePage() {

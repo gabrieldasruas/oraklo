@@ -302,59 +302,40 @@ export const reports = {
   ],
 };
 
-export const settings = {
-  sections: ["Perfil", "Equipe", "Integrações", "Notificações"],
-  team: [
-    { name: "Gabriel Senhas", role: "Administrador", email: "gabriel@oraklo.app" },
-    { name: "Rafael Lima", role: "SDR", email: "rafael@oraklo.app" },
-    { name: "Ana Souza", role: "Gestora", email: "ana@oraklo.app" },
-  ],
-  integrations: [
-    { name: "CRM", text: "Sincronize leads e negócios.", on: true },
-    { name: "E-mail corporativo", text: "Envie sequências pelo seu domínio.", on: true },
-    { name: "Calendário", text: "Reuniões marcadas direto na agenda.", on: false },
-    { name: "WhatsApp", text: "Abordagem por mensagem.", on: false },
-  ],
-  notifications: [
-    { label: "Resposta de um lead", on: true },
-    { label: "Reunião marcada", on: true },
-    { label: "Resumo semanal por e-mail", on: false },
-  ],
-};
-
 export const productSteps = [
-  { n: "01", title: "Defina o nicho", text: "Escolha uma segmentação pronta, como transportadoras em SC, ou monte a sua com filtros." },
-  { n: "02", title: "Monte a lista", text: "Receba contatos de decisores com e-mail e telefone verificados e dados enriquecidos." },
-  { n: "03", title: "Abordagem em escala", text: "Dispare sequências de e-mail e ligação e acompanhe as respostas em um só lugar." },
-  { n: "04", title: "Meça e ajuste", text: "Veja o que converte por segmento e refine a sua estratégia a cada semana." },
+  { n: "01", title: "Defina seu cliente ideal", text: "Escolha os nichos e o perfil (porte, capital, tipo de contato) na Segmentação." },
+  { n: "02", title: "Encontre no mapa", text: "Busque por raio, cidade ou estado e veja as empresas com pin no endereço e score." },
+  { n: "03", title: "Aborde", text: "Mande ao pipeline, dispare e-mail com follow-up ou chame no WhatsApp." },
+  { n: "04", title: "Meça e ajuste", text: "Os relatórios mostram o que responde mais por segmento, cidade, porte e score." },
 ];
 
 export const plans = [
   {
-    name: "Essencial",
-    price: "R$ 149",
-    desc: "Para quem está começando a prospectar.",
-    features: ["500 contatos por mês", "Busca e filtros", "1 sequência ativa", "Suporte por e-mail"],
+    name: "Grátis",
+    price: "R$ 0",
+    desc: "Para conhecer e começar a prospectar.",
+    features: ["Busca no mapa com score", "50 empresas por mês no pipeline", "CRM com pipeline e calendário", "Portfólio com link público"],
     highlight: false,
   },
   {
     name: "Profissional",
-    price: "R$ 399",
-    desc: "Para times comerciais em crescimento.",
-    features: ["5.000 contatos por mês", "Segmentações prontas", "Sequências ilimitadas", "Integração com CRM", "Relatórios por segmento"],
+    price: "R$ 149",
+    desc: "Para quem prospecta todo dia.",
+    features: ["Empresas ilimitadas no pipeline", "E-mail com follow-up automático", "Escrita com IA e radar de novas empresas", "Relatórios completos e exportação", "Integração com CRM"],
     highlight: true,
   },
   {
-    name: "Empresarial",
+    name: "Equipe",
     price: "Sob consulta",
-    desc: "Para operações de grande escala.",
-    features: ["Contatos ilimitados", "Usuários ilimitados", "Gerente de sucesso dedicado", "SSO e auditoria"],
+    desc: "Para times comerciais e outras regiões.",
+    features: ["Tudo do Profissional", "Base de outros estados sob demanda", "Vários usuários (em breve)", "Suporte prioritário"],
     highlight: false,
   },
 ];
 
 export const faq = [
-  { q: "Posso testar antes de assinar?", a: "Sim, há 14 dias de teste sem necessidade de cartão de crédito." },
-  { q: "De onde vêm os contatos?", a: "De fontes públicas e parceiros, verificados e atualizados continuamente." },
-  { q: "Consigo cancelar quando quiser?", a: "Sim, o cancelamento é feito direto no painel, sem multa." },
+  { q: "O plano grátis tem prazo?", a: "Não. Use à vontade dentro dos limites do plano, sem cartão de crédito." },
+  { q: "De onde vêm os dados das empresas?", a: "Do cadastro público de CNPJ da Receita Federal. Hoje a base cobre Santa Catarina; outros estados estão a caminho." },
+  { q: "Como fica a LGPD?", a: "Usamos dados públicos de empresas para contato comercial, e todo e-mail enviado pelo Oraklo tem link para a pessoa sair da lista. Veja a política de privacidade." },
+  { q: "Como pago?", a: "O pagamento por Pix e cartão está chegando. Até lá, fale com a gente para liberar o Profissional." },
 ];

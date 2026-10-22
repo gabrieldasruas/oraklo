@@ -5,6 +5,7 @@ import { createClient } from "@/lib/db/server";
 import { getCompany } from "@/lib/companies";
 import { ehDecisor, rotuloCargo } from "@/lib/crm";
 import { calcularScore } from "@/lib/score";
+import { avisarCrm } from "@/lib/crm-webhook";
 
 // Empresas da base → leads do workspace (um por empresa), com o decisor do QSA como contato
 // e o score calculado. Empresas que já estão no pipeline não são duplicadas.
@@ -55,6 +56,7 @@ export async function adicionarEmpresasAoPipeline(cnpjs: string[]): Promise<{ cr
       continue;
     }
     criados += data.length;
+    await avisarCrm(supabase, user.workspaceName, "lead.criado", data.map((l) => l.id));
     await supabase
       .from("lead_events")
       .insert(data.map((l) => ({ lead_id: l.id, workspace_id: user.workspaceId, type: "created", payload: { from: "busca" } })));
