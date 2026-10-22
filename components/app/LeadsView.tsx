@@ -14,10 +14,10 @@ import Calendario from "@/components/crm/Calendario";
 import ReuniaoModal, { type AberturaReuniao } from "@/components/crm/ReuniaoModal";
 
 type Aba = "pipeline" | "calendario" | "lista";
-const ABAS: { v: Aba; t: string; icon: typeof List }[] = [
-  { v: "pipeline", t: "Pipeline", icon: KanbanSquare },
-  { v: "calendario", t: "Calendário", icon: CalendarDays },
-  { v: "lista", t: "Lista", icon: List },
+const ABAS: { v: Aba; t: string; d: string; icon: typeof List }[] = [
+  { v: "pipeline", t: "Pipeline", d: "Arraste os leads entre as etapas", icon: KanbanSquare },
+  { v: "calendario", t: "Calendário", d: "Reuniões por dia, semana e mês", icon: CalendarDays },
+  { v: "lista", t: "Lista", d: "Tabela completa e constelação 3D", icon: List },
 ];
 
 const statusDot: Record<string, string> = {
@@ -111,21 +111,52 @@ export default function LeadsView() {
         </section>
 
         {/* abas do CRM */}
-        <div role="tablist" aria-label="Visões do CRM" className="flex w-fit gap-1 rounded-full bg-white/60 p-1 backdrop-blur">
-          {ABAS.map(({ v, t, icon: Icon }) => (
-            <button
-              key={v}
-              type="button"
-              role="tab"
-              aria-selected={aba === v}
-              onClick={() => setAba(v)}
-              className={`flex min-h-10 cursor-pointer items-center gap-2 rounded-full px-5 text-sm transition-colors ${
-                aba === v ? "bg-night font-medium text-white" : "hover:bg-white"
-              }`}
-            >
-              <Icon size={15} aria-hidden /> {t}
-            </button>
-          ))}
+        <div role="tablist" aria-label="Visões do CRM" className="grid gap-3 sm:grid-cols-3">
+          {ABAS.map(({ v, t, d, icon: Icon }) => {
+            const on = aba === v;
+            const numero = v === "pipeline" ? leads.length : v === "calendario" ? proximasReunioes : leads.length;
+            const legenda = v === "pipeline" ? "leads no funil" : v === "calendario" ? "reuniões agendadas" : "contatos";
+            return (
+              <button
+                key={v}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                onClick={() => setAba(v)}
+                className={`group relative flex min-h-24 cursor-pointer items-center gap-4 overflow-hidden rounded-[24px] border p-4 text-left transition-all duration-300 md:p-5 ${
+                  on
+                    ? "border-night bg-night text-white shadow-[0_24px_50px_-24px_rgba(10,10,10,0.7)]"
+                    : "border-white/80 bg-white/70 hover:-translate-y-0.5 hover:border-night/20 hover:bg-white"
+                }`}
+              >
+                {/* brilho neon na aba ativa */}
+                {on && (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full opacity-60 blur-2xl"
+                    style={{ background: "radial-gradient(circle, rgba(184,255,60,0.55), transparent 70%)" }}
+                  />
+                )}
+                <span
+                  className={`relative flex size-12 shrink-0 items-center justify-center rounded-2xl transition-colors ${
+                    on ? "bg-neon text-night" : "bg-night/5 text-night group-hover:bg-night group-hover:text-neon"
+                  }`}
+                >
+                  <Icon size={22} aria-hidden />
+                </span>
+                <span className="relative min-w-0 flex-1">
+                  <span className="block text-lg font-medium leading-tight tracking-[-0.02em] md:text-xl">{t}</span>
+                  <span className={`block truncate text-xs ${on ? "text-white/60" : "opacity-55"}`}>{d}</span>
+                </span>
+                <span className="relative shrink-0 text-right">
+                  <span className={`block text-3xl font-light leading-none tracking-[-0.05em] tabular-nums ${on ? "text-neon" : ""}`}>
+                    {loaded ? numero : "–"}
+                  </span>
+                  <span className={`block font-mono text-[9px] uppercase tracking-widest ${on ? "text-white/50" : "opacity-45"}`}>{legenda}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {aba === "pipeline" && (
