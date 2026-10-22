@@ -6,6 +6,7 @@ import {
   Presentation,
   BarChart3,
   MapPinned,
+  Gem,
   type LucideIcon,
 } from "lucide-react";
 
@@ -25,6 +26,7 @@ export const appNav: NavItem[] = [
   { label: "Busca avançada", href: "/busca-avancada", icon: MapPinned, desc: "Raio no mapa" },
   { label: "Portfólio", href: "/portfolio", icon: Presentation, desc: "Suas soluções" },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3, desc: "Desempenho" },
+  { label: "Pacotes", href: "/pacotes", icon: Gem, desc: "Free, Premium e Ultra" },
 ];
 
 // Páginas de apoio: continuam existindo, mas ficam fora do painel para não poluir.

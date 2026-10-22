@@ -6,6 +6,10 @@ import { CONFIG_TAG, RD_TOKEN_TAG, completarConfig, type ConfigWorkspace } from 
 import { cifrar, decifrar } from "@/lib/segredo";
 import { ErroRd, listarFunis, verificarToken, type FunilRd } from "@/lib/rdstation";
 import { enviarAgora } from "@/lib/rd-sync";
+import { LIMITES, planoDoWorkspace } from "@/lib/planos";
+
+const liberado = async (workspaceId: string) => LIMITES[await planoDoWorkspace(await createClient(), workspaceId)].integracoes;
+const SO_PREMIUM = "A integração com o RD Station faz parte do pacote Premium.";
 
 // Integração direta com o RD Station CRM. O token é validado, cifrado e guardado numa linha própria;
 // nunca volta para o navegador. Erros voltam como { ok: false, erro } (o Next esconde exceções em produção).
@@ -39,6 +43,7 @@ async function tokenSalvo() {
 /** Valida o token, guarda cifrado e devolve a conta e os funis. */
 export async function conectarRd(token: string): Promise<Res<{ config: ConfigWorkspace; funis: FunilRd[] }>> {
   const user = await requireUser();
+  if (!(await liberado(user.workspaceId))) return { ok: false, erro: SO_PREMIUM };
   const t = token.trim();
   if (!/^[A-Za-z0-9_-]{10,200}$/.test(t)) return { ok: false, erro: "Esse token não parece válido. Copie de RD Station CRM → Perfil → Token da API." };
   try {
@@ -95,7 +100,8 @@ export async function desconectarRd(): Promise<ConfigWorkspace> {
 
 /** Envia ao RD os leads que ainda não estão lá (até 50 por vez, por causa do limite da API). */
 export async function enviarLeadsRd(leadIds?: string[]): Promise<Res<{ enviados: number; jaEstavam: number; falharam: number; restam: number; aviso: string | null }>> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await liberado(user.workspaceId))) return { ok: false, erro: SO_PREMIUM };
   const db = await createClient();
   let ids = leadIds;
   let restam = 0;

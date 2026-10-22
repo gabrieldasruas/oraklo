@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/db/admin";
 import { PORTFOLIO_TAG, completar, type Portfolio } from "@/lib/portfolio-types";
 import Slides from "@/components/portfolio/Slides";
 import RegistrarVisita from "@/components/portfolio/RegistrarVisita";
+import { LIMITES } from "@/lib/pacotes";
+import { planoDe } from "@/lib/planos";
 
 // Portfólio público (link compartilhável). Só aparece se o dono ligou "Link público".
 
@@ -12,10 +14,17 @@ type Props = { params: Promise<{ id: string }>; searchParams: Promise<Record<str
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function carregar(id: string): Promise<Portfolio | null> {
+  return (await carregarComPlano(id))?.p ?? null;
+}
+
+async function carregarComPlano(id: string): Promise<{ p: Portfolio; semMarca: boolean } | null> {
   if (!UUID.test(id)) return null;
-  const { data } = await createAdminClient().from("lists").select("filter").eq("id", id).eq("tag", PORTFOLIO_TAG).maybeSingle();
+  const db = createAdminClient();
+  const { data } = await db.from("lists").select("filter, workspace_id").eq("id", id).eq("tag", PORTFOLIO_TAG).maybeSingle();
   const p = data ? completar(data.filter as Partial<Portfolio>) : null;
-  return p?.compartilhar?.ativo ? p : null;
+  if (!p?.compartilhar?.ativo) return null;
+  const { data: ws } = await db.from("workspaces").select("plan").eq("id", data!.workspace_id).maybeSingle();
+  return { p, semMarca: LIMITES[planoDe(ws?.plan as string | undefined)].semMarca };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -27,8 +36,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PortfolioPublico({ params, searchParams }: Props) {
   const { id } = await params;
   const { l } = await searchParams;
-  const p = await carregar(id);
-  if (!p) notFound();
+  const r = await carregarComPlano(id);
+  if (!r) notFound();
+  const { p, semMarca } = r;
   const i = p.identidade;
   const zap = i.telefone.replace(/\D/g, "");
 
@@ -67,7 +77,7 @@ export default async function PortfolioPublico({ params, searchParams }: Props) 
 
         <Slides p={p} />
 
-        <footer className="mt-10 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">Apresentação criada com Oraklo</footer>
+        {!semMarca && <footer className="mt-10 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">Apresentação criada com Oraklo</footer>}
       </div>
     </main>
   );

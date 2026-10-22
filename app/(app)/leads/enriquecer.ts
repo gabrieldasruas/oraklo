@@ -3,15 +3,17 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
 import { sitePeloEmail } from "@/lib/crm";
+import { LIMITES, planoDoWorkspace } from "@/lib/planos";
 
 // Enriquecimento de decisores pelo Hunter (https://hunter.io): pessoas e e-mails do domínio da empresa.
 // Desligado até existir HUNTER_API_KEY nas variáveis da Vercel.
 
 export type Pessoa = { nome: string; cargo: string; email: string; confianca: number; linkedin: string | null; senioridade: string | null };
 
-export async function hunterConfigurado(): Promise<boolean> {
-  await requireUser();
-  return Boolean(process.env.HUNTER_API_KEY);
+export async function hunterConfigurado(): Promise<{ configurado: boolean; liberado: boolean }> {
+  const user = await requireUser();
+  const liberado = LIMITES[await planoDoWorkspace(await createClient(), user.workspaceId)].decisores;
+  return { configurado: Boolean(process.env.HUNTER_API_KEY), liberado };
 }
 
 const limparDominio = (d: string) =>
@@ -31,7 +33,8 @@ export async function dominioDoLead(leadId: string): Promise<string | null> {
 }
 
 export async function buscarDecisores(dominio: string): Promise<{ dominio: string; pessoas: Pessoa[]; organizacao: string | null }> {
-  await requireUser();
+  const user = await requireUser();
+  if (!LIMITES[await planoDoWorkspace(await createClient(), user.workspaceId)].decisores) throw new Error("Decisores fazem parte do Premium.");
   const chave = process.env.HUNTER_API_KEY;
   if (!chave) throw new Error("Configure HUNTER_API_KEY para buscar decisores.");
   const d = limparDominio(dominio);
