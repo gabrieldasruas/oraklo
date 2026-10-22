@@ -46,6 +46,8 @@ export function descreverEvento(e: EventoLead): { titulo: string; detalhe?: stri
       return { titulo: "Clicou num link do e-mail", detalhe: str(p.link) || undefined, tom: "neon" };
     case "email_bounced":
       return { titulo: "E-mail voltou (endereço inválido)", tom: "rosa" };
+    case "email_unsubscribed":
+      return { titulo: "Pediu para não receber mais e-mails", tom: "rosa" };
     case "email_replied":
       return { titulo: "Respondeu ao e-mail", tom: "sol" };
     case "portfolio_viewed":

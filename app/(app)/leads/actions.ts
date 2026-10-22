@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
 import { adicionarEmpresasAoPipeline } from "./empresas";
+import { avisarCrm } from "@/lib/crm-webhook";
 import { STATUSES, type Lead, type LeadInput, type Status } from "@/lib/lead-types";
 
 type LeadRow = {
@@ -64,6 +65,7 @@ export async function createLead(input: LeadInput): Promise<Lead> {
   const { data, error } = await supabase.from("leads").insert(row).select(COLUMNS).single();
   if (error) throw new Error("Não foi possível salvar o lead");
   await supabase.from("lead_events").insert({ lead_id: data.id, workspace_id: user.workspaceId, type: "created" });
+  await avisarCrm(supabase, user.workspaceName, "lead.criado", [data.id]);
   return toLead(data as LeadRow);
 }
 
@@ -76,6 +78,7 @@ export async function updateLeadStatus(id: string, status: Status): Promise<void
   await supabase
     .from("lead_events")
     .insert({ lead_id: id, workspace_id: user.workspaceId, type: "status_changed", payload: { status } });
+  await avisarCrm(supabase, user.workspaceName, "lead.etapa", [id], { etapaNova: status });
 }
 
 export async function deleteLead(id: string): Promise<void> {

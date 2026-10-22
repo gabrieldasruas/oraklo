@@ -2,6 +2,7 @@
 
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
+import { avisarCrm } from "@/lib/crm-webhook";
 import { CATEGORIAS, type CategoriaId, type Reuniao, type ReuniaoInput } from "@/lib/meeting-types";
 
 // Reuniões guardadas como eventos em `lead_events` (ver lib/meeting-types.ts).
@@ -85,6 +86,7 @@ export async function criarReuniao(input: ReuniaoInput): Promise<Reuniao> {
     .select("created_at")
     .single();
   if (error) throw new Error("Não foi possível agendar a reunião");
+  await avisarCrm(supabase, user.workspaceName, "reuniao.marcada", [input.leadId], { reuniao: { titulo: payload.title, inicio: start, fim: end } });
 
   // mover o lead para "Reunião marcada" é feito pela tela (updateLeadStatus), para registrar um evento só
   return { id: meetingId, leadId: input.leadId, ...payload, canceled: false, createdAt: data.created_at } as Reuniao;

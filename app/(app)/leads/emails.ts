@@ -3,6 +3,9 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
 import { emailConfigurado, enviarLote, urlDoApp } from "@/lib/email";
+import { rodapeDescadastro } from "@/lib/descadastro";
+import { avisarCrm } from "@/lib/crm-webhook";
+import { carregarConfig } from "../configuracoes/actions";
 import { PORTFOLIO_TAG, completar, preencherEmail, type Portfolio } from "@/lib/portfolio-types";
 
 // Disparo de e-mails para leads (Resend) com follow-up automático.
@@ -51,7 +54,10 @@ export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semE
   const p = completar(port?.filter as Partial<Portfolio> | null);
   const portfolioId = (port?.id as string | undefined) ?? null;
 
-  const comEmail = (leads ?? []).filter((l) => emailValido(String(l.email).trim()));
+  // quem pediu para sair da lista não recebe mais nada
+  const { data: saiu } = await supabase.from("lead_events").select("lead_id").eq("type", "email_unsubscribed").in("lead_id", ids);
+  const descadastrados = new Set((saiu ?? []).map((e) => e.lead_id as string));
+  const comEmail = (leads ?? []).filter((l) => emailValido(String(l.email).trim()) && !descadastrados.has(l.id));
   const semEmail = (leads?.length ?? 0) - comEmail.length;
   const dias = d.followup ? Math.min(30, Math.max(1, Math.round(d.followup.dias))) : 0;
   const followAt = d.followup ? new Date(Date.now() + dias * 86_400_000).toISOString() : null;
@@ -59,10 +65,13 @@ export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semE
   const preencher = (t: string, l: { id: string; name: string; company: string }) =>
     preencherEmail(t.replaceAll("{link_portfolio}", linkPortfolio(portfolioId, p, l.id)), p, l);
 
+  const assinatura = (await carregarConfig().catch(() => null))?.assinatura?.trim();
+  const comAssinatura = (t: string) => (assinatura ? `${t}\n\n${assinatura}` : t);
+
   const msgs = comEmail.map((l) => ({
     para: String(l.email).trim(),
     assunto: preencher(assunto, l),
-    texto: preencher(corpo, l),
+    texto: comAssinatura(preencher(corpo, l)) + rodapeDescadastro(l.id),
     responderPara: user.email || undefined,
     tags: { lead: l.id },
   }));
@@ -87,7 +96,7 @@ export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semE
         body: msgs[i].texto.slice(0, 4000),
         step: 1,
         replyTo: user.email,
-        followup: d.followup && followAt ? { at: followAt, subject: preencher(texto(d.followup.assunto, 200) || `Re: ${assunto}`, l), body: preencher(texto(d.followup.corpo, 8000), l) } : null,
+        followup: d.followup && followAt ? { at: followAt, subject: preencher(texto(d.followup.assunto, 200) || `Re: ${assunto}`, l), body: comAssinatura(preencher(texto(d.followup.corpo, 8000), l)) } : null,
       },
     });
     if (l.status === "Novo") paraSequencia.push(l.id);
@@ -113,6 +122,7 @@ export async function marcarResposta(leadId: string): Promise<void> {
     { lead_id: leadId, workspace_id: user.workspaceId, type: "email_replied", payload: {} },
     { lead_id: leadId, workspace_id: user.workspaceId, type: "status_changed", payload: { status: "Respondeu" } },
   ]);
+  await avisarCrm(supabase, user.workspaceName, "lead.respondeu", [leadId]);
 }
 
 /** Números de e-mail dos últimos 30 dias (Visão geral). */

@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/db/admin";
 import { emailConfigurado, enviarLote } from "@/lib/email";
+import { rodapeDescadastro } from "@/lib/descadastro";
 
 // Cron da Vercel (vercel.json): envia os follow-ups vencidos para quem ainda não respondeu.
 // A Vercel manda "Authorization: Bearer $CRON_SECRET". Sem CRON_SECRET a rota fica fechada.
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
   const { data, error } = await db
     .from("lead_events")
     .select("id, lead_id, workspace_id, type, payload, created_at")
-    .in("type", ["email_sent", "email_replied", "email_bounced"])
+    .in("type", ["email_sent", "email_replied", "email_bounced", "email_unsubscribed"])
     .gte("created_at", desde)
     .order("created_at", { ascending: true })
     .limit(20000);
@@ -49,7 +50,7 @@ export async function GET(req: Request) {
 
   const msgs = enviar.map((e) => {
     const f = e.payload!.followup as Follow;
-    return { para: String(e.payload!.to), assunto: f.subject, texto: f.body, responderPara: String(e.payload!.replyTo ?? "") || undefined, tags: { lead: e.lead_id } };
+    return { para: String(e.payload!.to), assunto: f.subject, texto: f.body + rodapeDescadastro(e.lead_id), responderPara: String(e.payload!.replyTo ?? "") || undefined, tags: { lead: e.lead_id } };
   });
   const ids = msgs.length ? await enviarLote(msgs) : [];
 
