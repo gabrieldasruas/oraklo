@@ -15,6 +15,8 @@ export type CompanyFilter = {
   municipalities?: string[];
   sizes?: string[];
   min_share_capital?: number;
+  /** idade mínima da empresa, em anos */
+  min_years_open?: number;
   headquarters_only?: boolean;
   has_email?: boolean;
   q?: string;

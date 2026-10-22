@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
-import { Building2, Check, ChevronDown, Crosshair, ListPlus, Loader2, Locate, MapPin, Plus, Radio, Search, X } from "lucide-react";
+import { Building2, Check, ChevronDown, Crosshair, ListPlus, Loader2, Locate, MapPin, Plus, Radio, Search, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import Link from "next/link";
+import { afinidade, aplicarSinal, cnaesDoPerfil, type PerfilBusca } from "@/lib/perfil-busca";
+import { registrarSinal } from "@/app/(app)/segmentacao/perfil";
 import { Glass, Micro } from "@/components/app/ui";
 import ContactCell from "@/components/app/ContactCell";
 import PreviaEmpresa from "./PreviaEmpresa";
@@ -34,6 +37,7 @@ const RadiusMap = dynamic(() => import("./RadiusMap"), {
 type Cnae = { code: string; description: string; count: number };
 type Item = {
   cnpj: string;
+  cnaeMain: string | null;
   name: string;
   isHeadquarters: boolean;
   city: string;
@@ -61,7 +65,7 @@ type Override = { escopo?: Escopo; raioKm?: number; ufs?: string[]; centro?: Cen
 /** Fração das empresas localizadas que ganham pin neon (1 = todas as empresas buscadas). */
 const FRACAO_DESTAQUE = 1;
 
-const INICIO: Centro = [-23.5505, -46.6333]; // São Paulo
+const INICIO: Centro = [-26.9078, -48.6619]; // Itajaí/SC: a base importada é toda de SC
 const fmt = (n: number) => n.toLocaleString("pt-BR");
 
 // Sede do município pelo nome (a Receita escreve sem acento: "ITAJAI").
@@ -82,8 +86,11 @@ const semAcento = (s: string) =>
 export default function BuscaAvancada({
   cnaes,
   ufsComDados = {},
+  perfil = null,
 }: {
   cnaes: Cnae[];
+  /** perfil de cliente ideal (Segmentação): pré-aplica filtros e ordena por afinidade */
+  perfil?: PerfilBusca | null;
   /** UF → empresas já importadas na base */
   ufsComDados?: Record<string, number>;
 }) {
@@ -96,13 +103,26 @@ export default function BuscaAvancada({
   const [modoMapa, setModoMapa] = useState<ModoMapa>("auto");
   const [voar, setVoar] = useState<{ lat: number; lng: number; token: number } | null>(null);
 
+  // ---------- perfil de cliente ideal ----------
+  const [perfilAtual, setPerfilAtual] = useState<PerfilBusca | null>(perfil);
+  const aplicaPerfil = !!perfil?.ativo;
+  const cnaesPerfil = useMemo(() => {
+    if (!perfil) return [];
+    const existentes = new Set(cnaes.map((c) => c.code));
+    return cnaesDoPerfil(perfil).filter((c) => existentes.has(c));
+  }, [perfil, cnaes]);
+  const temPerfil = !!perfil && (perfil.nichos.length > 0 || perfil.portes.length > 0 || perfil.capitalMin !== null || perfil.anosMin !== null || perfil.temEmail || perfil.temWhatsapp || perfil.soMatriz || perfil.aprendizado.sinais > 0);
+  const [ordenarPerfil, setOrdenarPerfil] = useState(temPerfil);
+
   // ---------- filtros ----------
   const [ufsFiltro, setUfsFiltro] = useState<string[]>([]);
-  const [cnaesSel, setCnaesSel] = useState<string[]>([]);
+  const [cnaesSel, setCnaesSel] = useState<string[]>(aplicaPerfil ? cnaesPerfil : []);
   const [buscaCnae, setBuscaCnae] = useState("");
-  const [portes, setPortes] = useState<string[]>([]);
-  const [temEmail, setTemEmail] = useState(false);
-  const [matriz, setMatriz] = useState(false);
+  const [portes, setPortes] = useState<string[]>(aplicaPerfil && perfil ? perfil.portes : []);
+  const [temEmail, setTemEmail] = useState(aplicaPerfil && !!perfil?.temEmail);
+  const [matriz, setMatriz] = useState(aplicaPerfil && !!perfil?.soMatriz);
+  const [capitalMin, setCapitalMin] = useState<number | null>(aplicaPerfil ? (perfil?.capitalMin ?? null) : null);
+  const [anosMin, setAnosMin] = useState<number | null>(aplicaPerfil ? (perfil?.anosMin ?? null) : null);
   // por padrão só a atividade PRINCIPAL conta (evita JBS/Fedex que têm transporte como secundária)
   const [principal, setPrincipal] = useState(true);
   const [aberto, setAberto] = useState<null | "cnae" | "estados" | "cidade" | "cidade-barra" | "porte">(null);
@@ -117,7 +137,7 @@ export default function BuscaAvancada({
   const [acao, setAcao] = useState<null | "pipeline" | "lista">(null);
   const [retorno, setRetorno] = useState<{ tipo: "ok" | "erro"; texto: string; link?: { href: string; t: string } } | null>(null);
   // a busca só roda no botão; guardamos o que foi buscado para avisar quando os filtros mudarem
-  const assinaturaAtual = JSON.stringify([centro, raioKm, escopo, ufsFiltro, cnaesSel, portes, temEmail, matriz, principal]);
+  const assinaturaAtual = JSON.stringify([centro, raioKm, escopo, ufsFiltro, cnaesSel, portes, temEmail, matriz, principal, capitalMin, anosMin]);
   const [assinaturaBuscada, setAssinaturaBuscada] = useState<string | null>(null);
   const desatualizada = assinaturaBuscada !== null && assinaturaBuscada !== assinaturaAtual;
 
@@ -229,6 +249,8 @@ export default function BuscaAvancada({
           temEmail,
           matriz,
           principal,
+          capitalMin,
+          anosMin,
           cursor,
         }),
       });
@@ -247,6 +269,26 @@ export default function BuscaAvancada({
     }
   }
 
+
+  // ---------- 👍 / 👎: a busca aprende o que é um bom cliente ----------
+  async function sinal(c: Item, valor: 1 | -1) {
+    if (!perfilAtual) return;
+    const atual = perfilAtual.aprendizado.marcados[c.cnpj];
+    const novo: 1 | -1 | 0 = atual === valor ? 0 : valor;
+    // otimista: reordena na hora
+    setPerfilAtual((p) => (p ? aplicarSinal(p, c, novo) : p));
+    try {
+      setPerfilAtual(await registrarSinal({ cnpj: c.cnpj, cnaeMain: c.cnaeMain, size: c.size, city: c.city, uf: c.uf }, novo));
+    } catch {
+      setPerfilAtual((p) => (p ? aplicarSinal(p, c, (atual ?? 0) as 1 | -1 | 0) : p));
+    }
+  }
+  const itensOrdenados = useMemo(() => {
+    const itens = res?.items ?? [];
+    if (!perfilAtual) return itens.map((c) => ({ c, af: null as null | { valor: number; motivos: string[] } }));
+    const comAf = itens.map((c) => ({ c, af: afinidade(c, perfilAtual) }));
+    return ordenarPerfil ? [...comAf].sort((a, b) => b.af.valor - a.af.valor) : comAf;
+  }, [res, perfilAtual, ordenarPerfil]);
 
   // ---------- seleção ----------
   const alternar = (cnpj: string) =>
@@ -587,6 +629,40 @@ export default function BuscaAvancada({
           </button>
         </div>
 
+        {/* perfil de cliente ideal */}
+        {perfil && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-night px-3 py-2.5 text-white">
+            <span className="flex items-center gap-2 pl-1 text-xs font-medium">
+              <Sparkles size={14} aria-hidden className="text-neon" />
+              {temPerfil ? (aplicaPerfil ? "Busca ajustada ao seu perfil" : "Seu perfil (não aplicado automaticamente)") : "Ensine a busca como é o seu cliente ideal"}
+            </span>
+            {capitalMin !== null && (
+              <button type="button" onClick={() => setCapitalMin(null)} title="Remover" className="flex cursor-pointer items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] hover:bg-white/20">
+                Capital {formatMoney(capitalMin)}+ <X size={11} aria-hidden />
+              </button>
+            )}
+            {anosMin !== null && (
+              <button type="button" onClick={() => setAnosMin(null)} title="Remover" className="flex cursor-pointer items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] hover:bg-white/20">
+                {anosMin}+ anos <X size={11} aria-hidden />
+              </button>
+            )}
+            {perfilAtual && perfilAtual.aprendizado.sinais > 0 && (
+              <span className="rounded-full border border-neon/40 px-2.5 py-1 text-[11px] text-neon">aprendeu com {perfilAtual.aprendizado.sinais} avaliações</span>
+            )}
+            <span className="ml-auto flex flex-wrap items-center gap-2">
+              {temPerfil && (
+                <label className="flex cursor-pointer items-center gap-2 text-[11px] text-white/80">
+                  <input type="checkbox" checked={ordenarPerfil} onChange={(e) => setOrdenarPerfil(e.target.checked)} className="size-3.5 accent-[#b8ff3c]" />
+                  Mais aderentes primeiro
+                </label>
+              )}
+              <Link href="/segmentacao#foco" className="rounded-full bg-neon px-3 py-1 text-[11px] font-medium text-night">
+                {temPerfil ? "Aprimorar" : "Montar perfil"}
+              </Link>
+            </span>
+          </div>
+        )}
+
         {/* atividades escolhidas */}
         {cnaesSel.length > 0 && (
           <ul className="mt-3 flex flex-wrap gap-2">
@@ -864,8 +940,9 @@ export default function BuscaAvancada({
                   </span>
                 </li>
               ))}
-            {res?.items.map((c, idx) => {
+            {itensOrdenados.map(({ c, af }, idx) => {
               const pin = noMapa.get(c.cnpj);
+              const marcado = perfilAtual?.aprendizado.marcados[c.cnpj] ?? 0;
               const marcada = selecionadas.has(c.cnpj);
               const sc = calcularScore(c);
               const faixa = faixaScore(sc.score);
@@ -899,6 +976,14 @@ export default function BuscaAvancada({
                     <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                       <PreviaEmpresa empresa={c} />
                       <span className="flex items-center gap-2">
+                        {af && (
+                          <span
+                            className={`flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] font-medium ${af.valor >= 70 ? "bg-night text-neon" : "bg-night/10 text-night"}`}
+                            title={`Combina ${af.valor}% com o seu perfil${af.motivos.length ? `: ${af.motivos.join(", ")}` : ""}`}
+                          >
+                            <Sparkles size={10} aria-hidden /> {af.valor}%
+                          </span>
+                        )}
                         <span
                           className="rounded-full px-2 py-0.5 font-mono text-[10px] font-medium text-night"
                           style={{ background: faixa.cor }}
@@ -919,8 +1004,30 @@ export default function BuscaAvancada({
                       <span>{SIZE_LABEL[c.size] ?? "—"}</span>
                       {!c.isHeadquarters && <span>filial</span>}
                     </p>
-                    <div className="mt-2">
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                       <ContactCell email={c.email} phones={c.phones} inline />
+                      {perfilAtual && (
+                        <span className={`flex items-center gap-1 transition-opacity ${marcado ? "opacity-100" : "opacity-40 group-hover:opacity-100"}`}>
+                          <button
+                            type="button"
+                            onClick={() => void sinal(c, 1)}
+                            aria-pressed={marcado === 1}
+                            title="É meu cliente: mostrar mais empresas assim"
+                            className={`flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors ${marcado === 1 ? "border-night bg-night text-neon" : "border-night/15 hover:bg-night hover:text-neon"}`}
+                          >
+                            <ThumbsUp size={13} aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void sinal(c, -1)}
+                            aria-pressed={marcado === -1}
+                            title="Não é meu cliente: mostrar menos empresas assim"
+                            className={`flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors ${marcado === -1 ? "border-rose-500 bg-rose-500 text-white" : "border-night/15 hover:border-rose-500 hover:bg-rose-500 hover:text-white"}`}
+                          >
+                            <ThumbsDown size={13} aria-hidden />
+                          </button>
+                        </span>
+                      )}
                     </div>
                   </div>
                 </li>
