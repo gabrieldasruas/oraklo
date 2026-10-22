@@ -4,6 +4,7 @@
   --font-sans: var(--font-body), system-ui, sans-serif;
   --font-display: var(--font-display-app), system-ui, sans-serif;
   --font-mono: var(--font-mono-app), ui-monospace, monospace;
+  --font-serif: var(--font-serif-app), Georgia, serif;
 }
 
 @theme {
@@ -524,4 +525,35 @@ body {
 .company-pin--aprox > span {
   background: #0b0b0c;
   inset: 7px;
+}
+
+/* ====== Portfólio: "Baixar PDF" imprime só os slides, um por página ====== */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #portfolio-slides,
+  #portfolio-slides * {
+    visibility: visible;
+  }
+  #portfolio-slides {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+  }
+  #portfolio-slides > * {
+    break-after: page;
+    padding: 0;
+    margin: 0 !important;
+  }
+  html,
+  body {
+    background: #fff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }
