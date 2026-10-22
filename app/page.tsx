@@ -12,6 +12,7 @@ const links = [
   { label: "Produto", href: "/produto" },
   { label: "Guias", href: "/historias" },
   { label: "Preços", href: "/precos" },
+  { label: "Consulta CNPJ", href: "/consulta" },
   { label: "Privacidade", href: "/privacidade" },
 ];
 

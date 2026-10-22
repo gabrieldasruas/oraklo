@@ -7,10 +7,9 @@ import { STATUSES, useLeads, type Status } from "@/lib/leads";
 import PageHeader from "@/components/app/PageHeader";
 import LeadForm from "@/components/app/LeadForm";
 import { Aura, Glass, Micro, Pill, WireArt } from "@/components/app/ui";
-import { LeadsConstellation } from "@/components/three/lazy";
 import CountUp from "@/components/motion/CountUp";
 import { useReunioes } from "@/lib/meetings";
-import Pipeline from "@/components/crm/Pipeline";
+import Pipeline, { COR_ETAPA } from "@/components/crm/Pipeline";
 import Calendario from "@/components/crm/Calendario";
 import ReuniaoModal, { type AberturaReuniao } from "@/components/crm/ReuniaoModal";
 import LeadDrawer from "@/components/crm/LeadDrawer";
@@ -20,7 +19,7 @@ type Aba = "pipeline" | "calendario" | "lista";
 const ABAS: { v: Aba; t: string; d: string; icon: typeof List }[] = [
   { v: "pipeline", t: "Pipeline", d: "Arraste os leads entre as etapas", icon: KanbanSquare },
   { v: "calendario", t: "Calendário", d: "Reuniões por dia, semana e mês", icon: CalendarDays },
-  { v: "lista", t: "Lista", d: "Tabela completa e constelação 3D", icon: List },
+  { v: "lista", t: "Lista", d: "Tabela completa com filtros", icon: List },
 ];
 
 const statusDot: Record<string, string> = {
@@ -47,7 +46,8 @@ export default function LeadsView() {
   const aberto = leads.find((l) => l.id === abertoId) ?? null;
   const [query, setQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
-  const [picked, setPicked] = useState<string | null>(null);
+  const [filtroEtapa, setFiltroEtapa] = useState<Status | null>(null);
+  const [filtroFaixa, setFiltroFaixa] = useState<string | null>(null);
   const [aba, setAba] = useState<Aba>("pipeline");
   const { reunioes, erro: erroReunioes, agendar, alterar, cancelar } = useReunioes();
   const [abertura, setAbertura] = useState<AberturaReuniao | null>(null);
@@ -57,11 +57,13 @@ export default function LeadsView() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return leads;
-    return leads.filter((l) =>
-      [l.name, l.role, l.company, l.place, l.email].some((v) => v.toLowerCase().includes(q)),
+    return leads.filter(
+      (l) =>
+        (!filtroEtapa || l.status === filtroEtapa) &&
+        (!filtroFaixa || faixaScore(l.score).rotulo === filtroFaixa) &&
+        (!q || [l.name, l.role, l.company, l.place, l.email].some((v) => v.toLowerCase().includes(q))),
     );
-  }, [leads, query]);
+  }, [leads, query, filtroEtapa, filtroFaixa]);
 
   const kpis = [
     { label: "Leads na lista", value: leads.length, tone: "night" as const },
@@ -73,16 +75,6 @@ export default function LeadsView() {
     },
     { label: "Reuniões agendadas", value: proximasReunioes, tone: "mint" as const },
   ];
-
-  // Vindo da constelação 3D: limpa a busca, rola até o lead e destaca a linha.
-  function pick(id: string) {
-    setQuery("");
-    setPicked(id);
-    requestAnimationFrame(() =>
-      document.getElementById(`lead-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }),
-    );
-    window.setTimeout(() => setPicked((p) => (p === id ? null : p)), 2400);
-  }
 
   function onDelete(id: string, name: string) {
     if (window.confirm(`Excluir o lead "${name}"?`)) removeLead(id);
@@ -247,8 +239,46 @@ export default function LeadsView() {
 
         {aba === "lista" && (
           <>
-        {/* constelação 3D dos leads: clicar num ponto leva até a linha da tabela */}
-        <LeadsConstellation leads={leads} onPick={pick} />
+        {/* resumo leve: clique numa etapa ou faixa de score para filtrar a tabela */}
+        <Glass className="grid gap-5 p-5 md:grid-cols-[1.4fr_1fr]">
+          <div>
+            <Micro>Por etapa</Micro>
+            <div className="mt-3 flex h-3 overflow-hidden rounded-full bg-night/5">
+              {STATUSES.map((st) => {
+                const n = leads.filter((l) => l.status === st).length;
+                return n ? <span key={st} title={`${st}: ${n}`} style={{ width: `${(n / Math.max(1, leads.length)) * 100}%`, background: COR_ETAPA[st] }} /> : null;
+              })}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {STATUSES.map((st) => {
+                const n = leads.filter((l) => l.status === st).length;
+                const on = filtroEtapa === st;
+                return (
+                  <button key={st} type="button" onClick={() => setFiltroEtapa(on ? null : st)} aria-pressed={on} className={`flex min-h-8 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[11px] ${on ? "border-night bg-night text-white" : "border-night/10 bg-white/70 hover:bg-white"}`}>
+                    <span className="size-2 rounded-full" style={{ background: COR_ETAPA[st] }} />
+                    {st} <span className="font-mono opacity-60">{n}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <Micro>Por score</Micro>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {[90, 60, 10].map((v) => {
+                const f = faixaScore(v);
+                const n = leads.filter((l) => faixaScore(l.score).rotulo === f.rotulo).length;
+                const on = filtroFaixa === f.rotulo;
+                return (
+                  <button key={f.rotulo} type="button" onClick={() => setFiltroFaixa(on ? null : f.rotulo)} aria-pressed={on} className={`cursor-pointer rounded-2xl border p-3 text-left transition-colors ${on ? "border-night bg-night text-white" : "border-white/80 bg-white/60 hover:bg-white"}`}>
+                    <span className="inline-block rounded-full px-2 py-0.5 font-mono text-[10px] text-night" style={{ background: f.cor }}>{f.rotulo}</span>
+                    <span className="mt-2 block text-2xl font-light tracking-[-0.04em] tabular-nums">{n}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </Glass>
 
         <Glass className="overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-night/10 p-4">
@@ -285,7 +315,7 @@ export default function LeadsView() {
                   <tr
                     key={l.id}
                     id={`lead-${l.id}`}
-                    className={`scroll-mt-28 transition-colors duration-700 hover:bg-white/60 ${picked === l.id ? "bg-neon/40" : ""}`}
+                    className={`scroll-mt-28 transition-colors duration-700 hover:bg-white/60`}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">

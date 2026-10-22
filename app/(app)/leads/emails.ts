@@ -6,6 +6,7 @@ import { emailConfigurado, enviarLote, urlDoApp } from "@/lib/email";
 import { rodapeDescadastro } from "@/lib/descadastro";
 import { avisarCrm } from "@/lib/crm-webhook";
 import { carregarConfig } from "../configuracoes/actions";
+import { LIMITES, planoDoWorkspace, restante, usoDoMes } from "@/lib/planos";
 import { PORTFOLIO_TAG, completar, preencherEmail, type Portfolio } from "@/lib/portfolio-types";
 
 // Disparo de e-mails para leads (Resend) com follow-up automático.
@@ -36,7 +37,7 @@ function linkPortfolio(portfolioId: string | null, p: Portfolio, leadId: string)
   return `${urlDoApp()}/p/${portfolioId}?l=${leadId}`;
 }
 
-export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semEmail: number; falharam: number }> {
+export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semEmail: number; falharam: number; limitados: number }> {
   const user = await requireUser();
   if (!emailConfigurado()) throw new Error("Configure o envio de e-mail (RESEND_API_KEY e EMAIL_FROM) para disparar.");
   const assunto = texto(d.assunto, 200);
@@ -57,7 +58,12 @@ export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semE
   // quem pediu para sair da lista não recebe mais nada
   const { data: saiu } = await supabase.from("lead_events").select("lead_id").eq("type", "email_unsubscribed").in("lead_id", ids);
   const descadastrados = new Set((saiu ?? []).map((e) => e.lead_id as string));
-  const comEmail = (leads ?? []).filter((l) => emailValido(String(l.email).trim()) && !descadastrados.has(l.id));
+  const todosComEmail = (leads ?? []).filter((l) => emailValido(String(l.email).trim()) && !descadastrados.has(l.id));
+  // limite do plano Grátis (e-mails por mês)
+  const limiteEmails = LIMITES[await planoDoWorkspace(supabase, user.workspaceId)].emailsMes;
+  const cabe = restante(limiteEmails, (await usoDoMes(supabase)).emails);
+  const comEmail = cabe === null ? todosComEmail : todosComEmail.slice(0, cabe);
+  const limitados = todosComEmail.length - comEmail.length;
   const semEmail = (leads?.length ?? 0) - comEmail.length;
   const dias = d.followup ? Math.min(30, Math.max(1, Math.round(d.followup.dias))) : 0;
   const followAt = d.followup ? new Date(Date.now() + dias * 86_400_000).toISOString() : null;
@@ -109,7 +115,7 @@ export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semE
       .from("lead_events")
       .insert(paraSequencia.map((id) => ({ lead_id: id, workspace_id: user.workspaceId, type: "status_changed", payload: { status: "Em sequência" } })));
   }
-  return { enviados, semEmail, falharam: comEmail.length - enviados };
+  return { enviados, semEmail, falharam: comEmail.length - enviados, limitados };
 }
 
 /** Marca que o lead respondeu: para os follow-ups e move para "Respondeu". */
