@@ -426,11 +426,11 @@ body {
 .company-pin {
   position: relative;
   display: block;
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
   border-radius: 50% 50% 50% 0;
   background: #b8ff3c;
-  border: 2.5px solid #0b0b0c;
+  border: 2px solid #0b0b0c;
   transform: rotate(-45deg);
   box-shadow: 0 6px 14px -4px rgba(0, 0, 0, 0.5);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -438,7 +438,7 @@ body {
 }
 .company-pin > span {
   position: absolute;
-  inset: 8px;
+  inset: 6px;
   border-radius: 9999px;
   background: #0b0b0c;
 }
@@ -523,5 +523,5 @@ body {
 }
 .company-pin--aprox > span {
   background: #0b0b0c;
-  inset: 10px;
+  inset: 7px;
 }

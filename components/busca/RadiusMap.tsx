@@ -33,9 +33,9 @@ const ATRIB = "Mapa &copy; Esri, Maxar, Earthstar Geographics, HERE, Garmin, &co
 const pinIcon = (foco: boolean, aproximado = false) =>
   L.divIcon({
     className: "",
-    iconSize: [30, 38],
-    iconAnchor: [15, 36],
-    popupAnchor: [0, -34],
+    iconSize: [22, 28],
+    iconAnchor: [11, 27],
+    popupAnchor: [0, -26],
     html: `<span class="company-pin ${aproximado ? "company-pin--aprox" : ""} ${foco ? "company-pin--foco" : ""}"><span></span></span>`,
   });
 
@@ -164,7 +164,7 @@ export default function RadiusMap({
   const corCirculo = satelite ? "#b8ff3c" : "#0b0b0c";
 
   const tooltip = (e: EmpresaNoMapa) => (
-    <Tooltip direction="top" offset={[0, e.destaque ? -34 : -6]} className="pin-tooltip">
+    <Tooltip direction="top" offset={[0, e.destaque ? -26 : -6]} className="pin-tooltip">
       <span className="block text-[13px] font-medium leading-tight">{e.name}</span>
       <span className="block text-[11px] opacity-60">{e.local}</span>
       <span className="mt-0.5 block font-mono text-[11px]">{formatMoney(e.capital)}</span>
