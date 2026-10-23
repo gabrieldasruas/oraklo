@@ -4,6 +4,10 @@ import LeadsView from "@/components/app/LeadsView";
 
 export const metadata: Metadata = { title: `Leads — ${site.name}` };
 
-export default function LeadsPage() {
-  return <LeadsView />;
+type Props = { searchParams: Promise<{ lead?: string }> };
+
+export default async function LeadsPage({ searchParams }: Props) {
+  const { lead } = await searchParams;
+  // ?lead=<id> abre a ficha do lead (links do sininho de avisos)
+  return <LeadsView abrir={typeof lead === "string" ? lead : null} />;
 }

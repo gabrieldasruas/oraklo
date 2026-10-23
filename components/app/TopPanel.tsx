@@ -9,6 +9,7 @@ import { appNav } from "@/components/app/nav";
 import { Micro } from "@/components/app/ui";
 import MenuToggle from "./MenuToggle";
 import TemaToggle from "./TemaToggle";
+import AvisosSino from "./AvisosSino";
 import { site } from "@/content/site";
 
 // Painel enxuto no topo: serve para o usuário se localizar entre as seções principais.
@@ -76,6 +77,7 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
               <span className="size-1.5 rounded-full bg-neon ring-1 ring-night/40" /> Sistema online · BRT
             </Micro>
           )}
+          {user && <AvisosSino />}
           <TemaToggle />
           <MenuToggle para="lateral" className="hidden lg:flex" />
           <button
@@ -84,7 +86,7 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
             aria-expanded={open}
             aria-controls="top-panel-body"
             title={open ? "Recolher" : "Ver todas as seções"}
-            className="flex min-h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-night/10 bg-white/70 px-3 text-xs hover:bg-white sm:px-4 xl:px-3"
+            className={`min-h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-night/10 bg-white/70 px-3 text-xs hover:bg-white sm:px-4 xl:px-3 ${open ? "flex" : "flex xl:hidden"}`}
           >
             {open ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
             <span className={open ? "hidden sm:inline" : "hidden sm:inline xl:hidden"}>{open ? "Recolher" : "Seções"}</span>

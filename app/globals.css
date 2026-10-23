@@ -637,3 +637,21 @@ body {
     animation: none;
   }
 }
+
+/* Sininho de avisos: balança quando chega um lead quente */
+@keyframes sino-toca {
+  0%, 100% { rotate: 0deg; }
+  20% { rotate: 16deg; }
+  40% { rotate: -14deg; }
+  60% { rotate: 9deg; }
+  80% { rotate: -5deg; }
+}
+.sino-toca {
+  transform-origin: 50% 10%;
+  animation: sino-toca 0.9s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sino-toca {
+    animation: none;
+  }
+}
