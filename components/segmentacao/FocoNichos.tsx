@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Brain,
@@ -107,9 +108,12 @@ export default function FocoNichos({ niches, inicial, atividades = [] }: { niche
       atividades: s.atividades.some((x) => x.code === a.code) ? s.atividades.filter((x) => x.code !== a.code) : [...s.atividades, { code: a.code, descricao: a.description }].slice(0, 40),
     }));
   const [estado, setEstado] = useState<"ok" | "salvando" | "erro">("ok");
+  const router = useRouter();
+  const focoAnterior = useRef(JSON.stringify([inicial.nichos, inicial.atividades.map((a) => a.code)]));
   const ultimo = useRef(JSON.stringify(inicial));
   const forca = forcaDoPerfil(p);
   const grupos = useMemo(() => [...new Set(niches.map((n) => n.group))], [niches]);
+  const contagem = useMemo(() => new Map(atividades.map((a) => [a.code, a.count])), [atividades]);
   const a = p.aprendizado;
 
   // salva sozinho (sem o aprendizado, que é do servidor)
@@ -125,6 +129,12 @@ export default function FocoNichos({ niches, inicial, atividades = [] }: { niche
           ultimo.current = JSON.stringify({ ...p, atualizadoEm: salvo.atualizadoEm });
           setP((s) => ({ ...s, atualizadoEm: salvo.atualizadoEm }));
           setEstado("ok");
+          // o anel lá em cima mostra só os segmentos escolhidos: atualiza quando o foco muda
+          const foco = JSON.stringify([p.nichos, p.atividades.map((a) => a.code)]);
+          if (foco !== focoAnterior.current) {
+            focoAnterior.current = foco;
+            router.refresh();
+          }
         })
         .catch(() => setEstado("erro"));
     }, 900);
@@ -257,7 +267,10 @@ export default function FocoNichos({ niches, inicial, atividades = [] }: { niche
                             <span className="block truncate text-sm font-medium leading-tight">{n.name}</span>
                             <span className={`block truncate text-[11px] ${on ? "text-white/55" : "opacity-55"}`}>
                               {n.region}
-                              {n.preview ? " · prévia" : ` · ${n.companies.toLocaleString("pt-BR")} empresas`}
+                              {(() => {
+                                const qtd = n.preview ? (CNAES_DO_NICHO[n.id] ?? []).reduce((s, c) => s + (contagem.get(c) ?? 0), 0) : n.companies;
+                                return qtd > 0 ? ` · ${qtd.toLocaleString("pt-BR")} empresas` : " · sem empresas na base ainda";
+                              })()}
                             </span>
                           </span>
                           <span className={`flex size-6 shrink-0 items-center justify-center rounded-full border transition-colors ${on ? "border-neon bg-neon text-night" : "border-night/20"}`}>

@@ -20,7 +20,7 @@ import {
   ChevronRight,
   type LucideIcon,
 } from "lucide-react";
-import { nicheGroups, type Niche } from "@/content/app";
+import type { Niche } from "@/content/app";
 import { Aura, Micro, Pill } from "@/components/app/ui";
 import { createListFromNiche } from "@/app/(app)/listas/actions";
 import { NicheShape, RingVortex } from "@/components/three/lazy";
@@ -55,7 +55,31 @@ const fmt = (n: number) => n.toLocaleString("pt-BR");
 
 // Anel 3D de nichos: gira sozinho, pausa ao passar o mouse e pré-visualiza o nicho.
 // A lista vem do servidor e não muda durante a visita, por isso os efeitos leem N/STEP só na montagem.
-export default function SegmentExplorer({ niches, acimaDoAnel }: { niches: Niche[]; acimaDoAnel?: React.ReactNode }) {
+type Props = { niches: Niche[]; acimaDoAnel?: React.ReactNode };
+
+// Só aparecem os nichos e atividades que o cliente escolheu no perfil, com números reais da base.
+export default function SegmentExplorer({ niches, acimaDoAnel }: Props) {
+  if (!niches.length) {
+    return (
+      <div className="space-y-4">
+        {acimaDoAnel}
+        <div className="glass no-fx flex flex-col items-start gap-3 p-8">
+          <Micro>Seus segmentos</Micro>
+          <h2 className="text-3xl font-light tracking-[-0.04em]">Você ainda não escolheu nenhum segmento</h2>
+          <p className="max-w-xl text-sm opacity-60">
+            Marque abaixo os nichos ou pesquise as atividades que você quer focar. Eles aparecem aqui, com o número de empresas que existem na base.
+          </p>
+          <a href="#foco" className="mt-2 rounded-full bg-night px-5 py-2.5 text-sm font-medium text-white">
+            Escolher segmentos
+          </a>
+        </div>
+      </div>
+    );
+  }
+  return <Anel niches={niches} acimaDoAnel={acimaDoAnel} />;
+}
+
+function Anel({ niches, acimaDoAnel }: Props) {
   const N = niches.length;
   const STEP = 360 / N;
   const [group, setGroup] = useState("Todos");
@@ -195,6 +219,7 @@ export default function SegmentExplorer({ niches, acimaDoAnel }: { niches: Niche
   }
 
   const active = niches.find((n) => n.id === (hoverId ?? frontId)) ?? niches[0];
+  const grupos = ["Todos", ...new Set(niches.map((n) => n.group))];
   const ActiveIcon = icons[active.icon] ?? Building2;
 
   return (
@@ -204,7 +229,7 @@ export default function SegmentExplorer({ niches, acimaDoAnel }: { niches: Niche
         aria-label="Áreas de atuação"
         className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]"
       >
-        {nicheGroups.map((g) => (
+        {grupos.map((g) => (
           <button
             key={g}
             role="tab"
@@ -306,7 +331,7 @@ export default function SegmentExplorer({ niches, acimaDoAnel }: { niches: Niche
                           <Icon size={18} aria-hidden />
                         </span>
                         <span className="font-mono text-[10px] uppercase tracking-widest opacity-70">
-                          {n.preview ? "Prévia" : `Fit ${n.score ?? "—"}`}
+                          {n.score !== null ? `Fit ${n.score}` : `${fmt(n.companies)} empresas`}
                         </span>
                       </div>
                       <div>
@@ -361,27 +386,17 @@ export default function SegmentExplorer({ niches, acimaDoAnel }: { niches: Niche
               {active.name}
             </h2>
             <p className="relative mt-4 text-sm leading-relaxed opacity-65">{active.description}</p>
-            {active.preview && (
-              <p className="relative mt-4 w-fit rounded-full border border-white/20 px-3 py-1 text-xs opacity-80">
-                Dados ilustrativos: nicho ainda não importado
-              </p>
+            {active.score !== null && (
+              <>
+                <p className="relative mt-8 text-8xl font-light leading-none tracking-[-0.06em] text-neon">{active.score}</p>
+                <Micro className="relative mt-2 !opacity-60">Índice de fit</Micro>
+              </>
             )}
 
-            {active.score === null ? (
-              <p className="relative mt-8 text-5xl font-light leading-none tracking-[-0.05em] text-neon">Em breve</p>
-            ) : (
-              <p className="relative mt-8 text-8xl font-light leading-none tracking-[-0.06em] text-neon">
-                {active.score}
-              </p>
-            )}
-            <Micro className="relative mt-2 !opacity-60">
-              {active.score === null ? "Índice de fit · após o enriquecimento" : "Índice de fit"}
-            </Micro>
-
-            <dl className="relative mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-white/10">
+            <dl className={`relative mt-6 grid gap-px overflow-hidden rounded-2xl bg-white/10 ${active.contacts > 0 ? "grid-cols-2" : "grid-cols-1"}`}>
               {[
-                { l: "Empresas", v: fmt(active.companies) },
-                { l: "Contatos", v: fmt(active.contacts) },
+                { l: active.atividade || active.preview ? "Empresas na base" : "Empresas", v: fmt(active.companies) },
+                ...(active.contacts > 0 ? [{ l: "Contatos", v: fmt(active.contacts) }] : []),
               ].map(({ l, v }) => (
                 <div key={l} className="bg-night/70 p-4">
                   <dd className="text-2xl font-light tracking-[-0.04em]">{v}</dd>
@@ -390,24 +405,32 @@ export default function SegmentExplorer({ niches, acimaDoAnel }: { niches: Niche
               ))}
             </dl>
 
-            <Micro className="relative mt-7 !opacity-60">Decisores mais comuns</Micro>
-            <ul className="relative mt-3 flex flex-wrap gap-2">
-              {active.roles.map((r) => (
-                <li key={r} className="rounded-full border border-white/20 px-3 py-1 text-xs">
-                  {r}
-                </li>
-              ))}
-            </ul>
+            {active.roles.length > 0 && (
+              <>
+                <Micro className="relative mt-7 !opacity-60">Decisores mais comuns</Micro>
+                <ul className="relative mt-3 flex flex-wrap gap-2">
+                  {active.roles.map((r) => (
+                    <li key={r} className="rounded-full border border-white/20 px-3 py-1 text-xs">
+                      {r}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
 
-            <Micro className="relative mt-7 !opacity-60">Exemplos de empresas</Micro>
-            <ul className="relative mt-2 divide-y divide-white/10 text-sm">
-              {active.samples.map((s, i) => (
-                <li key={s} className="flex items-center gap-3 py-3">
-                  <span className="font-mono text-[10px] text-neon">{String(i + 1).padStart(2, "0")}</span>
-                  {s}
-                </li>
-              ))}
-            </ul>
+            {active.samples.length > 0 && (
+              <>
+                <Micro className="relative mt-7 !opacity-60">Exemplos de empresas</Micro>
+                <ul className="relative mt-2 divide-y divide-white/10 text-sm">
+                  {active.samples.map((s, i) => (
+                    <li key={s} className="flex items-center gap-3 py-3">
+                      <span className="font-mono text-[10px] text-neon">{String(i + 1).padStart(2, "0")}</span>
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
 
             <ul className="relative mt-5 flex flex-wrap gap-2">
               {active.tags.map((t) => (
@@ -417,8 +440,12 @@ export default function SegmentExplorer({ niches, acimaDoAnel }: { niches: Niche
               ))}
             </ul>
 
-            {active.preview ? (
-              <p className="relative mt-7 text-xs opacity-60">Este nicho ainda não tem dados reais para virar lista.</p>
+            {active.preview || active.atividade ? (
+              <div className="relative mt-7">
+                <Pill href="/busca-avancada" tone="neon" className="w-full justify-between">
+                  Buscar empresas deste segmento
+                </Pill>
+              </div>
             ) : (
               <form action={createListFromNiche} className="relative mt-7">
                 <input type="hidden" name="niche" value={active.id} />
