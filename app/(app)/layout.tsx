@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const lateral = (await cookies()).get("oraklo-menu")?.value === "lateral";
   const u = user && { name: user.name, workspaceName: user.workspaceName };
   return (
-    <div className="app-canvas min-h-screen font-display text-night">
+    <div className="tema-app app-canvas min-h-screen font-display text-night">
       <AmbientDots />
       {lateral && <SideNav user={u} />}
       <div className={`relative z-10 mx-auto max-w-[1440px] p-3 md:p-4 ${lateral ? "lg:ml-[272px] lg:mr-0 lg:max-w-[1360px]" : ""}`}>

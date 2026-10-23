@@ -55,7 +55,7 @@ export default function Slides({ p }: { p: Portfolio }) {
   const fontesMarca = ["font-serif italic", "font-display font-semibold tracking-[-0.04em]", "font-mono uppercase", "font-serif", "font-display font-light"];
 
   return (
-    <div id="portfolio-slides" className="space-y-4">
+    <div id="portfolio-slides" className="tema-original space-y-4">
       {/* 1 — Capa */}
       <Slide className="bg-night">
         <div className="absolute inset-x-0 top-0 h-[64%] rounded-b-[3cqw] bg-white" style={GRADE}>

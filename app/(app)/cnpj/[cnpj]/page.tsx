@@ -80,7 +80,7 @@ export default async function CnpjPublicoPage({ params }: Props) {
             <Micro>Score Oraklo</Micro>
             <div className="mt-3 flex items-end gap-3">
               <span className="text-6xl font-light leading-none tracking-[-0.05em]">{sc.score}</span>
-              <span className="mb-1 rounded-full px-2.5 py-0.5 font-mono text-[11px] text-night" style={{ background: f.cor }}>
+              <span className="tema-original mb-1 rounded-full px-2.5 py-0.5 font-mono text-[11px] text-night" style={{ background: f.cor }}>
                 {f.rotulo}
               </span>
             </div>

@@ -834,7 +834,7 @@ export default function BuscaAvancada({
             {aberto === "cidade-barra" &&
               posLugar &&
               createPortal(
-                <div className="fixed z-[1000]" style={{ left: posLugar.left, bottom: posLugar.bottom }}>
+                <div className="tema-app fixed z-[1000]" style={{ left: posLugar.left, bottom: posLugar.bottom }}>
                   <div className="font-display text-night">
                     {seletorCidade(escolherCidade)}
                     <button
@@ -986,7 +986,7 @@ export default function BuscaAvancada({
                           </span>
                         )}
                         <span
-                          className="rounded-full px-2 py-0.5 font-mono text-[10px] font-medium text-night"
+                          className="tema-original rounded-full px-2 py-0.5 font-mono text-[10px] font-medium text-night"
                           style={{ background: faixa.cor }}
                           title={`Score ${sc.score} (${faixa.rotulo}): ${sc.motivos.join(", ") || "poucos dados"}`}
                         >

@@ -37,6 +37,8 @@ export default function AmbientDots() {
       mouse.x += (mouse.tx - mouse.x) * 0.12;
       mouse.y += (mouse.ty - mouse.y) * 0.12;
       ctx.clearRect(0, 0, w, h);
+      // cor dos pontos acompanha o tema (claro/escuro)
+      const tinta = getComputedStyle(el).getPropertyValue("--color-night").trim() || cores.night;
       for (let x = gap / 2; x < w; x += gap) {
         for (let y = gap / 2; y < h; y += gap) {
           const wave = reduced ? 0.5 : Math.sin((x + y) * 0.008 - t * 1.2) * 0.5 + 0.5;
@@ -46,7 +48,7 @@ export default function AmbientDots() {
           ctx.fillStyle =
             near > 0.05
               ? comAlfa(cores["pontos-onda"], 0.12 + near * 0.65)
-              : comAlfa(cores.night, 0.05 + wave * 0.05);
+              : comAlfa(tinta, 0.05 + wave * 0.05);
           ctx.beginPath();
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();

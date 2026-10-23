@@ -1,6 +1,6 @@
 "use client";
 
-import { cores } from "@/lib/colors";
+import { cores, corCss } from "@/lib/colors";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
@@ -106,7 +106,7 @@ export default function CapitalChart({ companies, total }: { companies: CompanyB
                       style={{
                         height: `${altura(c.shareCapital ?? 0)}%`,
                         animationDelay: `${i * 14}ms`,
-                        background: foco === i ? cores.night : "color-mix(in srgb, var(--color-night) 13%, transparent)",
+                        background: foco === i ? corCss("night") : corCss("night", 0.13),
                         opacity: apagada ? 0.35 : 1,
                       }}
                     >

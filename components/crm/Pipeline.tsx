@@ -140,7 +140,7 @@ export default function Pipeline({
                       setArrastando(null);
                       setSobre(null);
                     }}
-                    className={`group cursor-grab rounded-[18px] border border-white/80 bg-white p-3 shadow-[0_10px_24px_-18px_color-mix(in_srgb,var(--color-night)_50%,transparent)] transition-[transform,opacity] active:cursor-grabbing ${
+                    className={`group cursor-grab rounded-[18px] border border-white/80 bg-white p-3 shadow-[0_10px_24px_-18px_color-mix(in_srgb,var(--color-sombra)_50%,transparent)] transition-[transform,opacity] active:cursor-grabbing ${
                       arrastando === l.id ? "rotate-1 opacity-50" : "hover:-translate-y-0.5"
                     }`}
                   >
@@ -169,7 +169,7 @@ export default function Pipeline({
                       <span className="relative h-1 flex-1 overflow-hidden rounded-full bg-night/10">
                         <span className="absolute inset-y-0 left-0 rounded-full bg-night" style={{ width: `${l.score}%` }} />
                       </span>
-                      <span className="rounded-full px-2 py-0.5 font-mono text-[10px] font-medium tabular-nums text-night" style={{ background: faixaScore(l.score).cor }}>
+                      <span className="tema-original rounded-full px-2 py-0.5 font-mono text-[10px] font-medium tabular-nums text-night" style={{ background: faixaScore(l.score).cor }}>
                         {l.score} · {faixaScore(l.score).rotulo}
                       </span>
                     </div>

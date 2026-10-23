@@ -114,7 +114,7 @@ export default function PreviaEmpresa({ empresa, className = "" }: { empresa: Ba
             aria-label={`Prévia de ${empresa.name}`}
             onMouseEnter={() => agendar(true)}
             onMouseLeave={() => agendar(false)}
-            className="previa-in fixed z-[1000] rounded-[22px] border border-night/10 bg-papel-previa p-4 font-display text-night shadow-[0_30px_70px_-25px_color-mix(in_srgb,var(--color-black)_55%,transparent)]"
+            className="tema-app previa-in fixed z-[1000] rounded-[22px] border border-night/10 bg-papel-previa p-4 font-display text-night shadow-[0_30px_70px_-25px_color-mix(in_srgb,var(--color-black)_55%,transparent)]"
             style={{ top: pos.top, left: pos.left, width: LARGURA, transform: pos.acima ? "translateY(-100%)" : undefined }}
           >
             {/* cabeçalho */}

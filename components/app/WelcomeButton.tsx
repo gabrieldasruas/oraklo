@@ -36,7 +36,7 @@ export default function WelcomeButton({ tone = "dark", label = "Bem-vindo" }: { 
         className={`group flex min-h-16 cursor-pointer items-center gap-5 rounded-full py-2 pl-9 pr-2 text-xl font-medium tracking-[-0.02em] transition-transform hover:-translate-y-1 ${
           tone === "neon"
             ? "bg-neon text-night shadow-[0_20px_60px_-15px_color-mix(in_srgb,var(--color-neon)_70%,transparent)]"
-            : "bg-night text-white shadow-[0_20px_50px_-20px_color-mix(in_srgb,var(--color-night)_60%,transparent)]"
+            : "bg-night text-white shadow-[0_20px_50px_-20px_color-mix(in_srgb,var(--color-sombra)_60%,transparent)]"
         }`}
       >
         {label}

@@ -77,7 +77,7 @@ export default async function CidadePage({ params, searchParams }: Props) {
                   </span>
                   <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest opacity-70">
                     {SIZE_LABEL[c.size] ?? "—"}
-                    <span className="rounded-full px-2 py-0.5 normal-case tracking-normal text-night" style={{ background: f.cor }}>
+                    <span className="tema-original rounded-full px-2 py-0.5 normal-case tracking-normal text-night" style={{ background: f.cor }}>
                       {f.rotulo}
                     </span>
                   </span>

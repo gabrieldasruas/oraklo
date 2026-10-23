@@ -257,7 +257,7 @@ export default function FocoNichos({ niches, inicial, atividades = [] }: { niche
                           aria-pressed={on}
                           onClick={() => alternar("nichos", n.id)}
                           className={`group flex min-h-16 cursor-pointer items-center gap-3 rounded-[20px] border p-3 text-left transition-all duration-300 ${
-                            on ? "border-night bg-night text-white shadow-[0_18px_40px_-22px_color-mix(in_srgb,var(--color-night)_80%,transparent)]" : "border-white/80 bg-white/60 hover:-translate-y-0.5 hover:bg-white"
+                            on ? "border-night bg-night text-white shadow-[0_18px_40px_-22px_color-mix(in_srgb,var(--color-sombra)_80%,transparent)]" : "border-white/80 bg-white/60 hover:-translate-y-0.5 hover:bg-white"
                           }`}
                         >
                           <span className={`flex size-10 shrink-0 items-center justify-center rounded-2xl transition-colors ${on ? "bg-neon text-night" : "bg-night/5 group-hover:bg-night group-hover:text-neon"}`}>
