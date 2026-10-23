@@ -14,18 +14,19 @@ export const metadata: Metadata = { title: `Segmentação — ${site.name}` };
 
 type Cnae = { code: string; description: string; count: number };
 
-/** Só os segmentos que o cliente escolheu, com números reais da base (nada de exemplo). */
+/**
+ * Todos os nichos aparecem no anel (os do foco do cliente primeiro), sempre com números reais:
+ * nicho ainda não importado mostra a contagem de empresas da base pelos CNAEs dele, sem contatos,
+ * índice de fit ou empresas de exemplo inventados.
+ */
 function segmentosDoPerfil(niches: Niche[], perfil: PerfilBusca, cnaes: Cnae[]): Niche[] {
   const contagem = new Map(cnaes.map((c) => [c.code, c.count]));
   const somar = (codes: string[]) => codes.reduce((s, c) => s + (contagem.get(c) ?? 0), 0);
+  const real = (n: Niche): Niche =>
+    n.preview ? { ...n, region: "Santa Catarina", companies: somar(CNAES_DO_NICHO[n.id] ?? []), contacts: 0, score: null, samples: [] } : n;
 
-  const nichos = perfil.nichos.flatMap((id) => {
-    const n = niches.find((x) => x.id === id);
-    if (!n) return [];
-    if (!n.preview) return [n];
-    // nicho ainda não importado: mantém nome e descrição, troca os números de exemplo pelos da base
-    return [{ ...n, region: "Santa Catarina", companies: somar(CNAES_DO_NICHO[n.id] ?? []), contacts: 0, score: null, samples: [], tags: [] }];
-  });
+  const foco = new Set(perfil.nichos);
+  const nichos = [...niches.filter((n) => foco.has(n.id)), ...niches.filter((n) => !foco.has(n.id))].map((n) => ({ ...real(n), foco: foco.has(n.id) }));
 
   const atividades = perfil.atividades.map(
     (a): Niche => ({
@@ -42,6 +43,7 @@ function segmentosDoPerfil(niches: Niche[], perfil: PerfilBusca, cnaes: Cnae[]):
       samples: [],
       tags: [],
       atividade: true,
+      foco: true,
     }),
   );
   return [...nichos, ...atividades];
@@ -56,12 +58,12 @@ export default async function SegmentacaoPage() {
       <PageHeader
         index="03"
         title="Segmentação"
-        description="Escolha os nichos e atividades que você quer focar. Eles aparecem no anel com o número real de empresas da base."
+        description="Gire o anel para explorar os nichos com o número real de empresas da base. Os que você escolher para focar aparecem primeiro."
       />
       <SegmentExplorer
         key={segmentos.map((s) => s.id).join("|")}
         niches={segmentos}
-        acimaDoAnel={<VitrinePerfil perfil={perfil} nomesNichos={segmentos.map((s) => s.name)} />}
+        acimaDoAnel={<VitrinePerfil perfil={perfil} nomesNichos={segmentos.filter((s) => s.foco).map((s) => s.name)} />}
       />
       <FocoNichos niches={niches} inicial={perfil} atividades={cnaes} />
     </>

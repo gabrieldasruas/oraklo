@@ -331,7 +331,7 @@ function Anel({ niches, acimaDoAnel }: Props) {
                           <Icon size={18} aria-hidden />
                         </span>
                         <span className="font-mono text-[10px] uppercase tracking-widest opacity-70">
-                          {n.score !== null ? `Fit ${n.score}` : `${fmt(n.companies)} empresas`}
+                          {n.foco ? "No seu foco" : n.score !== null ? `Fit ${n.score}` : `${fmt(n.companies)} empresas`}
                         </span>
                       </div>
                       <div>
@@ -381,7 +381,7 @@ function Anel({ niches, acimaDoAnel }: Props) {
                 <ActiveIcon size={22} aria-hidden />
               </span>
             </div>
-            <Micro className="relative mt-5 !opacity-60">{active.group}</Micro>
+            <Micro className="relative mt-5 !opacity-60">{active.foco ? `${active.group} · no seu foco` : active.group}</Micro>
             <h2 className="relative mt-3 max-w-[18rem] text-4xl font-medium leading-[1] tracking-[-0.045em]">
               {active.name}
             </h2>
