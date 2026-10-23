@@ -46,6 +46,10 @@ Scripts úteis:
 | `npm run import:receita` | Importa a base de CNPJs da Receita Federal |
 | `npm run test:rls` | Testa as regras de segurança do banco |
 
+## Cores
+
+Todas as cores do site ficam em [`lib/colors.ts`](lib/colors.ts). Mudou lá, muda no site inteiro: cada nome vira classe do Tailwind (`bg-neon`, `text-danger-600`) e variável CSS (`var(--color-neon)`). O arquivo `app/cores.css` é gerado a partir dele por `npm run cores`, que roda sozinho antes do `dev` e do `build`.
+
 ## Documentação
 
 - [docs/PLANO_BACKEND.md](docs/PLANO_BACKEND.md): arquitetura, modelo de dados e pipelines

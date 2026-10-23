@@ -76,9 +76,9 @@ export default function WhatsappModal({ lead, onFechar, onMoveu }: { lead: Lead;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-night/40 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={onFechar}>
-      <div role="dialog" aria-label={`WhatsApp para ${lead.name}`} onClick={(e) => e.stopPropagation()} className="previa-in w-full max-w-lg overflow-hidden rounded-t-[28px] bg-[#f4f4f1] shadow-[0_40px_100px_-30px_rgba(0,0,0,0.7)] sm:rounded-[28px]">
+      <div role="dialog" aria-label={`WhatsApp para ${lead.name}`} onClick={(e) => e.stopPropagation()} className="previa-in w-full max-w-lg overflow-hidden rounded-t-[28px] bg-papel shadow-[0_40px_100px_-30px_color-mix(in_srgb,var(--color-black)_70%,transparent)] sm:rounded-[28px]">
         <header className="flex items-center gap-3 border-b border-night/10 bg-white/70 px-6 py-4">
-          <span className="flex size-10 items-center justify-center rounded-2xl bg-[#25d366] text-white">
+          <span className="flex size-10 items-center justify-center rounded-2xl bg-whatsapp text-white">
             <WhatsappIcon size={18} />
           </span>
           <div className="min-w-0 flex-1">
@@ -93,7 +93,7 @@ export default function WhatsappModal({ lead, onFechar, onMoveu }: { lead: Lead;
         </header>
 
         <div className="space-y-4 p-6">
-          {!zap && <p className="rounded-2xl bg-amber-50 p-3 text-sm text-amber-900">Esse lead não tem celular cadastrado. Edite o telefone no painel do lead.</p>}
+          {!zap && <p className="rounded-2xl bg-warn-50 p-3 text-sm text-warn-900">Esse lead não tem celular cadastrado. Edite o telefone no painel do lead.</p>}
           <div className="flex flex-wrap gap-1.5">
             {modelos.map((m) => (
               <button
@@ -114,7 +114,7 @@ export default function WhatsappModal({ lead, onFechar, onMoveu }: { lead: Lead;
               </button>
             )}
           </div>
-          {erro && <p className="text-xs text-rose-700">{erro}</p>}
+          {erro && <p className="text-xs text-danger-700">{erro}</p>}
           <textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={6} className="w-full resize-y rounded-2xl border border-white bg-white p-4 text-sm leading-relaxed outline-none focus:border-night/30" />
           <p className="text-[11px] opacity-50">
             Edite à vontade antes de abrir. Modelos ficam em{" "}
@@ -126,7 +126,7 @@ export default function WhatsappModal({ lead, onFechar, onMoveu }: { lead: Lead;
         </div>
 
         <footer className="flex justify-end border-t border-night/10 bg-white/70 px-6 py-4">
-          <button type="button" onClick={abrir} disabled={!zap || !texto.trim()} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full bg-[#25d366] px-6 text-sm font-medium text-white disabled:opacity-40">
+          <button type="button" onClick={abrir} disabled={!zap || !texto.trim()} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full bg-whatsapp px-6 text-sm font-medium text-white disabled:opacity-40">
             <WhatsappIcon size={16} /> Abrir no WhatsApp
           </button>
         </footer>

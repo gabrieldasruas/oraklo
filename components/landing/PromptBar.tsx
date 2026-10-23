@@ -55,7 +55,7 @@ export default function PromptBar() {
     <form
       onSubmit={submit}
       role="search"
-      className="group relative mx-auto flex w-full max-w-2xl items-center gap-3 rounded-full border border-white/12 bg-white/[0.06] py-2 pl-7 pr-2 shadow-[0_30px_80px_-40px_rgba(184,255,60,0.45)] backdrop-blur-xl transition-colors focus-within:border-neon/60 hover:border-white/25"
+      className="group relative mx-auto flex w-full max-w-2xl items-center gap-3 rounded-full border border-white/12 bg-white/[0.06] py-2 pl-7 pr-2 shadow-[0_30px_80px_-40px_color-mix(in_srgb,var(--color-neon)_45%,transparent)] backdrop-blur-xl transition-colors focus-within:border-neon/60 hover:border-white/25"
     >
       <label htmlFor="prompt" className="sr-only">
         Buscar empresas por nome

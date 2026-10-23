@@ -25,10 +25,10 @@ const ABAS: { v: Aba; t: string; d: string; icon: typeof List }[] = [
 
 const statusDot: Record<string, string> = {
   Novo: "bg-night/30",
-  "Em sequência": "bg-sky-500",
-  Respondeu: "bg-amber-400",
+  "Em sequência": "bg-info-500",
+  Respondeu: "bg-warn-400",
   "Reunião marcada": "bg-neon ring-1 ring-night",
-  "Sem interesse": "bg-rose-400",
+  "Sem interesse": "bg-danger-400",
 };
 
 const initials = (name: string) =>
@@ -93,7 +93,7 @@ export default function LeadsView() {
 
       <div className="space-y-4">
         {(error || erroReunioes) && (
-          <p role="alert" className="rounded-2xl bg-rose-100 px-5 py-3 text-sm text-rose-900">
+          <p role="alert" className="rounded-2xl bg-danger-100 px-5 py-3 text-sm text-danger-900">
             {error ?? erroReunioes}
           </p>
         )}
@@ -115,15 +115,15 @@ export default function LeadsView() {
         {/* destaque: disparo de e-mails */}
         <section
           aria-label="Disparar e-mails"
-          className="relative overflow-hidden rounded-[28px] bg-night p-6 text-white shadow-[0_30px_60px_-30px_rgba(10,10,10,0.8)] md:p-7"
+          className="relative overflow-hidden rounded-[28px] bg-night p-6 text-white shadow-[0_30px_60px_-30px_color-mix(in_srgb,var(--color-night)_80%,transparent)] md:p-7"
         >
-          <span aria-hidden className="pointer-events-none absolute -left-20 -top-24 size-72 rounded-full opacity-40 blur-3xl" style={{ background: "radial-gradient(circle, rgba(184,255,60,0.7), transparent 70%)" }} />
-          <span aria-hidden className="pointer-events-none absolute -bottom-28 right-10 size-72 rounded-full opacity-25 blur-3xl" style={{ background: "radial-gradient(circle, rgba(184,255,60,0.8), transparent 70%)" }} />
+          <span aria-hidden className="pointer-events-none absolute -left-20 -top-24 size-72 rounded-full opacity-40 blur-3xl" style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 70%, transparent), transparent 70%)" }} />
+          <span aria-hidden className="pointer-events-none absolute -bottom-28 right-10 size-72 rounded-full opacity-25 blur-3xl" style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 80%, transparent), transparent 70%)" }} />
           <WireArt kind="waves" className="pointer-events-none absolute -right-10 top-0 h-full w-1/2 text-neon opacity-10" />
 
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center">
             <div className="flex min-w-0 flex-1 items-start gap-4">
-              <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-neon text-night shadow-[0_0_40px_-6px_rgba(184,255,60,0.9)]">
+              <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-neon text-night shadow-[0_0_40px_-6px_color-mix(in_srgb,var(--color-neon)_90%,transparent)]">
                 <Send size={24} aria-hidden />
               </span>
               <div className="min-w-0">
@@ -153,7 +153,7 @@ export default function LeadsView() {
               <button
                 type="button"
                 onClick={() => setCampanha(prontos.map((l) => l.id))}
-                className="group flex min-h-14 cursor-pointer items-center justify-center gap-3 rounded-full bg-neon pl-7 pr-3 text-base font-medium text-night shadow-[0_18px_40px_-14px_rgba(184,255,60,0.9)] transition-transform hover:-translate-y-0.5"
+                className="group flex min-h-14 cursor-pointer items-center justify-center gap-3 rounded-full bg-neon pl-7 pr-3 text-base font-medium text-night shadow-[0_18px_40px_-14px_color-mix(in_srgb,var(--color-neon)_90%,transparent)] transition-transform hover:-translate-y-0.5"
               >
                 Disparar agora
                 <span className="flex size-9 items-center justify-center rounded-full bg-night text-neon transition-transform group-hover:translate-x-0.5">
@@ -182,7 +182,7 @@ export default function LeadsView() {
                 onClick={() => setAba(v)}
                 className={`group relative flex min-h-24 cursor-pointer items-center gap-4 overflow-hidden rounded-[24px] border p-4 text-left transition-all duration-300 md:p-5 ${
                   on
-                    ? "border-night bg-night text-white shadow-[0_24px_50px_-24px_rgba(10,10,10,0.7)]"
+                    ? "border-night bg-night text-white shadow-[0_24px_50px_-24px_color-mix(in_srgb,var(--color-night)_70%,transparent)]"
                     : "border-white/80 bg-white/70 hover:-translate-y-0.5 hover:border-night/20 hover:bg-white"
                 }`}
               >
@@ -191,7 +191,7 @@ export default function LeadsView() {
                   <span
                     aria-hidden
                     className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full opacity-60 blur-2xl"
-                    style={{ background: "radial-gradient(circle, rgba(184,255,60,0.55), transparent 70%)" }}
+                    style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 55%, transparent), transparent 70%)" }}
                   />
                 )}
                 <span

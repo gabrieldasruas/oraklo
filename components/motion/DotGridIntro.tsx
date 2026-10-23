@@ -1,5 +1,6 @@
 "use client";
 
+import { cores, misturar } from "@/lib/colors";
 import { useEffect, useRef, useState } from "react";
 
 const KEY = "prospecta:intro-vista";
@@ -55,11 +56,10 @@ export default function DotGridIntro() {
           const d = Math.hypot(x - mouse.x, y - mouse.y);
           const near = Math.max(0, 1 - d / 180);
           const r = 1.2 + wave * 4.2 + near * 5;
-          // mistura #bfe98a -> #b8ff3c conforme a onda
-          const g = Math.round(233 + (255 - 233) * wave);
+          // mistura o ponto da intro com o neon conforme a onda
           const a = 0.18 + wave * 0.7 + near * 0.3;
           ctx.beginPath();
-          ctx.fillStyle = `rgba(${Math.round(191 - 7 * wave)},${g},${Math.round(138 - 78 * wave)},${Math.min(a, 1)})`;
+          ctx.fillStyle = misturar(cores["intro-ponto"], cores.neon, wave, Math.min(a, 1));
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();
         }

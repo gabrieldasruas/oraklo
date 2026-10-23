@@ -25,7 +25,7 @@ export default function SaveListForm({ query, total }: { query: string; total: n
         {pending ? "Criando…" : "Criar lista"}
       </Pill>
       <p aria-live="polite" className="w-full text-xs opacity-60">
-        {state.error ? <span className="text-rose-700 opacity-100">{state.error}</span> : capped ? "A lista guarda as 5.000 primeiras empresas (maior capital social)." : ""}
+        {state.error ? <span className="text-danger-700 opacity-100">{state.error}</span> : capped ? "A lista guarda as 5.000 primeiras empresas (maior capital social)." : ""}
       </p>
     </form>
   );

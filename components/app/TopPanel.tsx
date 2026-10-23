@@ -57,7 +57,7 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
                         ? "bg-night font-medium text-neon"
                         : "bg-night font-medium text-white"
                       : item.destaque
-                        ? "bg-neon font-medium text-night shadow-[0_8px_20px_-10px_rgba(132,204,22,0.9)] hover:bg-[#c8ff63]"
+                        ? "bg-neon font-medium text-night shadow-[0_8px_20px_-10px_color-mix(in_srgb,var(--color-neon-escuro)_90%,transparent)] hover:bg-neon-claro"
                         : "hover:bg-white/80"
                   }`}
                 >
@@ -130,7 +130,7 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={`flex min-h-[104px] flex-col justify-between rounded-2xl border p-4 transition-all hover:-translate-y-0.5 ${
-                    active ? "border-night bg-night text-white" : item.destaque ? "border-night/10 bg-neon hover:bg-[#c8ff63]" : "border-white/70 bg-white/55 hover:bg-white/90"
+                    active ? "border-night bg-night text-white" : item.destaque ? "border-night/10 bg-neon hover:bg-neon-claro" : "border-white/70 bg-white/55 hover:bg-white/90"
                   }`}
                 >
                   <div className="flex items-center justify-between">

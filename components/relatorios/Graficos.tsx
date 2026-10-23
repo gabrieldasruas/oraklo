@@ -1,12 +1,13 @@
+import { cores, comAlfa } from "@/lib/colors";
 import type { Balde } from "@/lib/relatorios";
 import { BLOCOS, DIAS_SEMANA } from "@/lib/relatorios";
 
 // Gráficos do relatório em SVG/HTML puro (renderizados no servidor, sem biblioteca).
 
 const SERIES = [
-  { k: "contatados", t: "Contatados", cor: "rgba(11,11,12,0.16)" },
-  { k: "respostas", t: "Respostas", cor: "#0b0b0c" },
-  { k: "reunioes", t: "Reuniões", cor: "#b8ff3c" },
+  { k: "contatados", t: "Contatados", cor: comAlfa(cores.night, 0.16) },
+  { k: "respostas", t: "Respostas", cor: cores.night },
+  { k: "reunioes", t: "Reuniões", cor: cores.neon },
 ] as const;
 
 /** Barras agrupadas por dia/semana: contatados, respostas e reuniões. */
@@ -81,7 +82,7 @@ export function MapaHorarios({ mapa }: { mapa: number[][] }) {
               {linha.map((v, b) => {
                 const t = v / max;
                 return (
-                  <td key={b} title={`${DIAS_SEMANA[d]} ${BLOCOS[b]}: ${v}`} className="h-7 rounded-md" style={{ background: v ? `rgba(184,255,60,${0.15 + t * 0.85})` : "rgba(11,11,12,0.05)", boxShadow: t > 0.85 ? "inset 0 0 0 1px #0b0b0c" : undefined }} />
+                  <td key={b} title={`${DIAS_SEMANA[d]} ${BLOCOS[b]}: ${v}`} className="h-7 rounded-md" style={{ background: v ? comAlfa(cores.neon, 0.15 + t * 0.85) : comAlfa(cores.night, 0.05), boxShadow: t > 0.85 ? `inset 0 0 0 1px ${cores.night}` : undefined }} />
                 );
               })}
             </tr>

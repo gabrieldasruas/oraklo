@@ -247,7 +247,7 @@ export default function FocoNichos({ niches, inicial, atividades = [] }: { niche
                           aria-pressed={on}
                           onClick={() => alternar("nichos", n.id)}
                           className={`group flex min-h-16 cursor-pointer items-center gap-3 rounded-[20px] border p-3 text-left transition-all duration-300 ${
-                            on ? "border-night bg-night text-white shadow-[0_18px_40px_-22px_rgba(10,10,10,0.8)]" : "border-white/80 bg-white/60 hover:-translate-y-0.5 hover:bg-white"
+                            on ? "border-night bg-night text-white shadow-[0_18px_40px_-22px_color-mix(in_srgb,var(--color-night)_80%,transparent)]" : "border-white/80 bg-white/60 hover:-translate-y-0.5 hover:bg-white"
                           }`}
                         >
                           <span className={`flex size-10 shrink-0 items-center justify-center rounded-2xl transition-colors ${on ? "bg-neon text-night" : "bg-night/5 group-hover:bg-night group-hover:text-neon"}`}>
@@ -295,7 +295,7 @@ export default function FocoNichos({ niches, inicial, atividades = [] }: { niche
               ))}
             </div>
             <p className="mt-2 flex items-center gap-1.5 text-[11px] opacity-60">
-              {estado === "salvando" ? <Loader2 size={11} className="animate-spin" /> : estado === "ok" ? <Check size={11} className="text-emerald-600" /> : <X size={11} className="text-rose-600" />}
+              {estado === "salvando" ? <Loader2 size={11} className="animate-spin" /> : estado === "ok" ? <Check size={11} className="text-good-600" /> : <X size={11} className="text-danger-600" />}
               {estado === "salvando" ? "Salvando…" : estado === "ok" ? "Perfil salvo" : "Não foi possível salvar"}
             </p>
           </div>

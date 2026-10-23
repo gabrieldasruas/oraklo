@@ -295,7 +295,7 @@ export default function SegmentExplorer({ niches, acimaDoAnel }: { niches: Niche
                         if (drag.current.total > 6) return;
                         bringToFront(i);
                       }}
-                      className={`aura-${tone} no-fx group relative flex size-full cursor-pointer flex-col justify-between overflow-hidden rounded-[24px] border border-white/60 p-4 text-left shadow-[0_24px_40px_-24px_rgba(10,10,10,0.5)] transition-transform duration-300 hover:scale-[1.06]`}
+                      className={`aura-${tone} no-fx group relative flex size-full cursor-pointer flex-col justify-between overflow-hidden rounded-[24px] border border-white/60 p-4 text-left shadow-[0_24px_40px_-24px_color-mix(in_srgb,var(--color-night)_50%,transparent)] transition-transform duration-300 hover:scale-[1.06]`}
                     >
                       <div className="flex items-start justify-between">
                         <span

@@ -84,7 +84,7 @@ export default function ContactCell({ email, phones, inline = false }: { email: 
               rel="noopener noreferrer"
               aria-label="Abrir no WhatsApp"
               title="Abrir no WhatsApp"
-              className="flex size-8 shrink-0 items-center justify-center rounded-full text-[#25d366] hover:bg-[#25d366] hover:text-white"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full text-whatsapp hover:bg-whatsapp hover:text-white"
             >
               <WhatsappIcon size={15} />
             </a>

@@ -1,12 +1,13 @@
 "use client";
 
+import { cores } from "@/lib/colors";
 import { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { ContactShadows, Environment, Float, Lightformer, RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 
-const NEON = "#b8ff3c";
-const NIGHT = "#0b0b0c";
+const NEON = cores.neon;
+const NIGHT = cores.night;
 
 // Um anel de órbita fino com um "lead" (esfera verde) girando nele.
 function Orbit({ radius, tilt, speed, offset }: { radius: number; tilt: [number, number, number]; speed: number; offset: number }) {

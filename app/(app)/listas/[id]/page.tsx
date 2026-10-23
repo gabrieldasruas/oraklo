@@ -124,7 +124,7 @@ export default async function ListaPage({ params, searchParams }: PageProps<"/li
         <input type="hidden" name="id" value={list.id} />
         <ConfirmSubmit
           message={`Excluir a lista "${list.name}"? As empresas continuam na base.`}
-          className="min-h-11 cursor-pointer rounded-full border border-rose-300 px-5 text-sm text-rose-800 hover:bg-rose-50"
+          className="min-h-11 cursor-pointer rounded-full border border-danger-300 px-5 text-sm text-danger-800 hover:bg-danger-50"
         >
           Excluir lista
         </ConfirmSubmit>

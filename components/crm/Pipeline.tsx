@@ -1,5 +1,6 @@
 "use client";
 
+import { cores } from "@/lib/colors";
 import { useMemo, useState } from "react";
 import { CalendarPlus, GripVertical, Mail, Phone, Send, UserRound } from "lucide-react";
 import { WhatsappIcon } from "@/components/brand/Icons";
@@ -10,11 +11,11 @@ import { faixaScore } from "@/lib/score";
 
 // Cor de cada etapa do funil (as mesmas da constelação de leads).
 export const COR_ETAPA: Record<Status, string> = {
-  Novo: "#a1a1aa",
-  "Em sequência": "#38bdf8",
-  Respondeu: "#fbbf24",
-  "Reunião marcada": "#b8ff3c",
-  "Sem interesse": "#fb7185",
+  Novo: cores["etapa-novo"],
+  "Em sequência": cores["etapa-sequencia"],
+  Respondeu: cores["etapa-respondeu"],
+  "Reunião marcada": cores["etapa-reuniao"],
+  "Sem interesse": cores["etapa-sem-interesse"],
 };
 
 const DICA_ETAPA: Record<Status, string> = {
@@ -139,7 +140,7 @@ export default function Pipeline({
                       setArrastando(null);
                       setSobre(null);
                     }}
-                    className={`group cursor-grab rounded-[18px] border border-white/80 bg-white p-3 shadow-[0_10px_24px_-18px_rgba(10,10,10,0.5)] transition-[transform,opacity] active:cursor-grabbing ${
+                    className={`group cursor-grab rounded-[18px] border border-white/80 bg-white p-3 shadow-[0_10px_24px_-18px_color-mix(in_srgb,var(--color-night)_50%,transparent)] transition-[transform,opacity] active:cursor-grabbing ${
                       arrastando === l.id ? "rotate-1 opacity-50" : "hover:-translate-y-0.5"
                     }`}
                   >
@@ -194,7 +195,7 @@ export default function Pipeline({
                         <CalendarPlus size={12} aria-hidden /> Agendar
                       </button>
                       {zap ? (
-                        <button type="button" onClick={() => onWhatsapp(l)} title="WhatsApp com modelo ou IA" className="flex size-8 cursor-pointer items-center justify-center rounded-full bg-[#25d366] text-white">
+                        <button type="button" onClick={() => onWhatsapp(l)} title="WhatsApp com modelo ou IA" className="flex size-8 cursor-pointer items-center justify-center rounded-full bg-whatsapp text-white">
                           <WhatsappIcon size={14} />
                         </button>
                       ) : (

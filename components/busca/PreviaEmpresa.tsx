@@ -114,7 +114,7 @@ export default function PreviaEmpresa({ empresa, className = "" }: { empresa: Ba
             aria-label={`Prévia de ${empresa.name}`}
             onMouseEnter={() => agendar(true)}
             onMouseLeave={() => agendar(false)}
-            className="previa-in fixed z-[1000] rounded-[22px] border border-night/10 bg-[#f6f6f8] p-4 font-display text-night shadow-[0_30px_70px_-25px_rgba(0,0,0,0.55)]"
+            className="previa-in fixed z-[1000] rounded-[22px] border border-night/10 bg-papel-previa p-4 font-display text-night shadow-[0_30px_70px_-25px_color-mix(in_srgb,var(--color-black)_55%,transparent)]"
             style={{ top: pos.top, left: pos.left, width: LARGURA, transform: pos.acima ? "translateY(-100%)" : undefined }}
           >
             {/* cabeçalho */}
@@ -154,7 +154,7 @@ export default function PreviaEmpresa({ empresa, className = "" }: { empresa: Ba
                         target="_blank"
                         rel="noopener noreferrer"
                         title={`${p.name} no LinkedIn`}
-                        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0a66c2] text-white hover:opacity-85"
+                        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-linkedin text-white hover:opacity-85"
                       >
                         <LinkedinIcon size={13} />
                       </a>
@@ -182,11 +182,11 @@ export default function PreviaEmpresa({ empresa, className = "" }: { empresa: Ba
 
             {/* ações rápidas */}
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <a href={linkedinEmpresa(marca)} target="_blank" rel="noopener noreferrer" title="Empresa no LinkedIn" className={`${acao} !border-[#0a66c2] !bg-[#0a66c2] text-white`}>
+              <a href={linkedinEmpresa(marca)} target="_blank" rel="noopener noreferrer" title="Empresa no LinkedIn" className={`${acao} !border-linkedin !bg-linkedin text-white`}>
                 <LinkedinIcon size={16} />
               </a>
               {zap ? (
-                <a href={`https://wa.me/55${zap}`} target="_blank" rel="noopener noreferrer" title={`WhatsApp ${formatPhone(zap)}`} className={`${acao} !border-[#25d366] !bg-[#25d366] text-white`}>
+                <a href={`https://wa.me/55${zap}`} target="_blank" rel="noopener noreferrer" title={`WhatsApp ${formatPhone(zap)}`} className={`${acao} !border-whatsapp !bg-whatsapp text-white`}>
                   <WhatsappIcon size={17} />
                 </a>
               ) : (

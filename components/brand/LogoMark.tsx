@@ -1,5 +1,6 @@
 "use client";
 
+import { cores } from "@/lib/colors";
 import { useEffect, useId, useRef, useState } from "react";
 
 /*
@@ -28,43 +29,43 @@ export function LogoGlass({ className = "" }: { className?: string }) {
       <defs>
         {/* aro: cromo com reflexo neon */}
         <linearGradient id={u("rim")} x1="20%" y1="10%" x2="80%" y2="95%">
-          <stop offset="0" stopColor="#fbfff0" />
-          <stop offset="0.22" stopColor="#d6ff8a" />
-          <stop offset="0.45" stopColor="#5f8f12" />
-          <stop offset="0.62" stopColor="#1b2408" />
-          <stop offset="0.8" stopColor="#b8ff3c" />
-          <stop offset="1" stopColor="#f2ffd1" />
+          <stop offset="0" stopColor={cores["logo-aro-1"]} />
+          <stop offset="0.22" stopColor={cores["logo-aro-2"]} />
+          <stop offset="0.45" stopColor={cores["logo-aro-3"]} />
+          <stop offset="0.62" stopColor={cores["logo-aro-4"]} />
+          <stop offset="0.8" stopColor={cores.neon} />
+          <stop offset="1" stopColor={cores["logo-aro-5"]} />
         </linearGradient>
         <linearGradient id={u("rimIn")} x1="80%" y1="90%" x2="20%" y2="10%">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.9" />
-          <stop offset="0.5" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="0" stopColor={cores.branco} stopOpacity="0.9" />
+          <stop offset="0.5" stopColor={cores.branco} stopOpacity="0" />
         </linearGradient>
         {/* lente iridescente */}
         <radialGradient id={u("lens")} cx="38%" cy="34%" r="75%">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.95" />
-          <stop offset="0.3" stopColor="#bdf3ff" stopOpacity="0.8" />
-          <stop offset="0.58" stopColor="#c9b6ff" stopOpacity="0.75" />
-          <stop offset="0.82" stopColor="#ffc2e4" stopOpacity="0.7" />
-          <stop offset="1" stopColor="#7ee8fa" stopOpacity="0.85" />
+          <stop offset="0" stopColor={cores.branco} stopOpacity="0.95" />
+          <stop offset="0.3" stopColor={cores["logo-lente-1"]} stopOpacity="0.8" />
+          <stop offset="0.58" stopColor={cores["logo-lente-2"]} stopOpacity="0.75" />
+          <stop offset="0.82" stopColor={cores["logo-lente-3"]} stopOpacity="0.7" />
+          <stop offset="1" stopColor={cores["logo-lente-4"]} stopOpacity="0.85" />
         </radialGradient>
         <linearGradient id={u("handle")} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#5b5d68" />
-          <stop offset="0.35" stopColor="#24252b" />
-          <stop offset="1" stopColor="#0b0b0c" />
+          <stop offset="0" stopColor={cores["logo-cabo-1"]} />
+          <stop offset="0.35" stopColor={cores["logo-cabo-2"]} />
+          <stop offset="1" stopColor={cores.night} />
         </linearGradient>
         <linearGradient id={u("collar")} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#f2ffd1" />
-          <stop offset="0.45" stopColor="#b8ff3c" />
-          <stop offset="1" stopColor="#3d5c00" />
+          <stop offset="0" stopColor={cores["logo-aro-5"]} />
+          <stop offset="0.45" stopColor={cores.neon} />
+          <stop offset="1" stopColor={cores["logo-neon-fundo"]} />
         </linearGradient>
         <pattern id={u("grid")} width="9" height="9" patternUnits="userSpaceOnUse">
-          <path d="M9 0H0V9" fill="none" stroke="#0b0b0c" strokeOpacity="0.16" strokeWidth="0.8" />
+          <path d="M9 0H0V9" fill="none" stroke={cores.night} strokeOpacity="0.16" strokeWidth="0.8" />
         </pattern>
         <clipPath id={u("clip")}>
           <circle cx={C} cy={C} r={R - RING / 2 + 1} />
         </clipPath>
         <filter id={u("shadow")} x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="10" stdDeviation="9" floodColor="#000" floodOpacity="0.55" />
+          <feDropShadow dx="0" dy="10" stdDeviation="9" floodColor={cores.preto} floodOpacity="0.55" />
         </filter>
         <filter id={u("glow")} x="-100%" y="-100%" width="300%" height="300%">
           <feGaussianBlur stdDeviation="4" result="b" />
@@ -79,9 +80,9 @@ export function LogoGlass({ className = "" }: { className?: string }) {
         {/* cabo + anel */}
         <g transform={`rotate(45 ${C} ${C})`}>
           <rect x={C + R + 22} y={C - 13} width="70" height="26" rx="13" fill={`url(#${u("handle")})`} />
-          <rect x={C + R + 30} y={C - 11} width="54" height="5" rx="2.5" fill="#fff" opacity="0.18" />
+          <rect x={C + R + 30} y={C - 11} width="54" height="5" rx="2.5" fill={cores.branco} opacity="0.18" />
           <rect x={C + R + 6} y={C - 14} width="18" height="28" rx="5" fill={`url(#${u("collar")})`} />
-          <rect x={C + R + 8} y={C - 12} width="14" height="4" rx="2" fill="#fff" opacity="0.55" />
+          <rect x={C + R + 8} y={C - 12} width="14" height="4" rx="2" fill={cores.branco} opacity="0.55" />
         </g>
 
         {/* lente */}
@@ -89,22 +90,22 @@ export function LogoGlass({ className = "" }: { className?: string }) {
           <circle cx={C} cy={C} r={R} fill={`url(#${u("lens")})`} />
           <rect x="0" y="0" width="200" height="200" fill={`url(#${u("grid")})`} />
           {/* linha de varredura */}
-          <rect className="lens-scan" x={C - R} y={C - 2} width={R * 2} height="4" fill="#b8ff3c" opacity="0.55" />
+          <rect className="lens-scan" x={C - R} y={C - 2} width={R * 2} height="4" fill={cores.neon} opacity="0.55" />
           {/* reflexo */}
-          <ellipse cx={C - 16} cy={C - 20} rx="30" ry="14" transform={`rotate(-35 ${C - 16} ${C - 20})`} fill="#fff" opacity="0.75" />
-          <ellipse cx={C + 22} cy={C + 26} rx="12" ry="5" transform={`rotate(-35 ${C + 22} ${C + 26})`} fill="#fff" opacity="0.45" />
+          <ellipse cx={C - 16} cy={C - 20} rx="30" ry="14" transform={`rotate(-35 ${C - 16} ${C - 20})`} fill={cores.branco} opacity="0.75" />
+          <ellipse cx={C + 22} cy={C + 26} rx="12" ry="5" transform={`rotate(-35 ${C + 22} ${C + 26})`} fill={cores.branco} opacity="0.45" />
         </g>
 
         {/* ponto neon: o lead encontrado */}
         <g filter={`url(#${u("glow")})`}>
-          <circle className="lens-dot" cx={C} cy={C} r="10" fill="#b8ff3c" />
+          <circle className="lens-dot" cx={C} cy={C} r="10" fill={cores.neon} />
         </g>
-        <circle cx={C} cy={C} r="20" fill="none" stroke="#0b0b0c" strokeOpacity="0.35" strokeWidth="1" strokeDasharray="3 4" />
+        <circle cx={C} cy={C} r="20" fill="none" stroke={cores.night} strokeOpacity="0.35" strokeWidth="1" strokeDasharray="3 4" />
 
         {/* aro */}
         <circle cx={C} cy={C} r={R} fill="none" stroke={`url(#${u("rim")})`} strokeWidth={RING} />
         <circle cx={C} cy={C} r={R - RING / 2 + 1.5} fill="none" stroke={`url(#${u("rimIn")})`} strokeWidth="2" />
-        <circle cx={C} cy={C} r={R + RING / 2 - 1} fill="none" stroke="#fff" strokeOpacity="0.35" strokeWidth="1.2" />
+        <circle cx={C} cy={C} r={R + RING / 2 - 1} fill="none" stroke={cores.branco} strokeOpacity="0.35" strokeWidth="1.2" />
       </g>
     </svg>
   );
@@ -200,7 +201,7 @@ export default function LogoMark({
       <div
         aria-hidden
         className="absolute inset-[12%] rounded-full blur-2xl transition-opacity duration-700"
-        style={{ background: "rgba(184,255,60,0.45)", opacity: showingNeon ? 1 : 0.6 }}
+        style={{ background: "color-mix(in srgb, var(--color-neon) 45%, transparent)", opacity: showingNeon ? 1 : 0.6 }}
       />
       <div className="logo-tilt relative size-full">
         <div className="logo-coin relative size-full" style={{ transform: `rotateY(${angle}deg)` }}>
@@ -208,7 +209,7 @@ export default function LogoMark({
             <LogoGlass className="size-full" />
           </div>
           <div className="logo-face absolute inset-0" style={{ transform: "rotateY(180deg)" }}>
-            <LogoNeon color="#b8ff3c" />
+            <LogoNeon color={cores.neon} />
           </div>
         </div>
         {/* faixa de luz que atravessa durante cada giro */}

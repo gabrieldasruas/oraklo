@@ -11,7 +11,7 @@ export default function PrimeirosPassos({ passos }: { passos: Passo[] }) {
   const proximo = passos.find((p) => !p.feito);
   return (
     <section aria-label="Primeiros passos" className="relative mb-4 overflow-hidden rounded-[28px] bg-night p-6 text-white md:p-8">
-      <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full opacity-35 blur-3xl" style={{ background: "radial-gradient(circle, rgba(184,255,60,0.7), transparent 70%)" }} />
+      <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full opacity-35 blur-3xl" style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 70%, transparent), transparent 70%)" }} />
       <div className="relative flex flex-wrap items-end justify-between gap-6">
         <div>
           <Micro className="!text-neon !opacity-90">Primeiros passos</Micro>

@@ -75,16 +75,16 @@ export default function IntegracoesView({ inicial, liberado }: { inicial: Config
   }
 
   const opcoes = [
-    { id: "rd", t: "RD Station CRM", d: "Integração direta: empresa, contato e negociação", cor: "bg-[#1b2b5b] text-white", icone: <span className="text-sm font-bold">RD</span>, selo: !liberado ? "premium" : c.rd.conectado ? "ok" : "off" },
+    { id: "rd", t: "RD Station CRM", d: "Integração direta: empresa, contato e negociação", cor: "bg-rd text-white", icone: <span className="text-sm font-bold">RD</span>, selo: !liberado ? "premium" : c.rd.conectado ? "ok" : "off" },
     { id: "webhook", t: "Zapier, Make e n8n", d: "Webhook para Pipedrive, HubSpot e outros", cor: "bg-night text-neon", icone: <Webhook size={20} aria-hidden />, selo: !liberado ? "premium" : c.crm.ativo && c.crm.webhookUrl ? "ok" : "off" },
     { id: "planilhas", t: "Planilhas por CRM", d: "Exporte no formato de importação", cor: "bg-neon text-night", icone: <FileSpreadsheet size={20} aria-hidden />, selo: liberado ? "ok" : "premium" },
-    { id: "whatsapp", t: "WhatsApp", d: `${c.whatsapp.modelos.length} modelos de mensagem`, cor: "bg-[#25d366] text-white", icone: <WhatsappIcon size={20} />, selo: "ok" },
+    { id: "whatsapp", t: "WhatsApp", d: `${c.whatsapp.modelos.length} modelos de mensagem`, cor: "bg-whatsapp text-white", icone: <WhatsappIcon size={20} />, selo: "ok" },
   ] as const;
 
   return (
     <div className="space-y-4">
       <p className="flex items-center gap-2 px-1 text-xs opacity-60">
-        {estado === "salvando" ? <Loader2 size={12} className="animate-spin" /> : estado === "ok" ? <Check size={12} className="text-emerald-600" /> : <X size={12} className="text-rose-600" />}
+        {estado === "salvando" ? <Loader2 size={12} className="animate-spin" /> : estado === "ok" ? <Check size={12} className="text-good-600" /> : <X size={12} className="text-danger-600" />}
         {estado === "salvando" ? "Salvando…" : estado === "ok" ? "Tudo salvo" : erro}
       </p>
 
@@ -164,7 +164,7 @@ export default function IntegracoesView({ inicial, liberado }: { inicial: Config
               {teste === "testando" ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} aria-hidden />} Enviar teste
             </button>
             {teste && teste !== "testando" && (
-              <span className={`text-xs ${teste.ok ? "text-emerald-700" : "text-rose-700"}`}>{teste.ok ? `Recebido (HTTP ${teste.status})` : `Falhou${teste.status ? ` (HTTP ${teste.status})` : ""}`}</span>
+              <span className={`text-xs ${teste.ok ? "text-good-700" : "text-danger-700"}`}>{teste.ok ? `Recebido (HTTP ${teste.status})` : `Falhou${teste.status ? ` (HTTP ${teste.status})` : ""}`}</span>
             )}
           </div>
           <details className="mt-4 rounded-2xl bg-night/5 p-4 text-xs leading-relaxed">
@@ -224,16 +224,16 @@ export default function IntegracoesView({ inicial, liberado }: { inicial: Config
       </div>
 
       {/* WhatsApp */}
-      <section id="whatsapp" aria-label="Modelos de WhatsApp" className="scroll-mt-28 overflow-hidden rounded-[28px] bg-[#0b2a1f] text-white">
+      <section id="whatsapp" aria-label="Modelos de WhatsApp" className="scroll-mt-28 overflow-hidden rounded-[28px] bg-whatsapp-mata text-white">
         <div className="grid gap-0 lg:grid-cols-[1fr_400px]">
           <div className="p-6 md:p-8">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="flex size-12 items-center justify-center rounded-2xl bg-[#25d366] text-white shadow-[0_10px_30px_-10px_rgba(37,211,102,0.9)]">
+                <span className="flex size-12 items-center justify-center rounded-2xl bg-whatsapp text-white shadow-[0_10px_30px_-10px_color-mix(in_srgb,var(--color-whatsapp)_90%,transparent)]">
                   <WhatsappIcon size={22} />
                 </span>
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#25d366]">WhatsApp</p>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-whatsapp">WhatsApp</p>
                   <h2 className="text-2xl font-light tracking-[-0.03em] md:text-3xl">Modelos de mensagem</h2>
                 </div>
               </div>
@@ -244,7 +244,7 @@ export default function IntegracoesView({ inicial, liberado }: { inicial: Config
                   setC((s) => ({ ...s, whatsapp: { modelos: [...s.whatsapp.modelos, { id: Math.random().toString(36).slice(2, 8), nome: "Novo modelo", texto: "Oi, {nome}! " }] } }));
                   setModeloAtivo(c.whatsapp.modelos.length);
                 }}
-                className="flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full bg-[#25d366] px-4 text-xs font-semibold text-[#0b2a1f] disabled:opacity-40"
+                className="flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full bg-whatsapp px-4 text-xs font-semibold text-whatsapp-mata disabled:opacity-40"
               >
                 <Plus size={13} aria-hidden /> Novo modelo
               </button>
@@ -260,7 +260,7 @@ export default function IntegracoesView({ inicial, liberado }: { inicial: Config
                   role="tab"
                   aria-selected={j === iM}
                   onClick={() => setModeloAtivo(j)}
-                  className={`min-h-9 cursor-pointer rounded-full px-4 text-xs font-medium transition-colors ${j === iM ? "bg-white text-[#0b2a1f]" : "bg-white/10 text-white/75 hover:bg-white/15"}`}
+                  className={`min-h-9 cursor-pointer rounded-full px-4 text-xs font-medium transition-colors ${j === iM ? "bg-white text-whatsapp-mata" : "bg-white/10 text-white/75 hover:bg-white/15"}`}
                 >
                   {x.nome || "Sem nome"}
                 </button>
@@ -279,7 +279,7 @@ export default function IntegracoesView({ inicial, liberado }: { inicial: Config
                       setC((s) => ({ ...s, whatsapp: { modelos: s.whatsapp.modelos.filter((_, j) => j !== iM) } }));
                       setModeloAtivo(0);
                     }}
-                    className="flex size-11 cursor-pointer items-center justify-center rounded-2xl bg-white/10 hover:bg-rose-500 disabled:opacity-30"
+                    className="flex size-11 cursor-pointer items-center justify-center rounded-2xl bg-white/10 hover:bg-danger-500 disabled:opacity-30"
                   >
                     <Trash2 size={15} />
                   </button>
@@ -295,7 +295,7 @@ export default function IntegracoesView({ inicial, liberado }: { inicial: Config
                 />
                 <div className="flex flex-wrap gap-1.5">
                   {VARIAVEIS.map((v) => (
-                    <button key={v} type="button" onClick={() => inserir(v)} className="min-h-8 cursor-pointer rounded-full border border-[#25d366]/40 px-3 font-mono text-[11px] text-[#25d366] hover:bg-[#25d366] hover:text-[#0b2a1f]">
+                    <button key={v} type="button" onClick={() => inserir(v)} className="min-h-8 cursor-pointer rounded-full border border-whatsapp/40 px-3 font-mono text-[11px] text-whatsapp hover:bg-whatsapp hover:text-whatsapp-mata">
                       {v}
                     </button>
                   ))}
@@ -305,9 +305,9 @@ export default function IntegracoesView({ inicial, liberado }: { inicial: Config
           </div>
 
           {/* prévia como no celular */}
-          <div className="flex items-center justify-center bg-[#071d15] p-6 md:p-8">
-            <div className="w-full max-w-[330px] overflow-hidden rounded-[30px] border-[6px] border-black bg-[#efeae2] shadow-[0_30px_60px_-20px_rgba(0,0,0,0.8)]">
-              <div className="flex items-center gap-3 bg-[#075e54] px-4 py-3 text-white">
+          <div className="flex items-center justify-center bg-whatsapp-mata-escura p-6 md:p-8">
+            <div className="w-full max-w-[330px] overflow-hidden rounded-[30px] border-[6px] border-black bg-whatsapp-fundo shadow-[0_30px_60px_-20px_color-mix(in_srgb,var(--color-black)_80%,transparent)]">
+              <div className="flex items-center gap-3 bg-whatsapp-escuro px-4 py-3 text-white">
                 <span className="flex size-9 items-center justify-center rounded-full bg-white/20 text-xs font-semibold">MC</span>
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium leading-tight">Mariana · Transportes Litoral</span>
@@ -316,19 +316,19 @@ export default function IntegracoesView({ inicial, liberado }: { inicial: Config
               </div>
               <div
                 className="min-h-[300px] space-y-2 p-3"
-                style={{ backgroundImage: "radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px)", backgroundSize: "14px 14px" }}
+                style={{ backgroundImage: "radial-gradient(color-mix(in srgb, var(--color-black) 5%, transparent) 1px, transparent 1px)", backgroundSize: "14px 14px" }}
               >
                 <p className="mx-auto w-fit rounded-md bg-white/80 px-2 py-0.5 text-[10px] text-black/50">HOJE</p>
-                <div className="ml-auto max-w-[88%] rounded-xl rounded-tr-sm bg-[#d9fdd3] px-3 py-2 text-[13px] leading-snug text-black shadow-sm">
+                <div className="ml-auto max-w-[88%] rounded-xl rounded-tr-sm bg-whatsapp-bolha px-3 py-2 text-[13px] leading-snug text-black shadow-sm">
                   <p className="whitespace-pre-line">{m ? preencher(m.texto) || "…" : "…"}</p>
                   <p className="mt-1 flex items-center justify-end gap-1 text-[10px] text-black/45">
-                    09:41 <CheckCheck size={13} className="text-[#53bdeb]" aria-hidden />
+                    09:41 <CheckCheck size={13} className="text-whatsapp-lido" aria-hidden />
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 bg-[#f0f0f0] px-3 py-2">
+              <div className="flex items-center gap-2 bg-whatsapp-barra px-3 py-2">
                 <span className="h-8 flex-1 rounded-full bg-white" />
-                <span className="flex size-8 items-center justify-center rounded-full bg-[#00a884] text-white">
+                <span className="flex size-8 items-center justify-center rounded-full bg-whatsapp-teal text-white">
                   <Send size={13} aria-hidden />
                 </span>
               </div>

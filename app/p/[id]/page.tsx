@@ -43,7 +43,7 @@ export default async function PortfolioPublico({ params, searchParams }: Props) 
   const zap = i.telefone.replace(/\D/g, "");
 
   return (
-    <main className="min-h-screen bg-[#0b0b0c] px-4 py-8 text-white sm:px-8 sm:py-12">
+    <main className="min-h-screen bg-night px-4 py-8 text-white sm:px-8 sm:py-12">
       <RegistrarVisita portfolioId={id} leadId={typeof l === "string" ? l : null} />
       <div className="mx-auto max-w-5xl">
         <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -52,7 +52,7 @@ export default async function PortfolioPublico({ params, searchParams }: Props) 
               // eslint-disable-next-line @next/next/no-img-element
               <img src={i.logo} alt="" className="size-11 rounded-xl bg-white object-contain p-1" />
             ) : (
-              <span className="flex size-11 items-center justify-center rounded-xl font-medium text-[#0b0b0c]" style={{ background: i.cor }}>
+              <span className="flex size-11 items-center justify-center rounded-xl font-medium text-night" style={{ background: i.cor }}>
                 {i.empresa.slice(0, 1)}
               </span>
             )}
@@ -63,7 +63,7 @@ export default async function PortfolioPublico({ params, searchParams }: Props) 
           </div>
           <div className="flex flex-wrap gap-2">
             {i.email && (
-              <a href={`mailto:${i.email}`} className="flex min-h-10 items-center rounded-full px-5 text-sm font-medium text-[#0b0b0c]" style={{ background: i.cor }}>
+              <a href={`mailto:${i.email}`} className="flex min-h-10 items-center rounded-full px-5 text-sm font-medium text-night" style={{ background: i.cor }}>
                 Falar com {i.nome.split(" ")[0]}
               </a>
             )}

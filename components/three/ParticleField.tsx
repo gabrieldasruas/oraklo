@@ -1,5 +1,6 @@
 "use client";
 
+import { cores } from "@/lib/colors";
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
@@ -70,8 +71,8 @@ export type MorphRef = { current: number };
 export default function ParticleField({
   shapes,
   morph,
-  colorA = "#b8ff3c",
-  colorB = "#e9ffd0",
+  colorA = cores.neon,
+  colorB = cores["particula-clara"],
   size = 26,
   opacity = 1,
   additive = true,

@@ -1,5 +1,6 @@
 "use client";
 
+import { cores, comAlfa } from "@/lib/colors";
 import { useEffect, useRef } from "react";
 
 // Fundo interativo de todas as páginas do app: grade de pontos que respira em ondas
@@ -44,8 +45,8 @@ export default function AmbientDots() {
           const r = 0.7 + wave * 0.6 + near * near * 3.2;
           ctx.fillStyle =
             near > 0.05
-              ? `rgba(120, 190, 20, ${0.12 + near * 0.65})`
-              : `rgba(11, 11, 12, ${0.05 + wave * 0.05})`;
+              ? comAlfa(cores["pontos-onda"], 0.12 + near * 0.65)
+              : comAlfa(cores.night, 0.05 + wave * 0.05);
           ctx.beginPath();
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();

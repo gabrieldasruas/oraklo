@@ -1,3 +1,4 @@
+import { cores, comAlfa } from "@/lib/colors";
 import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight, Lock, Clock3, Mail, MailOpen, MessageSquareReply, MousePointerClick, Repeat2, TriangleAlert } from "lucide-react";
 import { Aura, Glass, Micro, WireArt } from "@/components/app/ui";
@@ -108,14 +109,14 @@ export default function RelatorioView({ r, completo = true }: { r: Relatorio; co
                 {r.funil.map((f, i) => (
                   <li key={f.rotulo}>
                     {f.conversao !== null && (
-                      <p className={`mb-2 ml-4 flex items-center gap-2 font-mono text-[10px] ${r.maiorVazamento?.para === f.rotulo ? "text-rose-600" : "opacity-50"}`}>
+                      <p className={`mb-2 ml-4 flex items-center gap-2 font-mono text-[10px] ${r.maiorVazamento?.para === f.rotulo ? "text-danger-600" : "opacity-50"}`}>
                         <span className="h-3 w-px bg-current" /> {fmtPct(f.conversao)} passaram
                       </p>
                     )}
                     <div className="relative flex min-h-12 items-center overflow-hidden rounded-2xl bg-night/5">
                       <div
                         className="barra-larga absolute inset-y-0 left-0 rounded-2xl"
-                        style={{ width: `${Math.max(2, (f.valor / topoFunil) * 100)}%`, background: i === r.funil.length - 1 ? "#b8ff3c" : `rgba(11,11,12,${0.9 - i * 0.2})`, animationDelay: `${i * 90}ms` }}
+                        style={{ width: `${Math.max(2, (f.valor / topoFunil) * 100)}%`, background: i === r.funil.length - 1 ? cores.neon : comAlfa(cores.night, 0.9 - i * 0.2), animationDelay: `${i * 90}ms` }}
                       />
                       <span className={`relative flex w-full items-center justify-between px-4 text-sm ${i < r.funil.length - 1 && f.valor / topoFunil > 0.35 ? "text-white" : ""}`}>
                         <span className="flex items-center gap-3">
@@ -130,7 +131,7 @@ export default function RelatorioView({ r, completo = true }: { r: Relatorio; co
               </ol>
               <div className="mt-5 flex flex-wrap gap-2 text-xs">
                 {r.maiorVazamento && r.maiorVazamento.perda > 0 && (
-                  <span className="flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1.5 text-rose-800">
+                  <span className="flex items-center gap-2 rounded-full bg-danger-50 px-3 py-1.5 text-danger-800">
                     <TriangleAlert size={13} aria-hidden /> Maior vazamento: {r.maiorVazamento.de} → {r.maiorVazamento.para} ({fmtPct(r.maiorVazamento.perda)} ficam)
                   </span>
                 )}
@@ -162,8 +163,8 @@ export default function RelatorioView({ r, completo = true }: { r: Relatorio; co
                       <span className="text-xl font-light tracking-[-0.03em] tabular-nums">{fmtPct(pct(s.respostas, s.leads))}</span>
                     </div>
                     <div className="mt-2 space-y-1.5">
-                      <Barra rotulo="Resposta" valor={pct(s.respostas, s.leads)} cor="#0b0b0c" />
-                      <Barra rotulo="Reunião" valor={pct(s.reunioes, s.leads)} cor="#b8ff3c" />
+                      <Barra rotulo="Resposta" valor={pct(s.respostas, s.leads)} cor={cores.night} />
+                      <Barra rotulo="Reunião" valor={pct(s.reunioes, s.leads)} cor={cores.neon} />
                     </div>
                   </li>
                 ))}
@@ -244,7 +245,7 @@ function Bloqueado({ ativo, className = "", children }: { ativo: boolean; classN
       <a
         href="/pacotes"
         title="Exportação e dados completos no Premium"
-        className="absolute right-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-night py-1.5 pl-2.5 pr-3 text-[11px] font-medium text-white shadow-[0_10px_24px_-12px_rgba(0,0,0,0.7)] transition-transform hover:-translate-y-0.5 print:hidden"
+        className="absolute right-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-night py-1.5 pl-2.5 pr-3 text-[11px] font-medium text-white shadow-[0_10px_24px_-12px_color-mix(in_srgb,var(--color-black)_70%,transparent)] transition-transform hover:-translate-y-0.5 print:hidden"
       >
         <Lock size={11} aria-hidden className="text-neon" /> Premium
       </a>

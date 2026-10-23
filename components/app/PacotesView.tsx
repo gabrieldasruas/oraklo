@@ -31,7 +31,7 @@ function BarraUso({ rotulo, usado, limite }: { rotulo: string; usado: number; li
         <span className="shrink-0 font-mono tabular-nums opacity-60">{limite === null ? `${usado} · ∞` : `${usado}/${limite}`}</span>
       </div>
       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-night/10">
-        <div className={`h-full rounded-full ${limite !== null && pct >= 90 ? "bg-rose-500" : "bg-night"}`} style={{ width: `${pct}%` }} />
+        <div className={`h-full rounded-full ${limite !== null && pct >= 90 ? "bg-danger-500" : "bg-night"}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
