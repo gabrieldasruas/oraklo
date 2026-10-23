@@ -32,9 +32,15 @@ export const metadata: Metadata = {
   openGraph: { title: site.title, description: site.description, type: "website" },
 };
 
+const TEMA_SCRIPT = `try{var t=localStorage.getItem("oraklo-tema");var e=t==="escuro"||(t==="sistema"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=e?"dark":"light"}catch(_){}`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${body.variable} ${display.variable} ${mono.variable} ${serif.variable}`}>
+    <html lang="pt-BR" className={`${body.variable} ${display.variable} ${mono.variable} ${serif.variable}`} suppressHydrationWarning>
+      <head>
+        {/* aplica o tema salvo (claro/escuro) antes de pintar a página, para não piscar */}
+        <script dangerouslySetInnerHTML={{ __html: TEMA_SCRIPT }} />
+      </head>
       <body className="font-sans">{children}</body>
     </html>
   );

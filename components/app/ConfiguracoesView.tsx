@@ -7,6 +7,7 @@ import type { ConfigWorkspace } from "@/lib/config-workspace";
 import { useConfigAutosave } from "@/lib/useConfigAutosave";
 import { renomearWorkspace, salvarNome } from "@/app/(app)/configuracoes/actions";
 import type { Limites } from "@/lib/pacotes";
+import { TemaSeletor } from "@/components/app/TemaToggle";
 
 type Props = {
   inicial: ConfigWorkspace;
@@ -160,6 +161,15 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
           </span>
         </a>
       </div>
+
+      {/* aparência */}
+      <Glass className="flex flex-wrap items-center justify-between gap-4 p-7">
+        <div>
+          <Micro>05 · Aparência</Micro>
+          <p className="mt-2 text-sm opacity-60">Modo claro, escuro ou automático (segue o seu computador). Também dá para trocar no botão de sol/lua no topo.</p>
+        </div>
+        <TemaSeletor />
+      </Glass>
     </div>
   );
 }

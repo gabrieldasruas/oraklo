@@ -8,6 +8,7 @@ import { appNav, secondaryNav } from "@/components/app/nav";
 import { Micro } from "@/components/app/ui";
 import { site } from "@/content/site";
 import MenuToggle from "./MenuToggle";
+import TemaToggle from "./TemaToggle";
 
 const iniciais = (name: string) =>
   name
@@ -84,7 +85,10 @@ export default function SideNav({ user }: { user: { name: string; workspaceName:
       </div>
 
       <div className="mt-auto space-y-3 pt-4">
-        <MenuToggle para="topo" className="w-full justify-center" />
+        <div className="flex gap-2">
+          <MenuToggle para="topo" className="flex-1 justify-center" />
+          <TemaToggle />
+        </div>
         {user ? (
           <div className="flex items-center gap-2.5 rounded-2xl bg-white/60 p-2">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-night font-mono text-xs text-neon">{iniciais(user.name)}</span>

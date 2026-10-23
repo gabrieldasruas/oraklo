@@ -256,7 +256,7 @@ export default function PortfolioStudio({ inicial, arquivosIniciais }: { inicial
               aria-selected={on}
               onClick={() => setAba(v)}
               className={`group relative flex min-h-28 cursor-pointer items-center gap-5 overflow-hidden rounded-[26px] border p-5 text-left transition-all duration-300 md:p-6 ${
-                on ? "border-night bg-night text-white shadow-[0_24px_50px_-24px_color-mix(in_srgb,var(--color-night)_70%,transparent)]" : "border-white/80 bg-white/70 hover:-translate-y-0.5 hover:bg-white"
+                on ? "border-night bg-night text-white shadow-[0_24px_50px_-24px_color-mix(in_srgb,var(--color-sombra)_70%,transparent)]" : "border-white/80 bg-white/70 hover:-translate-y-0.5 hover:bg-white"
               }`}
             >
               {on && <span aria-hidden className="pointer-events-none absolute -right-10 -top-10 size-48 rounded-full opacity-60 blur-2xl" style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 55%, transparent), transparent 70%)" }} />}

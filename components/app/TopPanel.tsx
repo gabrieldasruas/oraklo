@@ -8,6 +8,7 @@ import { signOut } from "@/app/entrar/actions";
 import { appNav } from "@/components/app/nav";
 import { Micro } from "@/components/app/ui";
 import MenuToggle from "./MenuToggle";
+import TemaToggle from "./TemaToggle";
 import { site } from "@/content/site";
 
 // Painel enxuto no topo: serve para o usuário se localizar entre as seções principais.
@@ -75,6 +76,7 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
               <span className="size-1.5 rounded-full bg-neon ring-1 ring-night/40" /> Sistema online · BRT
             </Micro>
           )}
+          <TemaToggle />
           <MenuToggle para="lateral" className="hidden lg:flex" />
           <button
             type="button"

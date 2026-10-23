@@ -141,7 +141,7 @@ export default function LeadDrawer({
                     ))}
                   </select>
                 </label>
-                <span className="rounded-full px-2.5 py-1 font-mono text-[10px] font-medium text-night" style={{ background: faixa.cor }}>
+                <span className="tema-original rounded-full px-2.5 py-1 font-mono text-[10px] font-medium text-night" style={{ background: faixa.cor }}>
                   Score {lead.score} · {faixa.rotulo}
                 </span>
                 {abriu && !respondeu && <span className="rounded-full border border-neon/50 px-2.5 py-1 font-mono text-[10px] text-neon">abriu o e-mail</span>}

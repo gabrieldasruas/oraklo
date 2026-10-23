@@ -2,6 +2,8 @@
 @theme {
   --color-branco: #ffffff;
   --color-preto: #000000;
+  --color-white: #ffffff;
+  --color-sombra: #0b0b0c;
   --color-night: #0b0b0c;
   --color-neon: #b8ff3c;
   --color-neon-claro: #c8ff63;
@@ -156,4 +158,100 @@
   --color-cena-coral-2: #ffb08f;
   --color-cena-night-1: #0b0b0c;
   --color-cena-night-2: #4b5563;
+}
+
+/* Modo escuro: vale dentro do painel (.tema-app) quando <html data-theme="dark">. */
+:root[data-theme="dark"] .tema-app {
+  color-scheme: dark;
+  --color-white: #17181b;
+  --color-night: #eeeeec;
+  --color-canvas: #0d0e10;
+  --color-ink: #e9ebef;
+  --color-muted: #9aa3b2;
+  --color-line: #2a2d33;
+  --color-surface: #16171a;
+  --color-brand-soft: #1d1f3a;
+  --color-good-soft: #0f2a20;
+  --color-warn-soft: #2d2112;
+  --color-papel: #141517;
+  --color-papel-frio: #141518;
+  --color-papel-cinza: #16171a;
+  --color-papel-previa: #17181b;
+  --color-good-600: oklch(72% 0.15 163);
+  --color-good-700: oklch(78% 0.13 165);
+  --color-warn-50: oklch(27% 0.04 85);
+  --color-warn-900: oklch(88% 0.1 90);
+  --color-danger-50: oklch(26% 0.05 15);
+  --color-danger-100: oklch(30% 0.07 15);
+  --color-danger-700: oklch(78% 0.13 15);
+  --color-danger-800: oklch(82% 0.1 15);
+  --color-danger-900: oklch(86% 0.08 15);
+}
+:root[data-theme="dark"]:has(.tema-app) body {
+  background: #0d0e10;
+}
+
+/* Fundos coloridos fixos mantêm as cores originais no modo escuro. */
+:root[data-theme="dark"] .tema-app :is(
+  .tema-original,
+  .bg-night,
+  .hover\:bg-night:hover,
+  .bg-neon,
+  .hover\:bg-neon:hover,
+  .bg-whatsapp,
+  .\!bg-whatsapp,
+  .bg-whatsapp-escuro,
+  .bg-whatsapp-teal,
+  .bg-whatsapp-mata,
+  .bg-whatsapp-mata-escura,
+  .bg-whatsapp-fundo,
+  .bg-rd,
+  .bg-linkedin,
+  .\!bg-linkedin,
+  .bg-verde-noite,
+  .bg-danger-500,
+  .bg-danger-600,
+  .aura-lime,
+  .aura-sun,
+  .aura-coral,
+  .aura-mint,
+  .aura-lilac,
+  .aura-night
+) {
+  --color-white: #ffffff;
+  --color-night: #0b0b0c;
+  --color-canvas: #e7e7ea;
+  --color-ink: #0b1220;
+  --color-muted: #5b6475;
+  --color-line: #e6e8ee;
+  --color-surface: #f5f6f9;
+  --color-brand-soft: #eef0ff;
+  --color-good-soft: #e7f8f1;
+  --color-warn-soft: #fef3e2;
+  --color-papel: #f4f4f1;
+  --color-papel-frio: #f4f4f6;
+  --color-papel-cinza: #eeeef0;
+  --color-papel-previa: #f6f6f8;
+  --color-good-600: oklch(59.6% 0.145 163.225);
+  --color-good-700: oklch(50.8% 0.118 165.612);
+  --color-warn-50: oklch(98.7% 0.022 95.277);
+  --color-warn-900: oklch(41.4% 0.112 45.904);
+  --color-danger-50: oklch(96.9% 0.015 12.422);
+  --color-danger-100: oklch(94.1% 0.03 12.58);
+  --color-danger-700: oklch(51.4% 0.222 16.935);
+  --color-danger-800: oklch(45.5% 0.188 13.697);
+  --color-danger-900: oklch(41% 0.159 10.272);
+}
+
+/* Fundos claros fixos: texto escuro por padrão (no layer base, então classes text-* ainda mandam). */
+@layer base {
+  :root[data-theme="dark"] .tema-app :is(.tema-original, .bg-neon, .hover\:bg-neon:hover, .bg-whatsapp-fundo, .aura-lime, .aura-sun, .aura-coral, .aura-mint, .aura-lilac) {
+    color: var(--color-night);
+  }
+}
+
+/* Cards escuros ganham um contorno sutil para não sumir no fundo escuro. */
+:root[data-theme="dark"] .tema-app :is(.bg-night, .aura-night):not(:focus-visible) {
+  outline: 1px solid color-mix(in srgb, #ffffff 12%, transparent);
+  outline-offset: -1px;
 }

@@ -49,7 +49,7 @@ export default function RadarCard({ items, total, dias, mostrar, temPerfil }: { 
                       {e.city}/{e.uf} · {SIZE_LABEL[e.size] ?? "—"} · {formatMoney(e.shareCapital)}
                     </span>
                   </span>
-                  <span className="shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] text-night" style={{ background: f.cor }}>
+                  <span className="tema-original shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] text-night" style={{ background: f.cor }}>
                     {f.rotulo}
                   </span>
                   <span className="w-16 shrink-0 text-right font-mono text-[10px] uppercase tracking-wider opacity-50">{haDias(e.openedAt)}</span>

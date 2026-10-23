@@ -115,7 +115,7 @@ export default function LeadsView() {
         {/* destaque: disparo de e-mails */}
         <section
           aria-label="Disparar e-mails"
-          className="relative overflow-hidden rounded-[28px] bg-night p-6 text-white shadow-[0_30px_60px_-30px_color-mix(in_srgb,var(--color-night)_80%,transparent)] md:p-7"
+          className="relative overflow-hidden rounded-[28px] bg-night p-6 text-white shadow-[0_30px_60px_-30px_color-mix(in_srgb,var(--color-sombra)_80%,transparent)] md:p-7"
         >
           <span aria-hidden className="pointer-events-none absolute -left-20 -top-24 size-72 rounded-full opacity-40 blur-3xl" style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 70%, transparent), transparent 70%)" }} />
           <span aria-hidden className="pointer-events-none absolute -bottom-28 right-10 size-72 rounded-full opacity-25 blur-3xl" style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 80%, transparent), transparent 70%)" }} />
@@ -182,7 +182,7 @@ export default function LeadsView() {
                 onClick={() => setAba(v)}
                 className={`group relative flex min-h-24 cursor-pointer items-center gap-4 overflow-hidden rounded-[24px] border p-4 text-left transition-all duration-300 md:p-5 ${
                   on
-                    ? "border-night bg-night text-white shadow-[0_24px_50px_-24px_color-mix(in_srgb,var(--color-night)_70%,transparent)]"
+                    ? "border-night bg-night text-white shadow-[0_24px_50px_-24px_color-mix(in_srgb,var(--color-sombra)_70%,transparent)]"
                     : "border-white/80 bg-white/70 hover:-translate-y-0.5 hover:border-night/20 hover:bg-white"
                 }`}
               >
@@ -274,7 +274,7 @@ export default function LeadsView() {
                 const on = filtroFaixa === f.rotulo;
                 return (
                   <button key={f.rotulo} type="button" onClick={() => setFiltroFaixa(on ? null : f.rotulo)} aria-pressed={on} className={`cursor-pointer rounded-2xl border p-3 text-left transition-colors ${on ? "border-night bg-night text-white" : "border-white/80 bg-white/60 hover:bg-white"}`}>
-                    <span className="inline-block rounded-full px-2 py-0.5 font-mono text-[10px] text-night" style={{ background: f.cor }}>{f.rotulo}</span>
+                    <span className="tema-original inline-block rounded-full px-2 py-0.5 font-mono text-[10px] text-night" style={{ background: f.cor }}>{f.rotulo}</span>
                     <span className="mt-2 block text-2xl font-light tracking-[-0.04em] tabular-nums">{n}</span>
                   </button>
                 );
@@ -372,7 +372,7 @@ export default function LeadsView() {
                         <span className="relative h-px w-16 bg-night/15">
                           <span className="absolute inset-y-0 left-0 h-[3px] -translate-y-px bg-night" style={{ width: `${l.score}%` }} />
                         </span>
-                        <span className="whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[10px] font-medium text-night" style={{ background: faixaScore(l.score).cor }}>
+                        <span className="tema-original whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[10px] font-medium text-night" style={{ background: faixaScore(l.score).cor }}>
                           {l.score} · {faixaScore(l.score).rotulo}
                         </span>
                       </div>

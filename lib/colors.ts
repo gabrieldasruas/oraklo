@@ -5,11 +5,15 @@
 // - O script `scripts/gerar-cores.mjs` lê este arquivo e escreve `app/cores.css` (roda sozinho antes do `dev` e do `build`).
 // - Em código (canvas, 3D, mapa, e-mail), importe `cores` ou use `comAlfa(cores.neon, 0.5)`.
 // - Nunca escreva um hex ou rgba direto num componente: crie (ou reaproveite) um nome aqui.
+// - Modo escuro: `coresEscuras` troca só os valores que mudam; `ilhasTemaOriginal` lista os elementos
+//   de fundo colorido fixo que mantêm as cores originais (botão neon, WhatsApp, auras...).
 
 export const cores = {
   // ---------- marca ----------
-  branco: "#ffffff",
+  branco: "#ffffff", // sempre branco (canvas, SVG); para superfícies use `white`
   preto: "#000000",
+  white: "#ffffff", // superfícies e texto claro: muda no modo escuro
+  sombra: "#0b0b0c", // cor das sombras: igual nos dois temas
   night: "#0b0b0c",
   neon: "#b8ff3c",
   "neon-claro": "#c8ff63", // hover dos botões neon
@@ -192,6 +196,74 @@ export const cores = {
   "cena-night-1": "#0b0b0c",
   "cena-night-2": "#4b5563",
 } as const;
+
+/**
+ * Modo escuro: novos valores das cores que mudam. No escuro, `night` (texto e bordas) fica claro
+ * e `white` (cards e superfícies) fica escuro; o resto do site acompanha sozinho.
+ */
+export const coresEscuras = {
+  white: "#17181b",
+  night: "#eeeeec",
+  canvas: "#0d0e10",
+  ink: "#e9ebef",
+  muted: "#9aa3b2",
+  line: "#2a2d33",
+  surface: "#16171a",
+  "brand-soft": "#1d1f3a",
+  "good-soft": "#0f2a20",
+  "warn-soft": "#2d2112",
+  papel: "#141517",
+  "papel-frio": "#141518",
+  "papel-cinza": "#16171a",
+  "papel-previa": "#17181b",
+  "good-600": "oklch(72% 0.15 163)",
+  "good-700": "oklch(78% 0.13 165)",
+  "warn-50": "oklch(27% 0.04 85)",
+  "warn-900": "oklch(88% 0.1 90)",
+  "danger-50": "oklch(26% 0.05 15)",
+  "danger-100": "oklch(30% 0.07 15)",
+  "danger-700": "oklch(78% 0.13 15)",
+  "danger-800": "oklch(82% 0.1 15)",
+  "danger-900": "oklch(86% 0.08 15)",
+} as const;
+
+/**
+ * Elementos de fundo colorido fixo: no modo escuro continuam com as cores originais
+ * (senão o texto escuro do botão neon, por exemplo, ficaria claro). São nomes de classe; `hover:` vale ao passar o mouse.
+ * Para qualquer outro elemento, use a classe `tema-original`.
+ */
+export const ilhasTemaOriginal = [
+  "tema-original",
+  "bg-night",
+  "hover:bg-night",
+  "bg-neon",
+  "hover:bg-neon",
+  "bg-whatsapp",
+  "!bg-whatsapp",
+  "bg-whatsapp-escuro",
+  "bg-whatsapp-teal",
+  "bg-whatsapp-mata",
+  "bg-whatsapp-mata-escura",
+  "bg-whatsapp-fundo",
+  "bg-rd",
+  "bg-linkedin",
+  "!bg-linkedin",
+  "bg-verde-noite",
+  "bg-danger-500",
+  "bg-danger-600",
+  "aura-lime",
+  "aura-sun",
+  "aura-coral",
+  "aura-mint",
+  "aura-lilac",
+  "aura-night",
+];
+
+/** Cor como CSS que acompanha o tema: corCss("night", 0.16) → "color-mix(in srgb, var(--color-night) 16%, transparent)". */
+export function corCss(nome: NomeCor | keyof typeof coresEscuras, alfa?: number): string {
+  if (alfa === undefined || alfa >= 1) return `var(--color-${nome})`;
+  return `color-mix(in srgb, var(--color-${nome}) ${Math.round(alfa * 1000) / 10}%, transparent)`;
+}
 
 export type NomeCor = keyof typeof cores;
 

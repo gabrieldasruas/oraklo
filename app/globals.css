@@ -65,7 +65,7 @@ body {
   border: 1px solid color-mix(in srgb, var(--color-white) 75%, transparent);
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--color-white) 90%, transparent) inset,
-    0 24px 50px -28px color-mix(in srgb, var(--color-night) 28%, transparent);
+    0 24px 50px -28px color-mix(in srgb, var(--color-sombra) 28%, transparent);
   border-radius: 28px;
 }
 
@@ -163,7 +163,7 @@ body {
 .app-main [class*="aura-"]:not(.blur-3xl):not(.no-fx):hover {
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--color-white) 90%, transparent) inset,
-    0 34px 60px -30px color-mix(in srgb, var(--color-night) 40%, transparent);
+    0 34px 60px -30px color-mix(in srgb, var(--color-sombra) 40%, transparent);
 }
 /* luz neon que segue o mouse (posição vem do CardFX) */
 .app-main .glass:not(.no-fx) {

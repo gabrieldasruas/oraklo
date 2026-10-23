@@ -3,7 +3,7 @@
 
 export default function PastaOraklo({ titulo = "oraklo", etiqueta = "ORK/26" }: { titulo?: string; etiqueta?: string }) {
   return (
-    <div className="pasta group relative mx-auto aspect-[1.32] w-full max-w-[440px] [perspective:1200px]">
+    <div className="pasta tema-original group relative mx-auto aspect-[1.32] w-full max-w-[440px] [perspective:1200px]">
       <div className="pasta-corpo relative size-full transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] [transform-style:preserve-3d] group-hover:[transform:rotateX(8deg)_rotateY(-10deg)_translateY(-6px)]">
         {/* fundo da pasta + aba */}
         <div aria-hidden className="absolute inset-x-0 bottom-0 top-[7%] rounded-[14px] rounded-tr-none bg-gradient-to-br from-pasta-1 via-pasta-2 to-pasta-3 shadow-[0_40px_80px_-30px_color-mix(in_srgb,var(--color-black)_80%,transparent)]" />

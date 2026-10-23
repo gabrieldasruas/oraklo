@@ -1,4 +1,4 @@
-import { cores, comAlfa } from "@/lib/colors";
+import { corCss } from "@/lib/colors";
 import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight, Lock, Clock3, Mail, MailOpen, MessageSquareReply, MousePointerClick, Repeat2, TriangleAlert } from "lucide-react";
 import { Aura, Glass, Micro, WireArt } from "@/components/app/ui";
@@ -116,9 +116,9 @@ export default function RelatorioView({ r, completo = true }: { r: Relatorio; co
                     <div className="relative flex min-h-12 items-center overflow-hidden rounded-2xl bg-night/5">
                       <div
                         className="barra-larga absolute inset-y-0 left-0 rounded-2xl"
-                        style={{ width: `${Math.max(2, (f.valor / topoFunil) * 100)}%`, background: i === r.funil.length - 1 ? cores.neon : comAlfa(cores.night, 0.9 - i * 0.2), animationDelay: `${i * 90}ms` }}
+                        style={{ width: `${Math.max(2, (f.valor / topoFunil) * 100)}%`, background: i === r.funil.length - 1 ? corCss("neon") : corCss("sombra", 0.9 - i * 0.2), animationDelay: `${i * 90}ms` }}
                       />
-                      <span className={`relative flex w-full items-center justify-between px-4 text-sm ${i < r.funil.length - 1 && f.valor / topoFunil > 0.35 ? "text-white" : ""}`}>
+                      <span className={`relative flex w-full items-center justify-between px-4 text-sm ${i < r.funil.length - 1 && f.valor / topoFunil > 0.35 ? "text-branco" : ""}`}>
                         <span className="flex items-center gap-3">
                           <span className="font-mono text-[10px] opacity-60">{String(i + 1).padStart(2, "0")}</span>
                           {f.rotulo}
@@ -155,7 +155,7 @@ export default function RelatorioView({ r, completo = true }: { r: Relatorio; co
                   <li key={s.rotulo}>
                     <div className="flex items-baseline justify-between">
                       <span className="flex items-center gap-2 text-sm font-medium">
-                        <span className="rounded-full px-2.5 py-0.5 font-mono text-[10px] text-night" style={{ background: s.cor }}>
+                        <span className="tema-original rounded-full px-2.5 py-0.5 font-mono text-[10px] text-night" style={{ background: s.cor }}>
                           {s.rotulo}
                         </span>
                         <span className="font-mono text-[11px] font-normal opacity-50">{s.leads} leads</span>
@@ -163,8 +163,8 @@ export default function RelatorioView({ r, completo = true }: { r: Relatorio; co
                       <span className="text-xl font-light tracking-[-0.03em] tabular-nums">{fmtPct(pct(s.respostas, s.leads))}</span>
                     </div>
                     <div className="mt-2 space-y-1.5">
-                      <Barra rotulo="Resposta" valor={pct(s.respostas, s.leads)} cor={cores.night} />
-                      <Barra rotulo="Reunião" valor={pct(s.reunioes, s.leads)} cor={cores.neon} />
+                      <Barra rotulo="Resposta" valor={pct(s.respostas, s.leads)} cor={corCss("night")} />
+                      <Barra rotulo="Reunião" valor={pct(s.reunioes, s.leads)} cor={corCss("neon")} />
                     </div>
                   </li>
                 ))}
