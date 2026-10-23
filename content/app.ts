@@ -15,6 +15,7 @@ export type Niche = {
   tags: string[];
   preview?: boolean; // dados de exemplo: nicho ainda não importado da Receita
   atividade?: boolean; // atividade (CNAE) escolhida pelo cliente, montada a partir da base
+  foco?: boolean; // está no perfil de cliente ideal
 };
 
 export const nicheGroups = [
