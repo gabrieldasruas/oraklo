@@ -25,6 +25,7 @@ import {
 import { Glass, Micro } from "@/components/app/ui";
 import Slides from "./Slides";
 import { baixarArquivo, enviarArquivo, estatisticasPortfolio, removerArquivo, salvarPortfolio } from "@/app/(app)/portfolio/actions";
+import { EVENTO_RESUMO } from "@/components/portfolio/SeletorPortfolio";
 import { listLeads } from "@/app/(app)/leads/actions";
 import type { Lead } from "@/lib/lead-types";
 import { interpretarCsv, lerCsv, novoId, preencherEmail, type ArquivoResumo, type Portfolio } from "@/lib/portfolio-types";
@@ -122,6 +123,10 @@ function Secao({ titulo, children, icone: Icone }: { titulo: string; children: R
 
 export default function PortfolioStudio({ inicial, arquivosIniciais }: { inicial: Portfolio; arquivosIniciais: ArquivoResumo[] }) {
   const [p, setP] = useState<Portfolio>(inicial);
+  // avisa os cartões do topo (Apresentação · Catálogo) para os chips acompanharem as mudanças
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(EVENTO_RESUMO, { detail: { solucoes: p.solucoes.length, cases: p.cases.length, linkAtivo: !!p.compartilhar?.ativo } }));
+  }, [p.solucoes.length, p.cases.length, p.compartilhar?.ativo]);
   const [aba, setAba] = useState<Aba>("portfolio");
   const [salvo, setSalvo] = useState<"ok" | "salvando" | "erro">("ok");
   const [arquivos, setArquivos] = useState(arquivosIniciais);
