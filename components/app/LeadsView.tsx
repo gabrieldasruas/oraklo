@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CalendarDays, Clock3, KanbanSquare, List, Mail, MousePointerClick, Phone, Search, Send, Trash2 } from "lucide-react";
 import { faixaScore } from "@/lib/score";
 import { STATUSES, useLeads, type Status } from "@/lib/leads";
@@ -40,9 +40,13 @@ const initials = (name: string) =>
     .join("")
     .toUpperCase();
 
-export default function LeadsView() {
+export default function LeadsView({ abrir = null }: { abrir?: string | null } = {}) {
   const { leads, loaded, error, addLead, removeLead, updateStatus, substituir, marcarEmSequencia } = useLeads();
-  const [abertoId, setAbertoId] = useState<string | null>(null);
+  const [abertoId, setAbertoId] = useState<string | null>(abrir);
+  // veio de um aviso (?lead=): abre a ficha, inclusive quando a página já estava aberta
+  useEffect(() => {
+    if (abrir) setAbertoId(abrir);
+  }, [abrir]);
   const [campanha, setCampanha] = useState<string[] | null>(null);
   const [zapLead, setZapLead] = useState<string | null>(null);
   const aberto = leads.find((l) => l.id === abertoId) ?? null;
