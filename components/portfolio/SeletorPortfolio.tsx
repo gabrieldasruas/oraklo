@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ArrowRight, LayoutTemplate, ShoppingBag, Sparkles, X } from "lucide-react";
 
 const DICA_CHAVE = "oraklo-dica-catalogo";
+/** O editor da Apresentação manda este evento quando soluções, cases ou o link mudam. */
+export const EVENTO_RESUMO = "oraklo:resumo-portfolio";
 const fmt = (n: number) => n.toLocaleString("pt-BR");
 
 type Resumo = {
@@ -19,8 +21,19 @@ type Resumo = {
  * As duas partes do Portfólio como cartões de escolha. Na primeira visita, uma dica aponta
  * para o Catálogo ("Quem compra o que eu vendo"); fechou, não aparece mais.
  */
-export default function SeletorPortfolio({ aba, resumo }: { aba: "apresentacao" | "catalogo"; resumo: Resumo }) {
+export default function SeletorPortfolio({ aba, resumo: inicial }: { aba: "apresentacao" | "catalogo"; resumo: Resumo }) {
   const [dica, setDica] = useState(false);
+  const [resumo, setResumo] = useState(inicial);
+
+  useEffect(() => setResumo(inicial), [inicial]);
+  useEffect(() => {
+    const ouvir = (e: Event) => {
+      const d = (e as CustomEvent<Partial<Resumo>>).detail;
+      if (d) setResumo((r) => ({ ...r, ...d }));
+    };
+    window.addEventListener(EVENTO_RESUMO, ouvir);
+    return () => window.removeEventListener(EVENTO_RESUMO, ouvir);
+  }, []);
 
   useEffect(() => {
     if (aba === "catalogo") return;
