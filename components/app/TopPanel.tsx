@@ -41,10 +41,9 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
         </Link>
 
         {!open && (
-          <nav
-            aria-label="Seções"
-            className="mx-2 hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex"
-          >
+          // a lista nunca invade o logo nem os botões: centraliza quando cabe e rola de lado quando não cabe
+          <nav aria-label="Seções" className="mx-1 hidden min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] xl:block [&::-webkit-scrollbar]:hidden">
+            <div className="mx-auto flex w-max items-center gap-0.5 py-1 2xl:gap-1">
             {appNav.map((item) => {
               const active = pathname === item.href;
               return (
@@ -52,7 +51,7 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
                   key={item.href}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm transition-colors ${
+                  className={`flex min-h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-sm transition-colors 2xl:px-3 ${
                     active
                       ? item.destaque
                         ? "bg-night font-medium text-neon"
@@ -67,10 +66,11 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
                 </Link>
               );
             })}
+            </div>
           </nav>
         )}
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex shrink-0 items-center gap-2 xl:gap-3">
           {open && (
             <Micro className="hidden items-center gap-2 md:flex">
               <span className="size-1.5 rounded-full bg-neon ring-1 ring-night/40" /> Sistema online · BRT
@@ -83,10 +83,11 @@ export default function TopPanel({ user }: { user: { name: string; workspaceName
             onClick={() => setOpen((o) => !o)}
             aria-expanded={open}
             aria-controls="top-panel-body"
-            className="flex min-h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-night/10 bg-white/70 px-4 text-xs hover:bg-white"
+            title={open ? "Recolher" : "Ver todas as seções"}
+            className="flex min-h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-night/10 bg-white/70 px-3 text-xs hover:bg-white sm:px-4 xl:px-3"
           >
             {open ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
-            <span className="hidden sm:inline">{open ? "Recolher" : "Seções"}</span>
+            <span className={open ? "hidden sm:inline" : "hidden sm:inline xl:hidden"}>{open ? "Recolher" : "Seções"}</span>
           </button>
           {user ? (
             <>
