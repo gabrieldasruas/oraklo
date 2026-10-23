@@ -15,6 +15,7 @@ export type Produto = {
   unidade: string; // "un", "cx com 12", "kg"...
   pedidoMinimo: string;
   mostrarPreco: boolean; // false = "sob consulta" no catálogo e nas ofertas
+  publico: boolean; // aparece no catálogo do link público do portfólio
   foto: string | null; // data URL reduzida no navegador
   compradores: Comprador[];
   compradoresFonte: "tabela" | "ia" | "manual";
@@ -22,7 +23,7 @@ export type Produto = {
   atualizadoEm: string;
 };
 
-export type ProdutoEntrada = Omit<Produto, "id" | "criadoEm" | "atualizadoEm"> & { id?: string };
+export type ProdutoEntrada = Omit<Produto, "id" | "criadoEm" | "atualizadoEm" | "publico"> & { id?: string; publico?: boolean };
 
 export const MAX_FOTO_BYTES = 350_000;
 export const MAX_COMPRADORES = 12;
@@ -257,7 +258,7 @@ export function ofertaModelo(p: Produto, canal: "whatsapp" | "email", remetente:
   const desc = p.descricao.trim().replace(/[.;!]+$/, "");
   const precoFrase = preco === "Sob consulta" ? "condição especial para a sua região" : `a partir de ${preco}`;
   const minimo = p.pedidoMinimo ? ` Pedido mínimo: ${p.pedidoMinimo}.` : "";
-  const link = temLink ? `\n\nVeja o catálogo completo: {link_portfolio}` : "";
+  const link = temLink ? `\n\nVeja o catálogo completo: {link_portfolio}#produtos` : "";
   if (canal === "whatsapp") {
     return {
       assunto: "",
