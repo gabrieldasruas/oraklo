@@ -9,6 +9,8 @@ export type Limites = {
   pipelineMes: number | null;
   emailsMes: number | null;
   iaMes: number | null;
+  /** produtos no catálogo (Quem compra o que eu vendo) */
+  produtos: number | null;
   /** empresas visíveis no radar */
   radarItens: number | null;
   followup: boolean;
@@ -19,9 +21,9 @@ export type Limites = {
 };
 
 export const LIMITES: Record<Plano, Limites> = {
-  gratis: { buscasMes: 30, pipelineMes: 50, emailsMes: 20, iaMes: 10, radarItens: 5, followup: false, decisores: false, integracoes: false, relatoriosCompletos: false, semMarca: false },
-  premium: { buscasMes: 300, pipelineMes: 1000, emailsMes: 1000, iaMes: 200, radarItens: null, followup: true, decisores: true, integracoes: true, relatoriosCompletos: true, semMarca: false },
-  ultra: { buscasMes: null, pipelineMes: null, emailsMes: 5000, iaMes: 1000, radarItens: null, followup: true, decisores: true, integracoes: true, relatoriosCompletos: true, semMarca: true },
+  gratis: { produtos: 5, buscasMes: 30, pipelineMes: 50, emailsMes: 20, iaMes: 10, radarItens: 5, followup: false, decisores: false, integracoes: false, relatoriosCompletos: false, semMarca: false },
+  premium: { produtos: 20, buscasMes: 300, pipelineMes: 1000, emailsMes: 1000, iaMes: 200, radarItens: null, followup: true, decisores: true, integracoes: true, relatoriosCompletos: true, semMarca: false },
+  ultra: { produtos: null, buscasMes: null, pipelineMes: null, emailsMes: 5000, iaMes: 1000, radarItens: null, followup: true, decisores: true, integracoes: true, relatoriosCompletos: true, semMarca: true },
 };
 
 export const NOME_PLANO: Record<Plano, string> = { gratis: "Free", premium: "Premium", ultra: "Ultra" };
@@ -99,6 +101,7 @@ export const COMPARACAO: { grupo: string; linhas: { recurso: string; gratis: Cel
       { recurso: "Busca avançada no mapa", gratis: "30 buscas/mês", premium: "300 buscas/mês", ultra: "Sem limite" },
       { recurso: "Consulta de CNPJ e score 0–100", gratis: true, premium: true, ultra: true },
       { recurso: "Perfil de cliente ideal e 👍/👎", gratis: true, premium: true, ultra: true },
+      { recurso: "Catálogo + Quem compra o que eu vendo", gratis: "5 produtos", premium: "20 produtos", ultra: "Sem limite" },
       { recurso: "Radar de novas empresas", gratis: "5 por vez", premium: "Completo", ultra: "Completo + e-mail semanal" },
       { recurso: "Decisores (nome, cargo e e-mail)", gratis: false, premium: true, ultra: true },
     ],
