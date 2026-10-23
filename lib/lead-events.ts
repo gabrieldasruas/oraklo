@@ -25,7 +25,7 @@ export function descreverEvento(e: EventoLead): { titulo: string; detalhe?: stri
   const p = e.payload ?? {};
   switch (e.type) {
     case "created":
-      return { titulo: p.from === "busca" ? "Adicionado pela busca avançada" : "Lead criado", tom: "neutro" };
+      return { titulo: p.from === "busca" ? "Adicionado pela busca avançada" : p.from === "catalogo" ? "Chegou pelo seu catálogo" : "Lead criado", tom: p.from === "catalogo" ? "neon" : "neutro" };
     case "status_changed":
       return { titulo: `Movido para ${str(p.status) || str(p.to)}`, tom: "ceu" };
     case "whatsapp_opened":
@@ -58,6 +58,13 @@ export function descreverEvento(e: EventoLead): { titulo: string; detalhe?: stri
       return { titulo: "Pediu para não receber mais e-mails", tom: "rosa" };
     case "email_replied":
       return { titulo: "Respondeu ao e-mail", tom: "sol" };
+    case "cotacao_recebida": {
+      const itens = Array.isArray(p.itens) ? (p.itens as { produto?: string; quantidade?: number; unidade?: string }[]) : [];
+      const lista = itens.map((i) => `${i.quantidade ?? 1} ${i.unidade || "un"} · ${i.produto ?? ""}`).join("\n");
+      return { titulo: `Pediu cotação pelo catálogo (${itens.length} ${itens.length === 1 ? "item" : "itens"})`, detalhe: [lista, str(p.mensagem)].filter(Boolean).join("\n\n") || undefined, tom: "sol" };
+    }
+    case "produto_visto":
+      return { titulo: `Viu ${str(p.produto) || "um produto"} no seu catálogo`, tom: "neon" };
     case "portfolio_viewed":
       return { titulo: "Viu seu portfólio", tom: "neon" };
     case "meeting_created":

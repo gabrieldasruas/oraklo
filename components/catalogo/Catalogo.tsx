@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Pencil, Plus, Search } from "lucide-react";
+import { ArrowRight, ExternalLink, EyeOff, Globe, Pencil, Plus, Search } from "lucide-react";
 import { Glass, Micro } from "@/components/app/ui";
 import { CATEGORIAS, EXEMPLOS, categoriaPorId, compradoresDaCategoria, formatarPreco, linkBusca, unirCompradores, type Produto, type ProdutoEntrada } from "@/lib/produtos";
 import { ICONE_CATEGORIA } from "./icones";
@@ -19,12 +19,14 @@ type Props = {
   iaLigada: boolean;
   remetente: { nome: string; empresa: string };
   temLink: boolean;
+  /** endereço do catálogo no link público (null = link desligado) */
+  linkPublico: string | null;
 };
 
 const fmt = (n: number) => n.toLocaleString("pt-BR");
 
 /** Catálogo de produtos + "Quem compra o que eu vendo": cada produto já sabe quem compra e vira oferta. */
-export default function Catalogo({ inicial, limite, plano, atividades, iaLigada, remetente, temLink }: Props) {
+export default function Catalogo({ inicial, limite, plano, atividades, iaLigada, remetente, temLink, linkPublico }: Props) {
   const [produtos, setProdutos] = useState(inicial);
   const [filtro, setFiltro] = useState("todos");
   const [form, setForm] = useState<ProdutoEntrada | null>(null);
@@ -49,6 +51,7 @@ export default function Catalogo({ inicial, limite, plano, atividades, iaLigada,
       unidade: "un",
       pedidoMinimo: "",
       mostrarPreco: true,
+      publico: true,
       foto: null,
       compradores: [],
       compradoresFonte: "tabela",
@@ -84,6 +87,30 @@ export default function Catalogo({ inicial, limite, plano, atividades, iaLigada,
             )}
           </div>
         </div>
+
+        {/* link público: o comprador vê o catálogo e pede cotação */}
+        {produtos.length > 0 && (
+          <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-night/10 px-4 py-3 text-sm">
+            <Globe size={16} aria-hidden className="shrink-0 opacity-60" />
+            {linkPublico ? (
+              <>
+                <span className="flex-1">
+                  <b>{produtos.filter((p) => p.publico !== false).length}</b> produto(s) no seu link público. Quem recebe o portfólio vê o catálogo e pede cotação, que cai direto no pipeline.
+                </span>
+                <a href={linkPublico} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-full bg-night px-4 py-2 text-xs font-medium text-white">
+                  Ver como o comprador vê <ExternalLink size={12} aria-hidden />
+                </a>
+              </>
+            ) : (
+              <>
+                <span className="flex-1 opacity-75">Ligue o link público na aba Apresentação para os compradores verem este catálogo e pedirem cotação.</span>
+                <Link href="/portfolio" className="rounded-full border border-night/15 px-4 py-2 text-xs hover:bg-white">
+                  Ligar link público
+                </Link>
+              </>
+            )}
+          </div>
+        )}
 
         {/* chips de categoria */}
         {produtos.length > 0 && (
@@ -147,6 +174,7 @@ export default function Catalogo({ inicial, limite, plano, atividades, iaLigada,
                 ...e,
                 id: e.nome,
                 mostrarPreco: true,
+                publico: true,
                 foto: null,
                 compradores: compradoresDaCategoria(e.categoria),
                 compradoresFonte: "tabela",
@@ -253,6 +281,11 @@ function Card({
           <Icone size={64} strokeWidth={1.1} aria-hidden className="opacity-30 transition-transform duration-500 group-hover:scale-110" />
         )}
         <span className="absolute right-3 top-3 rounded-full border border-night/10 bg-white/80 px-2.5 py-1 text-[10px] font-medium">{cat.nome}</span>
+        {!exemplo && p.publico === false && (
+          <span className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[10px]">
+            <EyeOff size={11} aria-hidden /> Fora do link
+          </span>
+        )}
         {exemplo ? (
           <span className="absolute left-3 top-3 rounded-full bg-neon px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest">Exemplo</span>
         ) : (

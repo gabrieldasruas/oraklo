@@ -12,6 +12,7 @@ import { iaConfigurada } from "@/lib/ia";
 import { LIMITES, NOME_PLANO, planoDoWorkspace } from "@/lib/planos";
 import { carregarPortfolio, listarArquivos } from "./actions";
 import { listarProdutos } from "./produtos";
+import { PORTFOLIO_TAG } from "@/lib/portfolio-types";
 
 export const metadata: Metadata = { title: `Portfólio — ${site.name}` };
 
@@ -61,11 +62,12 @@ async function Apresentacao() {
 async function CatalogoPagina() {
   const user = await requireUser();
   const db = await createClient();
-  const [produtos, plano, facets, portfolio] = await Promise.all([
+  const [produtos, plano, facets, portfolio, { data: linha }] = await Promise.all([
     listarProdutos(),
     planoDoWorkspace(db, user.workspaceId),
     getFacets().catch(() => null),
     carregarPortfolio(),
+    db.from("lists").select("id").eq("tag", PORTFOLIO_TAG).order("created_at").limit(1).maybeSingle(),
   ]);
   const id = portfolio.identidade;
   return (
@@ -77,6 +79,7 @@ async function CatalogoPagina() {
       iaLigada={iaConfigurada()}
       remetente={{ nome: id.nome === "Seu nome" ? user.name : id.nome, empresa: id.empresa === "Sua empresa" ? user.workspaceName : id.empresa }}
       temLink={!!portfolio.compartilhar?.ativo}
+      linkPublico={portfolio.compartilhar?.ativo && linha ? `/p/${linha.id}#produtos` : null}
     />
   );
 }

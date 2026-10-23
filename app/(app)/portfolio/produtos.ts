@@ -33,6 +33,7 @@ function normalizar(e: ProdutoEntrada, atual?: Produto): Omit<Produto, "id"> {
     unidade: limpar(e.unidade, 30),
     pedidoMinimo: limpar(e.pedidoMinimo, 60),
     mostrarPreco: e.mostrarPreco !== false,
+    publico: e.publico !== false,
     foto: typeof e.foto === "string" && e.foto.startsWith("data:image/") ? e.foto : null,
     compradores,
     compradoresFonte: e.compradoresFonte === "ia" || e.compradoresFonte === "manual" ? e.compradoresFonte : "tabela",

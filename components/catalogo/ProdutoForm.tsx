@@ -218,6 +218,10 @@ export default function ProdutoForm({
           <input type="checkbox" checked={!p.mostrarPreco} onChange={(e) => set("mostrarPreco", !e.target.checked)} className="size-4 accent-night" />
           Não mostrar o preço (aparece “sob consulta” no catálogo e nas ofertas)
         </label>
+        <label className="mt-2 flex cursor-pointer items-center gap-2.5 text-sm">
+          <input type="checkbox" checked={p.publico !== false} onChange={(e) => set("publico", e.target.checked)} className="size-4 accent-night" />
+          Mostrar no catálogo do link público (quem recebe seu portfólio vê e pode pedir cotação)
+        </label>
 
         {/* quem compra */}
         <section className="mt-7 rounded-[24px] bg-night p-5 text-white">

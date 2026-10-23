@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/db/admin";
 import { PORTFOLIO_TAG, completar, type Portfolio } from "@/lib/portfolio-types";
 import Slides from "@/components/portfolio/Slides";
 import RegistrarVisita from "@/components/portfolio/RegistrarVisita";
+import VitrinePublica, { type ProdutoVitrine } from "@/components/portfolio/VitrinePublica";
+import { PRODUTO_TAG, categoriaPorId, formatarPreco, type Produto } from "@/lib/produtos";
 import { LIMITES } from "@/lib/pacotes";
 import { planoDe } from "@/lib/planos";
 
@@ -17,14 +19,24 @@ async function carregar(id: string): Promise<Portfolio | null> {
   return (await carregarComPlano(id))?.p ?? null;
 }
 
-async function carregarComPlano(id: string): Promise<{ p: Portfolio; semMarca: boolean } | null> {
+/** Produtos marcados para aparecer no link público, já sem dados internos (compradores, datas). */
+async function produtosPublicos(workspaceId: string): Promise<ProdutoVitrine[]> {
+  const { data } = await createAdminClient().from("lists").select("id, filter").eq("workspace_id", workspaceId).eq("tag", PRODUTO_TAG).order("created_at");
+  return (data ?? []).flatMap((r) => {
+    const p = r.filter as Produto;
+    if (!p?.nome || p.publico === false) return [];
+    return [{ id: r.id as string, nome: p.nome, descricao: p.descricao ?? "", categoria: p.categoria, categoriaNome: categoriaPorId(p.categoria).nome, preco: formatarPreco(p), unidade: p.unidade ?? "", pedidoMinimo: p.pedidoMinimo ?? "", foto: p.foto ?? null }];
+  });
+}
+
+async function carregarComPlano(id: string): Promise<{ p: Portfolio; semMarca: boolean; workspaceId: string } | null> {
   if (!UUID.test(id)) return null;
   const db = createAdminClient();
   const { data } = await db.from("lists").select("filter, workspace_id").eq("id", id).eq("tag", PORTFOLIO_TAG).maybeSingle();
   const p = data ? completar(data.filter as Partial<Portfolio>) : null;
   if (!p?.compartilhar?.ativo) return null;
   const { data: ws } = await db.from("workspaces").select("plan").eq("id", data!.workspace_id).maybeSingle();
-  return { p, semMarca: LIMITES[planoDe(ws?.plan as string | undefined)].semMarca };
+  return { p, semMarca: LIMITES[planoDe(ws?.plan as string | undefined)].semMarca, workspaceId: data!.workspace_id as string };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -41,10 +53,12 @@ export default async function PortfolioPublico({ params, searchParams }: Props) 
   const { p, semMarca } = r;
   const i = p.identidade;
   const zap = i.telefone.replace(/\D/g, "");
+  const produtos = await produtosPublicos(r.workspaceId);
+  const leadId = typeof l === "string" ? l : null;
 
   return (
     <main className="min-h-screen bg-night px-4 py-8 text-white sm:px-8 sm:py-12">
-      <RegistrarVisita portfolioId={id} leadId={typeof l === "string" ? l : null} />
+      <RegistrarVisita portfolioId={id} leadId={leadId} />
       <div className="mx-auto max-w-5xl">
         <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -62,6 +76,11 @@ export default async function PortfolioPublico({ params, searchParams }: Props) 
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            {produtos.length > 0 && (
+              <a href="#produtos" className="flex min-h-10 items-center rounded-full border border-white/20 px-5 text-sm hover:bg-white/10">
+                Ver produtos ({produtos.length})
+              </a>
+            )}
             {i.email && (
               <a href={`mailto:${i.email}`} className="flex min-h-10 items-center rounded-full px-5 text-sm font-medium text-night" style={{ background: i.cor }}>
                 Falar com {i.nome.split(" ")[0]}
@@ -77,7 +96,11 @@ export default async function PortfolioPublico({ params, searchParams }: Props) 
 
         <Slides p={p} />
 
-        {!semMarca && <footer className="mt-10 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">Apresentação criada com Oraklo</footer>}
+        {produtos.length > 0 && (
+          <VitrinePublica portfolioId={id} leadId={leadId} produtos={produtos} empresa={i.empresa} cor={i.cor} whatsapp={zap.length >= 10 ? zap : null} />
+        )}
+
+        {!semMarca && <footer className="mt-10 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">{produtos.length ? "Apresentação e catálogo criados com Oraklo" : "Apresentação criada com Oraklo"}</footer>}
       </div>
     </main>
   );
