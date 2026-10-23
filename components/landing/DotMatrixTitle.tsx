@@ -35,6 +35,11 @@ export default function DotMatrixTitle({ text, className = "" }: { text: string;
 
     const build = () => {
       w = canvas.clientWidth;
+      // ainda sem largura (aba em segundo plano, layout carregando): espera o ResizeObserver chamar de novo
+      if (w < 1) {
+        dots = [];
+        return;
+      }
       // tamanho da fonte acompanha a largura (como um clamp)
       const fs = Math.min(190, Math.max(60, w / (text.length * 0.56)));
       gap = Math.max(4, Math.round(fs / 24));

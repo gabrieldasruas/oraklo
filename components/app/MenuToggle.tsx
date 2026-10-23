@@ -21,7 +21,7 @@ export default function MenuToggle({ para, className = "" }: { para: "lateral" |
       className={`flex min-h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-night/10 bg-white/70 px-3 text-xs hover:bg-white ${className}`}
     >
       <Icone size={15} aria-hidden />
-      <span className="hidden xl:inline">{para === "lateral" ? "Menu lateral" : "Menu no topo"}</span>
+      <span className="sr-only">{para === "lateral" ? "Menu lateral" : "Menu no topo"}</span>
     </button>
   );
 }
