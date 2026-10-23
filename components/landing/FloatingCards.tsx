@@ -1,5 +1,6 @@
 "use client";
 
+import { cores } from "@/lib/colors";
 import { useEffect, useRef } from "react";
 import { Building2, Mail, Truck, TrendingUp, Zap } from "lucide-react";
 
@@ -21,7 +22,7 @@ type Item = {
   node: React.ReactNode;
 };
 
-const glassDark = "rounded-[22px] border border-white/15 bg-white/[0.06] p-4 text-white shadow-[0_30px_60px_-30px_rgba(0,0,0,0.9)] backdrop-blur-xl";
+const glassDark = "rounded-[22px] border border-white/15 bg-white/[0.06] p-4 text-white shadow-[0_30px_60px_-30px_color-mix(in_srgb,var(--color-black)_90%,transparent)] backdrop-blur-xl";
 
 function Sphere({ size, from, to }: { size: number; from: string; to: string }) {
   return (
@@ -30,7 +31,7 @@ function Sphere({ size, from, to }: { size: number; from: string; to: string }) 
       style={{
         width: size,
         height: size,
-        background: `radial-gradient(circle at 32% 28%, #fff 0%, ${from} 22%, ${to} 70%, #050505 100%)`,
+        background: `radial-gradient(circle at 32% 28%, ${cores.branco} 0%, ${from} 22%, ${to} 70%, ${cores["esfera-sombra"]} 100%)`,
         boxShadow: `0 0 60px -10px ${from}`,
       }}
     />
@@ -67,7 +68,7 @@ const ITEMS: Item[] = [
     delay: 0.35,
     hideMobile: true,
     node: (
-      <div className="aura-lime w-44 rounded-[22px] p-4 text-night shadow-[0_30px_60px_-30px_rgba(0,0,0,0.9)]">
+      <div className="aura-lime w-44 rounded-[22px] p-4 text-night shadow-[0_30px_60px_-30px_color-mix(in_srgb,var(--color-black)_90%,transparent)]">
         <span className="flex size-9 items-center justify-center rounded-full bg-night text-neon">
           <Truck size={16} aria-hidden />
         </span>
@@ -83,7 +84,7 @@ const ITEMS: Item[] = [
     tilt: 7,
     delay: 0.25,
     node: (
-      <div className="aura-sun w-48 rounded-[22px] p-4 text-night shadow-[0_30px_60px_-30px_rgba(0,0,0,0.9)]">
+      <div className="aura-sun w-48 rounded-[22px] p-4 text-night shadow-[0_30px_60px_-30px_color-mix(in_srgb,var(--color-black)_90%,transparent)]">
         <p className="font-mono text-[10px] uppercase tracking-widest opacity-70">Taxa de resposta</p>
         <p className="mt-3 text-5xl font-light tracking-[-0.06em]">17,3%</p>
         <p className="mt-1 flex items-center gap-1 font-mono text-[11px]">
@@ -125,7 +126,7 @@ const ITEMS: Item[] = [
     delay: 0.55,
     hideMobile: true,
     node: (
-      <div className="aura-lilac flex w-44 items-center gap-3 rounded-[22px] p-4 text-night shadow-[0_30px_60px_-30px_rgba(0,0,0,0.9)]">
+      <div className="aura-lilac flex w-44 items-center gap-3 rounded-[22px] p-4 text-night shadow-[0_30px_60px_-30px_color-mix(in_srgb,var(--color-black)_90%,transparent)]">
         <span className="flex size-9 items-center justify-center rounded-full bg-night text-white">
           <Building2 size={15} aria-hidden />
         </span>
@@ -137,16 +138,16 @@ const ITEMS: Item[] = [
     ),
   },
   // esferas brilhantes e raio neon, como os objetos soltos da referência
-  { x: "66%", y: "7%", depth: 60, tilt: 0, delay: 0.6, node: <Sphere size={46} from="#d4d4d8" to="#3f3f46" /> },
-  { x: "79%", y: "40%", depth: 70, tilt: 0, delay: 0.7, hideMobile: true, node: <Sphere size={78} from="#5eead4" to="#065f46" /> },
-  { x: "25%", y: "80%", depth: 55, tilt: 0, delay: 0.75, hideMobile: true, node: <Sphere size={58} from="#d9f99d" to="#4d7c0f" /> },
+  { x: "66%", y: "7%", depth: 60, tilt: 0, delay: 0.6, node: <Sphere size={46} from={cores["esfera-prata-1"]} to={cores["esfera-prata-2"]} /> },
+  { x: "79%", y: "40%", depth: 70, tilt: 0, delay: 0.7, hideMobile: true, node: <Sphere size={78} from={cores["esfera-agua-1"]} to={cores["esfera-agua-2"]} /> },
+  { x: "25%", y: "80%", depth: 55, tilt: 0, delay: 0.75, hideMobile: true, node: <Sphere size={58} from={cores["esfera-lima-1"]} to={cores["esfera-lima-2"]} /> },
   {
     x: "88%",
     y: "33%",
     depth: 50,
     tilt: 14,
     delay: 0.8,
-    node: <Zap size={44} aria-hidden className="fill-neon text-neon drop-shadow-[0_0_18px_rgba(184,255,60,0.7)]" />,
+    node: <Zap size={44} aria-hidden className="fill-neon text-neon drop-shadow-[0_0_18px_color-mix(in_srgb,var(--color-neon)_70%,transparent)]" />,
   },
 ];
 

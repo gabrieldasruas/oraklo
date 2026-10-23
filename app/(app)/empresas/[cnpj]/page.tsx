@@ -259,7 +259,7 @@ export default async function EmpresaPage({ params }: PageProps<"/empresas/[cnpj
               {proximosPassos.map((s, i) => (
                 <li key={s.t} className="flex gap-3">
                   {s.feito ? (
-                    <CheckCircle2 size={20} aria-hidden className="shrink-0 text-emerald-600" />
+                    <CheckCircle2 size={20} aria-hidden className="shrink-0 text-good-600" />
                   ) : (
                     <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-night/30 font-mono text-[10px]">{i + 1}</span>
                   )}

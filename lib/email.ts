@@ -1,3 +1,4 @@
+import { cores } from "@/lib/colors";
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
@@ -13,9 +14,9 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 /** Texto puro → HTML simples (links clicáveis, quebras de linha). */
 export function textoParaHtml(texto: string) {
   const corpo = esc(texto)
-    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#0b0b0c">$1</a>')
+    .replace(/(https?:\/\/[^\s<]+)/g, `<a href="$1" style="color:${cores.night}">$1</a>`)
     .replace(/\n/g, "<br>");
-  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#0b0b0c">${corpo}</div>`;
+  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:${cores.night}">${corpo}</div>`;
 }
 
 /** Envia até 100 mensagens numa chamada. Devolve o id da Resend de cada uma (ou null se falhou). */

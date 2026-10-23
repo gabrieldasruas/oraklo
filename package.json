@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "cores": "node scripts/gerar-cores.mjs",
+    "predev": "node scripts/gerar-cores.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:raw": "next dev",
+    "prebuild": "node scripts/gerar-cores.mjs",
     "build": "next build",
     "start": "next start",
     "import:receita": "node --env-file=.env.local worker/jobs/import-receita.ts",

@@ -1,5 +1,6 @@
 "use client";
 
+import { cores } from "@/lib/colors";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
@@ -11,7 +12,7 @@ import { Micro } from "@/components/app/ui";
 
 export type CompanyBar = { cnpj: string; name: string; shareCapital: number | null; size: string; place: string };
 
-const COR: Record<string, string> = { ME: "#b8ff3c", EPP: "#ffb547", DEMAIS: "#8fa8ff" };
+const COR: Record<string, string> = { ME: cores["porte-me"], EPP: cores["porte-epp"], DEMAIS: cores["porte-demais"] };
 const PORTES = ["ME", "EPP", "DEMAIS"];
 const MARCAS = [1e4, 1e5, 1e6, 1e7, 1e8, 1e9];
 const curto = (v: number) =>
@@ -47,7 +48,7 @@ export default function CapitalChart({ companies, total }: { companies: CompanyB
         </div>
         {atual && foco !== null ? (
           <div className="previa-in flex min-h-[74px] w-full max-w-[460px] items-center gap-4 rounded-2xl bg-night px-5 py-3 text-white">
-            <span className="size-2.5 shrink-0 rounded-full" style={{ background: COR[atual.size] ?? "#d8d8de" }} />
+            <span className="size-2.5 shrink-0 rounded-full" style={{ background: COR[atual.size] ?? cores["score-frio"] }} />
             <div className="min-w-0 flex-1">
               <p className="truncate font-mono text-[9px] uppercase tracking-widest text-white/50">
                 #{foco + 1} · {SIZE_LABEL[atual.size] ?? "Porte não informado"} · {atual.place || "—"}
@@ -105,11 +106,11 @@ export default function CapitalChart({ companies, total }: { companies: CompanyB
                       style={{
                         height: `${altura(c.shareCapital ?? 0)}%`,
                         animationDelay: `${i * 14}ms`,
-                        background: foco === i ? "#0b0b0c" : "rgba(11,11,12,0.13)",
+                        background: foco === i ? cores.night : "color-mix(in srgb, var(--color-night) 13%, transparent)",
                         opacity: apagada ? 0.35 : 1,
                       }}
                     >
-                      <span aria-hidden className="absolute inset-x-0 top-0 h-1.5" style={{ background: COR[c.size] ?? "#d8d8de" }} />
+                      <span aria-hidden className="absolute inset-x-0 top-0 h-1.5" style={{ background: COR[c.size] ?? cores["score-frio"] }} />
                     </button>
                   </li>
                 );

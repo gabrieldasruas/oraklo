@@ -66,12 +66,12 @@ export default function AuthForm({ next, linkError }: { next: string; linkError:
 
         <div aria-live="polite">
           {linkError && !state.error && !state.info && (
-            <p role="alert" className="rounded-2xl bg-rose-100 px-4 py-3 text-sm text-rose-900">
+            <p role="alert" className="rounded-2xl bg-danger-100 px-4 py-3 text-sm text-danger-900">
               O link de confirmação é inválido ou expirou. Entre com sua senha ou crie a conta de novo.
             </p>
           )}
           {state.error && (
-            <p role="alert" className="rounded-2xl bg-rose-100 px-4 py-3 text-sm text-rose-900">
+            <p role="alert" className="rounded-2xl bg-danger-100 px-4 py-3 text-sm text-danger-900">
               {state.error}
             </p>
           )}

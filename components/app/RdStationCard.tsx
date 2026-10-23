@@ -18,7 +18,7 @@ type Props = {
 function Opcao({ on, onChange, rotulo }: { on: boolean; onChange: (v: boolean) => void; rotulo: string }) {
   return (
     <label className="flex cursor-pointer items-center gap-3 py-2 text-sm">
-      <input type="checkbox" checked={on} onChange={(e) => onChange(e.target.checked)} className="size-4 accent-[#0b0b0c]" />
+      <input type="checkbox" checked={on} onChange={(e) => onChange(e.target.checked)} className="size-4 accent-night" />
       {rotulo}
     </label>
   );
@@ -70,7 +70,7 @@ export default function RdStationCard({ c, setC, onServidor }: Props) {
     <Glass className="p-7">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-2xl bg-[#1b2b5b] font-semibold text-white">RD</span>
+          <span className="flex size-10 items-center justify-center rounded-2xl bg-rd font-semibold text-white">RD</span>
           <div>
             <Micro>RD Station CRM · integração direta</Micro>
             <p className="text-sm opacity-60">Integração direta: cada lead vira empresa, contato e negociação no seu RD.</p>
@@ -176,15 +176,15 @@ export default function RdStationCard({ c, setC, onServidor }: Props) {
                 setOcupado(null);
               }}
               disabled={!!ocupado}
-              className="flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-night/15 px-4 text-xs hover:border-rose-500 hover:text-rose-600 disabled:opacity-40"
+              className="flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-night/15 px-4 text-xs hover:border-danger-500 hover:text-danger-600 disabled:opacity-40"
             >
               <Unplug size={13} aria-hidden /> Desconectar
             </button>
           </div>
-          {resultado && <p className="text-xs text-emerald-700">{resultado}</p>}
+          {resultado && <p className="text-xs text-good-700">{resultado}</p>}
         </div>
       )}
-      {erro && <p className="mt-3 text-xs text-rose-700">{erro}</p>}
+      {erro && <p className="mt-3 text-xs text-danger-700">{erro}</p>}
     </Glass>
   );
 }

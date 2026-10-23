@@ -1,5 +1,6 @@
 "use client";
 
+import { cores } from "@/lib/colors";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, Download, Mail, Pencil, Plus, Trash2, UserRound, X } from "lucide-react";
 import { WhatsappIcon } from "@/components/brand/Icons";
@@ -202,7 +203,7 @@ export default function Calendario({
       {/* ================= Calendário ================= */}
       <section
         className="no-fx relative overflow-hidden rounded-[28px] border border-white/70 p-4 md:p-5"
-        style={{ background: "linear-gradient(115deg, #ecffb0 0%, #f3f6e8 30%, #ebe6ff 70%, #dcd4ff 100%)" }}
+        style={{ background: "linear-gradient(115deg, var(--color-agenda-faixa-1) 0%, var(--color-agenda-faixa-2) 30%, var(--color-agenda-faixa-3) 70%, var(--color-agenda-faixa-4) 100%)" }}
       >
         {/* cabeçalho */}
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -455,7 +456,7 @@ function DetalheReuniao({
   return (
     <>
       <div aria-hidden className="fixed inset-0 z-30" onClick={onFechar} />
-      <div role="dialog" aria-label={r.title} className="previa-in absolute right-6 top-24 z-40 w-[330px] rounded-[22px] bg-white p-5 shadow-[0_30px_70px_-25px_rgba(0,0,0,0.55)]">
+      <div role="dialog" aria-label={r.title} className="previa-in absolute right-6 top-24 z-40 w-[330px] rounded-[22px] bg-white p-5 shadow-[0_30px_70px_-25px_color-mix(in_srgb,var(--color-black)_55%,transparent)]">
         <div className="flex items-start justify-between gap-3">
           <p className="text-lg font-medium leading-tight tracking-[-0.02em]">{r.title}</p>
           <button type="button" aria-label="Fechar" onClick={onFechar} className="cursor-pointer opacity-50 hover:opacity-100">
@@ -510,7 +511,7 @@ function DetalheReuniao({
         </div>
         <div className="mt-4 flex items-center gap-2">
           {zap && (
-            <a href={`https://wa.me/55${zap}`} target="_blank" rel="noopener noreferrer" title="WhatsApp" className="flex size-9 items-center justify-center rounded-full bg-[#25d366] text-white">
+            <a href={`https://wa.me/55${zap}`} target="_blank" rel="noopener noreferrer" title="WhatsApp" className="flex size-9 items-center justify-center rounded-full bg-whatsapp text-white">
               <WhatsappIcon size={15} />
             </a>
           )}
@@ -522,7 +523,7 @@ function DetalheReuniao({
           <button type="button" onClick={onEditar} className="ml-auto flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full bg-night px-4 text-xs font-medium text-white hover:bg-neon hover:text-night">
             <Pencil size={13} aria-hidden /> Editar
           </button>
-          <button type="button" onClick={onCancelar} title="Cancelar reunião" className="flex size-9 cursor-pointer items-center justify-center rounded-full border border-night/15 hover:border-rose-500 hover:bg-rose-500 hover:text-white">
+          <button type="button" onClick={onCancelar} title="Cancelar reunião" className="flex size-9 cursor-pointer items-center justify-center rounded-full border border-night/15 hover:border-danger-500 hover:bg-danger-500 hover:text-white">
             <Trash2 size={14} aria-hidden />
           </button>
         </div>
@@ -534,10 +535,10 @@ function DetalheReuniao({
 function GoogleG() {
   return (
     <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden>
-      <path fill="#4285F4" d="M22.6 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-1.9 3.3-4.8 3.3-8z" />
-      <path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.6-2.7c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.1v2.8A11 11 0 0 0 12 23z" />
-      <path fill="#FBBC05" d="M5.8 14.2a6.6 6.6 0 0 1 0-4.3V7.1H2.1a11 11 0 0 0 0 9.9l3.7-2.8z" />
-      <path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11 11 0 0 0 2.1 7.1l3.7 2.8C6.7 7.3 9.1 5.4 12 5.4z" />
+      <path fill={cores["google-azul"]} d="M22.6 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-1.9 3.3-4.8 3.3-8z" />
+      <path fill={cores["google-verde"]} d="M12 23c3 0 5.5-1 7.3-2.7l-3.6-2.7c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.1v2.8A11 11 0 0 0 12 23z" />
+      <path fill={cores["google-amarelo"]} d="M5.8 14.2a6.6 6.6 0 0 1 0-4.3V7.1H2.1a11 11 0 0 0 0 9.9l3.7-2.8z" />
+      <path fill={cores["google-vermelho"]} d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11 11 0 0 0 2.1 7.1l3.7 2.8C6.7 7.3 9.1 5.4 12 5.4z" />
     </svg>
   );
 }

@@ -8,8 +8,8 @@ import PastaOraklo from "./PastaOraklo";
 export default function VitrinePerfil({ perfil, nomesNichos }: { perfil: PerfilBusca; nomesNichos: string[] }) {
   const forca = forcaDoPerfil(perfil);
   return (
-    <section aria-label="Perfil de cliente ideal" className="relative overflow-hidden rounded-[28px] bg-[#0f120b] p-6 text-white md:p-8">
-      <span aria-hidden className="pointer-events-none absolute -left-24 -top-10 size-96 rounded-full opacity-35 blur-3xl" style={{ background: "radial-gradient(circle, rgba(184,255,60,0.55), transparent 70%)" }} />
+    <section aria-label="Perfil de cliente ideal" className="relative overflow-hidden rounded-[28px] bg-verde-noite p-6 text-white md:p-8">
+      <span aria-hidden className="pointer-events-none absolute -left-24 -top-10 size-96 rounded-full opacity-35 blur-3xl" style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 55%, transparent), transparent 70%)" }} />
       <div className="relative grid items-center gap-8 md:grid-cols-[1fr_1.05fr]">
         <div className="order-2 md:order-1">
           <PastaOraklo etiqueta={`${forca.feitos}/${forca.total}`} />

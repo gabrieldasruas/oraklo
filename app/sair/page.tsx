@@ -12,9 +12,9 @@ export default async function SairPage({ searchParams }: Props) {
   const { l = "", t = "", ok, erro } = await searchParams;
   const valido = !!l && !!t && tokenValido(l, t);
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#0b0b0c] px-5 font-display text-white">
+    <main className="flex min-h-screen items-center justify-center bg-night px-5 font-display text-white">
       <div className="w-full max-w-md rounded-[28px] border border-white/10 bg-white/[0.04] p-8 text-center">
-        <span className="mx-auto mb-6 flex size-12 items-center justify-center rounded-2xl bg-[#b8ff3c] text-xl font-semibold text-[#0b0b0c]">O</span>
+        <span className="mx-auto mb-6 flex size-12 items-center justify-center rounded-2xl bg-neon text-xl font-semibold text-night">O</span>
         {ok ? (
           <>
             <h1 className="text-3xl font-light tracking-[-0.04em]">Pronto, você saiu da lista</h1>
@@ -27,7 +27,7 @@ export default async function SairPage({ searchParams }: Props) {
             <form action={confirmarDescadastro} className="mt-7">
               <input type="hidden" name="l" value={l} />
               <input type="hidden" name="t" value={t} />
-              <button type="submit" className="min-h-12 w-full cursor-pointer rounded-full bg-[#b8ff3c] px-6 text-sm font-medium text-[#0b0b0c]">
+              <button type="submit" className="min-h-12 w-full cursor-pointer rounded-full bg-neon px-6 text-sm font-medium text-night">
                 Sair da lista
               </button>
             </form>

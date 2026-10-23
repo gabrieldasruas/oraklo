@@ -653,7 +653,7 @@ export default function BuscaAvancada({
             <span className="ml-auto flex flex-wrap items-center gap-2">
               {temPerfil && (
                 <label className="flex cursor-pointer items-center gap-2 text-[11px] text-white/80">
-                  <input type="checkbox" checked={ordenarPerfil} onChange={(e) => setOrdenarPerfil(e.target.checked)} className="size-3.5 accent-[#b8ff3c]" />
+                  <input type="checkbox" checked={ordenarPerfil} onChange={(e) => setOrdenarPerfil(e.target.checked)} className="size-3.5 accent-neon" />
                   Mais aderentes primeiro
                 </label>
               )}
@@ -692,7 +692,7 @@ export default function BuscaAvancada({
           type="button"
           onClick={() => void buscar()}
           disabled={carregando}
-          className={`group flex min-h-16 cursor-pointer items-center gap-5 rounded-full bg-neon py-2 pl-9 pr-2 text-lg font-medium text-night shadow-[0_18px_45px_-15px_rgba(120,190,20,0.95)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait ${
+          className={`group flex min-h-16 cursor-pointer items-center gap-5 rounded-full bg-neon py-2 pl-9 pr-2 text-lg font-medium text-night shadow-[0_18px_45px_-15px_color-mix(in_srgb,var(--color-pontos-onda)_95%,transparent)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait ${
             desatualizada || !res ? "buscar-pulsa" : ""
           }`}
         >
@@ -767,7 +767,7 @@ export default function BuscaAvancada({
               <Crosshair size={12} aria-hidden /> Centro: <b className="font-medium">{perto.name}/{perto.uf}</b>
             </div>
             {aviso && (
-              <div role="alert" className="absolute inset-x-3 top-14 z-[600] flex items-start justify-between gap-3 rounded-2xl bg-rose-100 px-4 py-3 text-sm text-rose-900 shadow-lg">
+              <div role="alert" className="absolute inset-x-3 top-14 z-[600] flex items-start justify-between gap-3 rounded-2xl bg-danger-100 px-4 py-3 text-sm text-danger-900 shadow-lg">
                 {aviso}
                 <button type="button" aria-label="Fechar aviso" onClick={() => setAviso(null)} className="cursor-pointer">
                   <X size={16} />
@@ -874,7 +874,7 @@ export default function BuscaAvancada({
           </div>
 
           {erro && (
-            <p role="alert" className="m-4 rounded-2xl bg-rose-100 px-4 py-3 text-sm text-rose-900">
+            <p role="alert" className="m-4 rounded-2xl bg-danger-100 px-4 py-3 text-sm text-danger-900">
               {erro}
             </p>
           )}
@@ -887,7 +887,7 @@ export default function BuscaAvancada({
                   type="checkbox"
                   checked={todasMarcadas}
                   onChange={() => setSelecionadas(todasMarcadas ? new Set() : new Set(res.items.map((i) => i.cnpj)))}
-                  className="size-4 accent-[#b8ff3c]"
+                  className="size-4 accent-neon"
                 />
                 {selecionadas.size ? `${selecionadas.size} selecionada${selecionadas.size > 1 ? "s" : ""}` : `Selecionar todas (${res.items.length})`}
               </label>
@@ -917,7 +917,7 @@ export default function BuscaAvancada({
             </div>
           )}
           {retorno && (
-            <p role="status" className={`flex flex-wrap items-center gap-3 px-5 py-2.5 text-sm ${retorno.tipo === "ok" ? "bg-neon/40" : "bg-rose-100 text-rose-900"}`}>
+            <p role="status" className={`flex flex-wrap items-center gap-3 px-5 py-2.5 text-sm ${retorno.tipo === "ok" ? "bg-neon/40" : "bg-danger-100 text-danger-900"}`}>
               {retorno.texto}
               {retorno.link && (
                 <a href={retorno.link.href} className="font-medium underline underline-offset-4">
@@ -959,7 +959,7 @@ export default function BuscaAvancada({
                     checked={marcada}
                     onChange={() => alternar(c.cnpj)}
                     aria-label={`Selecionar ${c.name}`}
-                    className="mt-3 size-4 shrink-0 cursor-pointer accent-[#0b0b0c]"
+                    className="mt-3 size-4 shrink-0 cursor-pointer accent-night"
                   />
                   {/* posição + estado no mapa */}
                   <button
@@ -1023,7 +1023,7 @@ export default function BuscaAvancada({
                             onClick={() => void sinal(c, -1)}
                             aria-pressed={marcado === -1}
                             title="Não é meu cliente: mostrar menos empresas assim"
-                            className={`flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors ${marcado === -1 ? "border-rose-500 bg-rose-500 text-white" : "border-night/15 hover:border-rose-500 hover:bg-rose-500 hover:text-white"}`}
+                            className={`flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors ${marcado === -1 ? "border-danger-500 bg-danger-500 text-white" : "border-night/15 hover:border-danger-500 hover:bg-danger-500 hover:text-white"}`}
                           >
                             <ThumbsDown size={13} aria-hidden />
                           </button>

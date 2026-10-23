@@ -1,5 +1,6 @@
 "use client";
 
+import { cores } from "@/lib/colors";
 import type { Portfolio } from "@/lib/portfolio-types";
 
 // Slides do portfólio (16:9). Tamanhos em cqw (relativos à largura do slide), então o mesmo
@@ -8,7 +9,7 @@ import type { Portfolio } from "@/lib/portfolio-types";
 
 const GRADE = {
   backgroundImage:
-    "linear-gradient(rgba(11,11,12,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(11,11,12,0.06) 1px, transparent 1px)",
+    "linear-gradient(color-mix(in srgb, var(--color-night) 6%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--color-night) 6%, transparent) 1px, transparent 1px)",
   backgroundSize: "2.6cqw 2.6cqw",
 };
 
@@ -37,8 +38,8 @@ function Topo({ esquerda, meio, direita, claro = false }: { esquerda: string; me
 function Etiqueta({ children, cor, girar = -3, escura = false }: { children: React.ReactNode; cor: string; girar?: number; escura?: boolean }) {
   return (
     <span
-      className="inline-block px-[1.2cqw] py-[0.5cqw] text-[1.5cqw] font-medium leading-tight shadow-[0_0.4cqw_1cqw_-0.4cqw_rgba(0,0,0,0.4)]"
-      style={{ background: escura ? "#0b0b0c" : cor, color: escura ? "#fff" : "#0b0b0c", rotate: `${girar}deg` }}
+      className="inline-block px-[1.2cqw] py-[0.5cqw] text-[1.5cqw] font-medium leading-tight shadow-[0_0.4cqw_1cqw_-0.4cqw_color-mix(in_srgb,var(--color-black)_40%,transparent)]"
+      style={{ background: escura ? cores.night : cor, color: escura ? cores.branco : cores.night, rotate: `${girar}deg` }}
     >
       {children}
     </span>
@@ -49,7 +50,7 @@ const ano = new Date().getFullYear();
 
 export default function Slides({ p }: { p: Portfolio }) {
   const { identidade: id, sobre, solucoes, cases, clientes } = p;
-  const cor = id.cor || "#b8ff3c";
+  const cor = id.cor || cores.neon;
   const nums = sobre.numeros.filter((n) => n.valor);
   const fontesMarca = ["font-serif italic", "font-display font-semibold tracking-[-0.04em]", "font-mono uppercase", "font-serif", "font-display font-light"];
 
@@ -134,7 +135,7 @@ export default function Slides({ p }: { p: Portfolio }) {
           {solucoes.slice(0, 4).map((s, i) => (
             <div
               key={s.id}
-              className={`flex aspect-[4/5] flex-col justify-between rounded-[1.2cqw] p-[1.4cqw] shadow-[0_1cqw_2cqw_-1cqw_rgba(0,0,0,0.45)] ${i % 2 ? "bg-[#f1efe6]" : "bg-night text-white"}`}
+              className={`flex aspect-[4/5] flex-col justify-between rounded-[1.2cqw] p-[1.4cqw] shadow-[0_1cqw_2cqw_-1cqw_color-mix(in_srgb,var(--color-black)_45%,transparent)] ${i % 2 ? "bg-papel-creme" : "bg-night text-white"}`}
               style={{ rotate: `${[-2, 1.5, -1, 2][i]}deg` }}
             >
               <span className="font-mono text-[0.9cqw] opacity-60">{String(ano)} · {String(i + 1).padStart(2, "0")}</span>
@@ -233,7 +234,7 @@ export default function Slides({ p }: { p: Portfolio }) {
 
       {/* 7 — Clientes (estilo "Our Customer") */}
       {clientes.length > 0 && (
-        <Slide className="bg-[#e9e9ec]">
+        <Slide className="bg-papel-slide">
           <div className="absolute inset-y-0 left-0 w-[46%]" style={{ background: cor }} />
           <div className="absolute inset-y-0 left-[46%] w-[12%]" style={{ background: `linear-gradient(90deg, ${cor}, transparent)` }} />
           <p className="absolute bottom-[4cqw] left-[4cqw] text-[6cqw] font-medium leading-[0.95] tracking-[-0.04em]">

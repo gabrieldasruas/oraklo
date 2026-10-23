@@ -34,9 +34,9 @@ type Aba = "atividade" | "tarefas" | "contato";
 const TOM: Record<string, string> = {
   neutro: "bg-night/25",
   neon: "bg-neon ring-1 ring-night",
-  sol: "bg-amber-400",
-  rosa: "bg-rose-400",
-  ceu: "bg-sky-400",
+  sol: "bg-warn-400",
+  rosa: "bg-danger-400",
+  ceu: "bg-info-400",
 };
 
 const celular = (p: string) => {
@@ -111,11 +111,11 @@ export default function LeadDrawer({
       <aside
         role="dialog"
         aria-label={`Lead ${lead.name}`}
-        className="drawer-in fixed inset-y-0 right-0 z-50 flex w-full max-w-[520px] flex-col overflow-hidden bg-[#f4f4f1] shadow-[0_0_80px_-20px_rgba(0,0,0,0.6)]"
+        className="drawer-in fixed inset-y-0 right-0 z-50 flex w-full max-w-[520px] flex-col overflow-hidden bg-papel shadow-[0_0_80px_-20px_color-mix(in_srgb,var(--color-black)_60%,transparent)]"
       >
         {/* cabeçalho */}
         <header className="relative overflow-hidden bg-night p-6 text-white">
-          <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full opacity-50 blur-3xl" style={{ background: "radial-gradient(circle, rgba(184,255,60,0.6), transparent 70%)" }} />
+          <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full opacity-50 blur-3xl" style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 60%, transparent), transparent 70%)" }} />
           <div className="relative flex items-start gap-4">
             <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-neon font-mono text-base text-night">{iniciais(lead.name)}</span>
             <div className="min-w-0 flex-1">
@@ -166,7 +166,7 @@ export default function LeadDrawer({
               </button>
             )}
             {zap && (
-              <button type="button" onClick={() => onWhatsapp(lead)} title="WhatsApp com modelo ou IA" className="flex size-9 cursor-pointer items-center justify-center rounded-full bg-[#25d366] text-white">
+              <button type="button" onClick={() => onWhatsapp(lead)} title="WhatsApp com modelo ou IA" className="flex size-9 cursor-pointer items-center justify-center rounded-full bg-whatsapp text-white">
                 <WhatsappIcon size={15} />
               </button>
             )}
@@ -206,7 +206,7 @@ export default function LeadDrawer({
 
         <div className="flex-1 overflow-y-auto p-5 [scrollbar-width:thin]">
           {erro && (
-            <p role="alert" className="mb-4 rounded-2xl bg-rose-100 px-4 py-3 text-sm text-rose-900">
+            <p role="alert" className="mb-4 rounded-2xl bg-danger-100 px-4 py-3 text-sm text-danger-900">
               {erro}
             </p>
           )}
@@ -247,7 +247,7 @@ function Atividade({ leadId, eventos, onNovo }: { leadId: string; eventos: Event
 
   return (
     <div className="space-y-5">
-      <form onSubmit={salvar} className="rounded-[20px] border border-white bg-white p-3 shadow-[0_10px_30px_-24px_rgba(0,0,0,0.5)]">
+      <form onSubmit={salvar} className="rounded-[20px] border border-white bg-white p-3 shadow-[0_10px_30px_-24px_color-mix(in_srgb,var(--color-black)_50%,transparent)]">
         <label className="flex items-start gap-2">
           <NotebookPen size={15} aria-hidden className="mt-2.5 shrink-0 opacity-40" />
           <span className="sr-only">Nova nota</span>
@@ -341,7 +341,7 @@ function Tarefas({ leadId, tarefas, onNovo }: { leadId: string; tarefas: ReturnT
         {ordenadas.map((t) => {
           const atrasada = !t.feita && t.vence && t.vence.slice(0, 10) < hoje();
           return (
-            <li key={t.id} className={`flex items-center gap-3 rounded-[18px] border bg-white p-3 ${t.feita ? "border-transparent opacity-50" : atrasada ? "border-rose-300" : "border-white"}`}>
+            <li key={t.id} className={`flex items-center gap-3 rounded-[18px] border bg-white p-3 ${t.feita ? "border-transparent opacity-50" : atrasada ? "border-danger-300" : "border-white"}`}>
               <button
                 type="button"
                 aria-label={t.feita ? "Reabrir tarefa" : "Concluir tarefa"}
@@ -352,7 +352,7 @@ function Tarefas({ leadId, tarefas, onNovo }: { leadId: string; tarefas: ReturnT
               </button>
               <span className={`min-w-0 flex-1 text-sm ${t.feita ? "line-through" : ""}`}>{t.titulo}</span>
               {t.vence && (
-                <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] ${atrasada ? "bg-rose-100 text-rose-800" : "bg-night/5"}`}>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] ${atrasada ? "bg-danger-100 text-danger-800" : "bg-night/5"}`}>
                   {new Date(t.vence).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
                 </span>
               )}
@@ -505,7 +505,7 @@ function Decisores({ lead, onAtualizado }: { lead: Lead; onAtualizado: (l: Lead)
         </form>
       )}
 
-      {erro && <p className="px-4 pb-4 text-sm text-rose-300">{erro}</p>}
+      {erro && <p className="px-4 pb-4 text-sm text-danger-300">{erro}</p>}
       {res && (
         <ul className="divide-y divide-white/10 border-t border-white/10">
           {!res.pessoas.length && <li className="p-4 text-sm text-white/60">Nenhum contato público encontrado para esse domínio.</li>}
@@ -539,7 +539,7 @@ function EnviarRd({ leadId }: { leadId: string }) {
   const [estado, setEstado] = useState<null | "enviando" | { ok: boolean; texto: string }>(null);
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-[20px] border border-white bg-white p-4">
-      <span className="flex size-9 items-center justify-center rounded-xl bg-[#1b2b5b] text-[11px] font-semibold text-white">RD</span>
+      <span className="flex size-9 items-center justify-center rounded-xl bg-rd text-[11px] font-semibold text-white">RD</span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">RD Station CRM</p>
         <p className="text-xs opacity-55">Cria empresa, contato e negociação no seu RD.</p>
@@ -557,7 +557,7 @@ function EnviarRd({ leadId }: { leadId: string }) {
       >
         {estado === "enviando" && <Loader2 size={12} className="animate-spin" />} Enviar ao RD
       </button>
-      {estado && estado !== "enviando" && <p className={`w-full text-xs ${estado.ok ? "text-emerald-700" : "text-rose-700"}`}>{estado.texto}</p>}
+      {estado && estado !== "enviando" && <p className={`w-full text-xs ${estado.ok ? "text-good-700" : "text-danger-700"}`}>{estado.texto}</p>}
     </div>
   );
 }

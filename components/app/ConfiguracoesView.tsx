@@ -40,7 +40,7 @@ function BarraUso({ rotulo, usado, limite }: { rotulo: string; usado: number; li
         <span className="font-mono text-xs tabular-nums opacity-70">{limite === null ? `${usado} · ilimitado` : `${usado} de ${limite}`}</span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-night/10">
-        <div className={`h-full rounded-full ${pct >= 90 ? "bg-rose-500" : "bg-night"}`} style={{ width: `${limite === null ? 8 : pct}%` }} />
+        <div className={`h-full rounded-full ${pct >= 90 ? "bg-danger-500" : "bg-night"}`} style={{ width: `${limite === null ? 8 : pct}%` }} />
       </div>
     </div>
   );
@@ -71,7 +71,7 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
   return (
     <div className="space-y-4">
       <p className="flex items-center gap-2 px-1 text-xs opacity-60">
-        {estado === "salvando" ? <Loader2 size={12} className="animate-spin" /> : estado === "ok" ? <Check size={12} className="text-emerald-600" /> : <X size={12} className="text-rose-600" />}
+        {estado === "salvando" ? <Loader2 size={12} className="animate-spin" /> : estado === "ok" ? <Check size={12} className="text-good-600" /> : <X size={12} className="text-danger-600" />}
         {estado === "salvando" ? "Salvando…" : estado === "ok" ? "Tudo salvo" : erro}
       </p>
 
@@ -149,7 +149,7 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
 
         {/* atalho para integrações */}
         <a href="/integracoes" className="group relative flex flex-col justify-between overflow-hidden rounded-[28px] bg-night p-7 text-white transition-transform hover:-translate-y-0.5">
-          <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full opacity-40 blur-3xl" style={{ background: "radial-gradient(circle, rgba(184,255,60,0.6), transparent 70%)" }} />
+          <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full opacity-40 blur-3xl" style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 60%, transparent), transparent 70%)" }} />
           <div className="relative">
             <Micro className="!text-neon !opacity-90">04 · Integrações</Micro>
             <p className="mt-3 text-3xl font-light tracking-[-0.04em]">Integrar CRM e WhatsApp</p>

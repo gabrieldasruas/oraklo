@@ -27,14 +27,14 @@ export default function WelcomePage() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(42% 38% at 50% 34%, rgba(184,255,60,0.22), transparent 70%), radial-gradient(40% 40% at 0% 100%, rgba(120,140,255,0.14), transparent 70%), radial-gradient(35% 35% at 100% 0%, rgba(255,150,110,0.1), transparent 70%)",
+              "radial-gradient(42% 38% at 50% 34%, color-mix(in srgb, var(--color-neon) 22%, transparent), transparent 70%), radial-gradient(40% 40% at 0% 100%, color-mix(in srgb, var(--color-aura-azul) 14%, transparent), transparent 70%), radial-gradient(35% 35% at 100% 0%, color-mix(in srgb, var(--color-aura-pessego) 10%, transparent), transparent 70%)",
           }}
         />
         <div
           className="absolute inset-x-0 bottom-0 h-[55%] opacity-50 [mask-image:linear-gradient(to_top,black,transparent)]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(184,255,60,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(184,255,60,0.18) 1px, transparent 1px)",
+              "linear-gradient(color-mix(in srgb, var(--color-neon) 18%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--color-neon) 18%, transparent) 1px, transparent 1px)",
             backgroundSize: "56px 56px",
             transform: "perspective(600px) rotateX(58deg)",
             transformOrigin: "bottom",

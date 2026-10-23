@@ -52,7 +52,7 @@ export default function LeadForm({
       ref={ref}
       onClose={onClose}
       aria-labelledby="lead-form-title"
-      className="m-auto w-[min(34rem,calc(100vw-2rem))] rounded-[28px] border border-white/70 bg-[#eeeef0] p-0 font-display text-night shadow-2xl backdrop:bg-night/50 backdrop:backdrop-blur-sm"
+      className="m-auto w-[min(34rem,calc(100vw-2rem))] rounded-[28px] border border-white/70 bg-papel-cinza p-0 font-display text-night shadow-2xl backdrop:bg-night/50 backdrop:backdrop-blur-sm"
     >
       <form onSubmit={submit} className="p-7">
         <div className="flex items-start justify-between gap-4">

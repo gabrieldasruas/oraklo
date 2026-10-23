@@ -1,5 +1,6 @@
 "use client";
 
+import { cores } from "@/lib/colors";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
@@ -161,7 +162,7 @@ export default function RadiusMap({
   const cardeais = pontosCardeais(centro, raioKm);
 
   // no satélite, traço neon para o círculo continuar visível
-  const corCirculo = satelite ? "#b8ff3c" : "#0b0b0c";
+  const corCirculo = satelite ? cores.neon : cores.night;
 
   const tooltip = (e: EmpresaNoMapa) => (
     <Tooltip direction="top" offset={[0, e.destaque ? -26 : -6]} className="pin-tooltip">
@@ -214,8 +215,8 @@ export default function RadiusMap({
         radius={raioKm * 1000}
         pathOptions={
           circuloAtivo
-            ? { color: corCirculo, weight: 3, fillColor: "#0b0b0c", fillOpacity: satelite ? 0.08 : 0.12, dashArray: undefined }
-            : { color: corCirculo, weight: 1.5, fillColor: "#0b0b0c", fillOpacity: 0.03, dashArray: "6 8" }
+            ? { color: corCirculo, weight: 3, fillColor: cores.night, fillOpacity: satelite ? 0.08 : 0.12, dashArray: undefined }
+            : { color: corCirculo, weight: 1.5, fillColor: cores.night, fillOpacity: 0.03, dashArray: "6 8" }
         }
         interactive={false}
       />
@@ -226,7 +227,7 @@ export default function RadiusMap({
           key={m.code}
           center={[m.lat, m.lng]}
           radius={temEmpresas ? 1.5 : 2.5}
-          pathOptions={{ color: "#0b0b0c", weight: 0, fillColor: "#0b0b0c", fillOpacity: temEmpresas ? 0.15 : 0.35 }}
+          pathOptions={{ color: cores.night, weight: 0, fillColor: cores.night, fillOpacity: temEmpresas ? 0.15 : 0.35 }}
         >
           <Tooltip direction="top" offset={[0, -4]}>
             {m.name}/{m.uf}
@@ -242,7 +243,7 @@ export default function RadiusMap({
             key={e.cnpj}
             center={[e.lat, e.lng]}
             radius={foco === e.cnpj ? 8 : 5}
-            pathOptions={{ color: "#fff", weight: 2, fillColor: foco === e.cnpj ? "#b8ff3c" : "#0b0b0c", fillOpacity: 0.85 }}
+            pathOptions={{ color: cores.branco, weight: 2, fillColor: foco === e.cnpj ? cores.neon : cores.night, fillOpacity: 0.85 }}
             eventHandlers={{ mouseover: () => onFoco?.(e.cnpj), mouseout: () => onFoco?.(null) }}
           >
             {tooltip(e)}

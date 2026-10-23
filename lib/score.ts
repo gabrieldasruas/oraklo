@@ -1,5 +1,6 @@
 // Score automático do lead (0–100): o quanto a empresa vale a abordagem, só com dados da Receita.
 // Usado ao adicionar empresas ao pipeline e mostrado nos resultados da busca.
+import { cores } from "@/lib/colors";
 import { tipoDoEmail } from "./crm";
 
 export type DadosScore = {
@@ -52,4 +53,4 @@ export function calcularScore(e: DadosScore): { score: number; motivos: string[]
 }
 
 /** Faixa do score para cor/rótulo. */
-export const faixaScore = (n: number) => (n >= 75 ? { rotulo: "Quente", cor: "#b8ff3c" } : n >= 50 ? { rotulo: "Morno", cor: "#ffd08a" } : { rotulo: "Frio", cor: "#d8d8de" });
+export const faixaScore = (n: number) => (n >= 75 ? { rotulo: "Quente", cor: cores["score-quente"] } : n >= 50 ? { rotulo: "Morno", cor: cores["score-morno"] } : { rotulo: "Frio", cor: cores["score-frio"] });

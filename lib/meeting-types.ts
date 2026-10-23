@@ -6,12 +6,13 @@
 //   meeting_canceled { meetingId }
 // O estado atual de cada reunião é montado aplicando os eventos em ordem.
 
+import { cores } from "@/lib/colors";
 export const CATEGORIAS = [
-  { id: "prospeccao", nome: "Prospecção", cor: "#e4fa8a", borda: "#9cc41a", texto: "#3d5c00" },
-  { id: "reuniao", nome: "Reunião", cor: "#d8d0ff", borda: "#8f7cff", texto: "#3b2f8f" },
-  { id: "followup", nome: "Follow-up", cor: "#bdeedc", borda: "#3fb994", texto: "#0f5c45" },
-  { id: "proposta", nome: "Proposta", cor: "#ffd08a", borda: "#f0a030", texto: "#7a4500" },
-  { id: "interno", nome: "Interno", cor: "#e2e2e6", borda: "#9a9aa3", texto: "#3a3a40" },
+  { id: "prospeccao", nome: "Prospecção", cor: cores["reuniao-prospeccao"], borda: cores["reuniao-prospeccao-borda"], texto: cores["reuniao-prospeccao-texto"] },
+  { id: "reuniao", nome: "Reunião", cor: cores["reuniao-reuniao"], borda: cores["reuniao-reuniao-borda"], texto: cores["reuniao-reuniao-texto"] },
+  { id: "followup", nome: "Follow-up", cor: cores["reuniao-followup"], borda: cores["reuniao-followup-borda"], texto: cores["reuniao-followup-texto"] },
+  { id: "proposta", nome: "Proposta", cor: cores["reuniao-proposta"], borda: cores["reuniao-proposta-borda"], texto: cores["reuniao-proposta-texto"] },
+  { id: "interno", nome: "Interno", cor: cores["reuniao-interno"], borda: cores["reuniao-interno-borda"], texto: cores["reuniao-interno-texto"] },
 ] as const;
 
 export type CategoriaId = (typeof CATEGORIAS)[number]["id"];

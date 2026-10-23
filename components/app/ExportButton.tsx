@@ -38,7 +38,7 @@ export default function ExportButton({ listId, rows }: { listId: string; rows: n
       <Pill onClick={exportCsv} disabled={pending || rows === 0}>
         {pending ? "Gerando CSV…" : `Exportar CSV (${rows.toLocaleString("pt-BR")})`}
       </Pill>
-      <p aria-live="polite" className="max-w-xs text-right text-xs text-rose-700">
+      <p aria-live="polite" className="max-w-xs text-right text-xs text-danger-700">
         {error}
       </p>
     </div>

@@ -43,7 +43,7 @@ export default function SideNav({ user }: { user: { name: string; workspaceName:
                 key={item.href}
                 href={item.href}
                 aria-current={on ? "page" : undefined}
-                className={`group mt-2 flex items-center gap-3 rounded-2xl p-2.5 transition-all ${on ? "bg-night text-white" : "bg-neon text-night shadow-[0_12px_28px_-14px_rgba(132,204,22,0.95)] hover:-translate-y-0.5"}`}
+                className={`group mt-2 flex items-center gap-3 rounded-2xl p-2.5 transition-all ${on ? "bg-night text-white" : "bg-neon text-night shadow-[0_12px_28px_-14px_color-mix(in_srgb,var(--color-neon-escuro)_95%,transparent)] hover:-translate-y-0.5"}`}
               >
                 <span className={`flex size-9 items-center justify-center rounded-xl ${on ? "bg-neon text-night" : "bg-night text-neon"}`}>
                   <Icon size={17} aria-hidden />

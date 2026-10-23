@@ -120,7 +120,7 @@ export default function CampanhaModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-night/40 p-0 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={() => !enviando && onFechar()}>
-      <div role="dialog" aria-label="Enviar e-mail" onClick={(e) => e.stopPropagation()} className="previa-in flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-t-[28px] bg-[#f4f4f1] shadow-[0_40px_100px_-30px_rgba(0,0,0,0.7)] sm:rounded-[28px]">
+      <div role="dialog" aria-label="Enviar e-mail" onClick={(e) => e.stopPropagation()} className="previa-in flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-t-[28px] bg-papel shadow-[0_40px_100px_-30px_color-mix(in_srgb,var(--color-black)_70%,transparent)] sm:rounded-[28px]">
         <header className="flex items-center gap-3 border-b border-night/10 bg-white/70 px-6 py-4">
           <span className="flex size-10 items-center justify-center rounded-2xl bg-night text-neon">
             <Mail size={18} aria-hidden />
@@ -182,7 +182,7 @@ export default function CampanhaModal({
                         return n;
                       })
                     }
-                    className="size-4 accent-[#0b0b0c]"
+                    className="size-4 accent-night"
                   />
                   Marcar {visiveis.length} visíve{visiveis.length === 1 ? "l" : "is"}
                   <span className="ml-auto font-mono text-[10px] opacity-50">{escolhidos.length} escolhidos</span>
@@ -202,7 +202,7 @@ export default function CampanhaModal({
                             return n;
                           })
                         }
-                        className="size-4 shrink-0 accent-[#0b0b0c]"
+                        className="size-4 shrink-0 accent-night"
                       />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm">{l.name}</span>
@@ -220,7 +220,7 @@ export default function CampanhaModal({
             {/* mensagem */}
             <section aria-label="Mensagem" className="min-h-0 space-y-4 overflow-y-auto p-5 [scrollbar-width:thin]">
               {cfg && !cfg.configurado && (
-                <div className="rounded-[18px] border border-amber-300/60 bg-amber-50 p-4 text-sm">
+                <div className="rounded-[18px] border border-warn-300/60 bg-warn-50 p-4 text-sm">
                   <p className="flex items-center gap-2 font-medium">
                     <Sparkles size={14} aria-hidden /> Falta ligar o envio automático
                   </p>
@@ -262,7 +262,7 @@ export default function CampanhaModal({
               {/* follow-up */}
               <div className={`rounded-[18px] border p-4 transition-colors ${follow ? "border-night bg-night text-white" : "border-white bg-white"}`}>
                 <label className="flex cursor-pointer items-center gap-3">
-                  <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} className="size-4 accent-[#b8ff3c]" />
+                  <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} className="size-4 accent-neon" />
                   <Clock3 size={15} aria-hidden className={follow ? "text-neon" : "opacity-50"} />
                   <span className="text-sm font-medium">Follow-up automático se não responder</span>
                 </label>
@@ -297,7 +297,7 @@ export default function CampanhaModal({
         {!feito && (
           <footer className="flex flex-wrap items-center gap-3 border-t border-night/10 bg-white/70 px-6 py-4">
             {erro && (
-              <p role="alert" className="text-sm text-rose-700">
+              <p role="alert" className="text-sm text-danger-700">
                 {erro}
               </p>
             )}
@@ -307,7 +307,7 @@ export default function CampanhaModal({
                 <Mail size={15} aria-hidden /> Abrir no meu e-mail
               </a>
             ) : (
-              <button type="button" onClick={() => void enviar()} disabled={!cfg || enviando || !escolhidos.length || !assunto.trim() || !corpo.trim()} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full bg-neon px-6 text-sm font-medium text-night shadow-[0_14px_30px_-14px_rgba(132,204,22,0.9)] disabled:opacity-40">
+              <button type="button" onClick={() => void enviar()} disabled={!cfg || enviando || !escolhidos.length || !assunto.trim() || !corpo.trim()} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full bg-neon px-6 text-sm font-medium text-night shadow-[0_14px_30px_-14px_color-mix(in_srgb,var(--color-neon-escuro)_90%,transparent)] disabled:opacity-40">
                 {enviando ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} aria-hidden />} Enviar para {escolhidos.length} lead{escolhidos.length === 1 ? "" : "s"}
               </button>
             )}

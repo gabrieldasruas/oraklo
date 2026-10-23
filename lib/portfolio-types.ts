@@ -2,6 +2,7 @@
 // Fica salvo no banco como uma lista especial (tag PORTFOLIO_TAG) do workspace; os arquivos
 // importados ficam em listas com a tag ARQUIVO_TAG. As duas tags ficam escondidas da página Listas.
 
+import { cores } from "@/lib/colors";
 export const PORTFOLIO_TAG = "__portfolio__";
 export const ARQUIVO_TAG = "__portfolio_file__";
 /** contador de visitas do link público */
@@ -54,7 +55,7 @@ export const PORTFOLIO_PADRAO: Portfolio = {
     telefone: "(47) 99999-0000",
     site: "suaempresa.com.br",
     linkedin: "",
-    cor: "#b8ff3c",
+    cor: cores.neon,
     logo: null,
     foto: null,
   },

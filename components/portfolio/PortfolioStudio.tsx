@@ -1,5 +1,6 @@
 "use client";
 
+import { cores } from "@/lib/colors";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
@@ -30,7 +31,7 @@ import { interpretarCsv, lerCsv, novoId, preencherEmail, type ArquivoResumo, typ
 import { iniciais } from "@/lib/crm";
 
 type Aba = "portfolio" | "solucoes";
-const CORES = ["#b8ff3c", "#ffe14d", "#7ee8fa", "#c9b6ff", "#ff9a7a", "#0b0b0c"];
+const CORES = [cores.neon, cores["portfolio-amarelo"], cores["portfolio-ciano"], cores["portfolio-lilas"], cores["portfolio-coral"], cores.night];
 const VARIAVEIS = ["{nome}", "{empresa}", "{meu_nome}", "{minha_empresa}", "{solucoes}", "{meu_telefone}", "{meu_site}", "{link_portfolio}"];
 
 const tamanho = (b: number) => (b > 1_000_000 ? `${(b / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1000))} KB`);
@@ -255,10 +256,10 @@ export default function PortfolioStudio({ inicial, arquivosIniciais }: { inicial
               aria-selected={on}
               onClick={() => setAba(v)}
               className={`group relative flex min-h-28 cursor-pointer items-center gap-5 overflow-hidden rounded-[26px] border p-5 text-left transition-all duration-300 md:p-6 ${
-                on ? "border-night bg-night text-white shadow-[0_24px_50px_-24px_rgba(10,10,10,0.7)]" : "border-white/80 bg-white/70 hover:-translate-y-0.5 hover:bg-white"
+                on ? "border-night bg-night text-white shadow-[0_24px_50px_-24px_color-mix(in_srgb,var(--color-night)_70%,transparent)]" : "border-white/80 bg-white/70 hover:-translate-y-0.5 hover:bg-white"
               }`}
             >
-              {on && <span aria-hidden className="pointer-events-none absolute -right-10 -top-10 size-48 rounded-full opacity-60 blur-2xl" style={{ background: "radial-gradient(circle, rgba(184,255,60,0.55), transparent 70%)" }} />}
+              {on && <span aria-hidden className="pointer-events-none absolute -right-10 -top-10 size-48 rounded-full opacity-60 blur-2xl" style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 55%, transparent), transparent 70%)" }} />}
               <span className={`relative flex size-14 shrink-0 items-center justify-center rounded-2xl ${on ? "bg-neon text-night" : "bg-night/5 group-hover:bg-night group-hover:text-neon"}`}>
                 <Icon size={24} aria-hidden />
               </span>
@@ -297,7 +298,7 @@ export default function PortfolioStudio({ inicial, arquivosIniciais }: { inicial
           <Plus size={15} aria-hidden /> Escolher arquivos
         </button>
         {aviso && (
-          <p role="status" className={`w-full rounded-2xl px-4 py-2.5 text-sm ${aviso.tipo === "ok" ? "bg-neon/40" : "bg-rose-100 text-rose-900"}`}>
+          <p role="status" className={`w-full rounded-2xl px-4 py-2.5 text-sm ${aviso.tipo === "ok" ? "bg-neon/40" : "bg-danger-100 text-danger-900"}`}>
             {aviso.texto}
           </p>
         )}
@@ -510,7 +511,7 @@ export default function PortfolioStudio({ inicial, arquivosIniciais }: { inicial
                         await removerArquivo(a.id);
                         setArquivos((s) => s.filter((x) => x.id !== a.id));
                       }}
-                      className="flex size-9 cursor-pointer items-center justify-center rounded-full hover:bg-rose-500 hover:text-white"
+                      className="flex size-9 cursor-pointer items-center justify-center rounded-full hover:bg-danger-500 hover:text-white"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -590,7 +591,7 @@ export default function PortfolioStudio({ inicial, arquivosIniciais }: { inicial
               <div>
                 <Micro>Prévia do portfólio</Micro>
                 <p className="mt-1 flex items-center gap-1.5 text-xs opacity-70">
-                  {salvo === "salvando" ? <Loader2 size={12} className="animate-spin" /> : salvo === "ok" ? <Check size={12} className="text-emerald-600" /> : <X size={12} className="text-rose-600" />}
+                  {salvo === "salvando" ? <Loader2 size={12} className="animate-spin" /> : salvo === "ok" ? <Check size={12} className="text-good-600" /> : <X size={12} className="text-danger-600" />}
                   {salvo === "salvando" ? "Salvando…" : salvo === "ok" ? "Tudo salvo" : "Não foi possível salvar — tente de novo"}
                 </p>
               </div>

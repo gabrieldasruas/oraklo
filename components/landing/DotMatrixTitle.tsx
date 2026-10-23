@@ -1,5 +1,6 @@
 "use client";
 
+import { cores, misturar } from "@/lib/colors";
 import { useEffect, useRef } from "react";
 
 // sx/sy: de onde o ponto sai; tx/ty: seu lugar no texto; ox/oy: desvio causado pelo mouse.
@@ -50,7 +51,7 @@ export default function DotMatrixTitle({ text, className = "" }: { text: string;
       o.font = `600 ${fs}px ${getComputedStyle(canvas).fontFamily}`;
       o.textAlign = "center";
       o.textBaseline = "middle";
-      o.fillStyle = "#fff";
+      o.fillStyle = cores.branco;
       // letter-spacing apertado, como os títulos do Oraklo
       (o as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = `${-fs * 0.04}px`;
       o.fillText(text, w / 2, h / 2 + fs * 0.04);
@@ -119,7 +120,7 @@ export default function DotMatrixTitle({ text, className = "" }: { text: string;
         const glow = Math.max(0, 1 - Math.abs(d.tx / w - sweep) * 6);
         const twinkle = 0.8 + Math.sin(t * 3 + d.seed * 20) * 0.2;
         ctx.globalAlpha = (0.2 + e * 0.8) * twinkle;
-        ctx.fillStyle = glow > 0.05 ? `rgb(${Math.round(244 - 60 * glow)},255,${Math.round(245 - 185 * glow)})` : "#f4f4f5";
+        ctx.fillStyle = glow > 0.05 ? misturar(cores["matriz-base"], cores.neon, glow) : cores["matriz-ponto"];
         const r = r0 * (1 + glow * 0.45) * (0.6 + e * 0.4);
         ctx.fillRect(x - r, y - r, r * 2, r * 2);
       }

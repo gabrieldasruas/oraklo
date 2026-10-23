@@ -1,5 +1,6 @@
 "use client";
 
+import { cores } from "@/lib/colors";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { nicheShape } from "@/lib/three/nicheShapes";
 import { useFrame } from "@react-three/fiber";
@@ -9,12 +10,12 @@ import ParticleField from "../ParticleField";
 import { galaxy, torus } from "@/lib/three/shapes";
 
 export const TONE_COLORS: Record<string, [string, string]> = {
-  lime: ["#7fbf1a", "#b8ff3c"],
-  sun: ["#ff8f5a", "#ffd166"],
-  mint: ["#2bb3a3", "#7ff0c9"],
-  lilac: ["#7a6cff", "#c9b8ff"],
-  coral: ["#ff5f86", "#ffb08f"],
-  night: ["#0b0b0c", "#4b5563"],
+  lime: [cores["cena-lime-1"], cores["cena-lime-2"]],
+  sun: [cores["cena-sun-1"], cores["cena-sun-2"]],
+  mint: [cores["cena-mint-1"], cores["cena-mint-2"]],
+  lilac: [cores["cena-lilac-1"], cores["cena-lilac-2"]],
+  coral: [cores["cena-coral-1"], cores["cena-coral-2"]],
+  night: [cores["cena-night-1"], cores["cena-night-2"]],
 };
 
 // Gira junto com o anel de cartões (ângulo em graus vindo do SegmentExplorer).

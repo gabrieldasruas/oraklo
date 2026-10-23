@@ -28,7 +28,7 @@ export const metadata: Metadata = { title: `Visão geral — ${site.name}` };
 const DIA = 86_400_000;
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 10 : 0);
 const sinal = (n: number) => (n > 0 ? `+${n}` : String(n));
-const TOM: Record<string, string> = { neutro: "bg-night/30", neon: "bg-neon ring-1 ring-night", sol: "bg-amber-400", rosa: "bg-rose-400", ceu: "bg-sky-400" };
+const TOM: Record<string, string> = { neutro: "bg-night/30", neon: "bg-neon ring-1 ring-night", sol: "bg-warn-400", rosa: "bg-danger-400", ceu: "bg-info-400" };
 
 export default async function PainelPage() {
   const user = await requireUser();
@@ -270,7 +270,7 @@ export default async function PainelPage() {
             <div className="flex items-center justify-between">
               <Micro>Tarefas em aberto</Micro>
               <span className="flex items-center gap-2">
-                {atrasadas > 0 && <span className="rounded-full bg-rose-100 px-2.5 py-0.5 font-mono text-[10px] text-rose-800">{atrasadas} atrasada{atrasadas > 1 ? "s" : ""}</span>}
+                {atrasadas > 0 && <span className="rounded-full bg-danger-100 px-2.5 py-0.5 font-mono text-[10px] text-danger-800">{atrasadas} atrasada{atrasadas > 1 ? "s" : ""}</span>}
                 <ListTodo size={16} aria-hidden className="opacity-40" />
               </span>
             </div>
@@ -280,13 +280,13 @@ export default async function PainelPage() {
                   const l = nomes.get(t.leadId);
                   const atrasada = t.vence && t.vence.slice(0, 10) < hoje;
                   return (
-                    <li key={t.id} className={`flex items-center gap-3 rounded-[18px] border bg-white/60 p-3 ${atrasada ? "border-rose-300" : "border-transparent"}`}>
+                    <li key={t.id} className={`flex items-center gap-3 rounded-[18px] border bg-white/60 p-3 ${atrasada ? "border-danger-300" : "border-transparent"}`}>
                       <span className="size-4 shrink-0 rounded-full border border-night/30" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm">{t.titulo}</span>
                         {l && <span className="block truncate text-xs opacity-55">{l.name} · {l.company}</span>}
                       </span>
-                      {t.vence && <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] ${atrasada ? "bg-rose-100 text-rose-800" : "bg-night/5"}`}>{new Date(t.vence).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</span>}
+                      {t.vence && <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] ${atrasada ? "bg-danger-100 text-danger-800" : "bg-night/5"}`}>{new Date(t.vence).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</span>}
                     </li>
                   );
                 })}

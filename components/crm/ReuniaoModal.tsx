@@ -98,7 +98,7 @@ export default function ReuniaoModal({
         aria-label={edicao ? "Editar reunião" : "Nova reunião"}
         onSubmit={salvar}
         onClick={(e) => e.stopPropagation()}
-        className="previa-in max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-[28px] bg-[#f4f4f6] p-6 font-display text-night shadow-2xl"
+        className="previa-in max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-[28px] bg-papel-frio p-6 font-display text-night shadow-2xl"
       >
         <div className="flex items-start justify-between">
           <div>
@@ -217,7 +217,7 @@ export default function ReuniaoModal({
         )}
 
         {erro && (
-          <p role="alert" className="mt-3 rounded-2xl bg-rose-100 px-4 py-2.5 text-sm text-rose-900">
+          <p role="alert" className="mt-3 rounded-2xl bg-danger-100 px-4 py-2.5 text-sm text-danger-900">
             {erro}
           </p>
         )}
