@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
-import { Building2, Check, ChevronDown, Crosshair, ListPlus, Loader2, Locate, MapPin, Plus, Radio, Search, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { Building2, Check, ChevronDown, Crosshair, ListPlus, Loader2, Locate, MapPin, Plus, Radio, Search, Sparkles, ThumbsDown, ThumbsUp, X, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { afinidade, aplicarSinal, cnaesDoPerfil, temFoco, type PerfilBusca } from "@/lib/perfil-busca";
 import { registrarSinal } from "@/app/(app)/segmentacao/perfil";
@@ -87,8 +87,11 @@ export default function BuscaAvancada({
   cnaes,
   ufsComDados = {},
   perfil = null,
+  vendendo = null,
 }: {
   cnaes: Cnae[];
+  /** veio do Catálogo ("Quem compra o que eu vendo"): já abre com os compradores do produto */
+  vendendo?: { produto: string; cnaes: string[] } | null;
   /** perfil de cliente ideal (Segmentação): pré-aplica filtros e ordena por afinidade */
   perfil?: PerfilBusca | null;
   /** UF → empresas já importadas na base */
@@ -116,7 +119,12 @@ export default function BuscaAvancada({
 
   // ---------- filtros ----------
   const [ufsFiltro, setUfsFiltro] = useState<string[]>([]);
-  const [cnaesSel, setCnaesSel] = useState<string[]>(aplicaPerfil ? cnaesPerfil : []);
+  const cnaesVendendo = useMemo(() => {
+    if (!vendendo) return [];
+    const existentes = new Set(cnaes.map((c) => c.code));
+    return vendendo.cnaes.filter((c) => existentes.has(c));
+  }, [vendendo, cnaes]);
+  const [cnaesSel, setCnaesSel] = useState<string[]>(vendendo ? cnaesVendendo : aplicaPerfil ? cnaesPerfil : []);
   const [buscaCnae, setBuscaCnae] = useState("");
   const [portes, setPortes] = useState<string[]>(aplicaPerfil && perfil ? perfil.portes : []);
   const [temEmail, setTemEmail] = useState(aplicaPerfil && !!perfil?.temEmail);
@@ -629,6 +637,24 @@ export default function BuscaAvancada({
             Só atividade principal
           </button>
         </div>
+
+        {/* veio do Catálogo: compradores do produto já aplicados */}
+        {vendendo && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-neon px-3 py-2.5 text-night">
+            <span className="flex items-center gap-2 pl-1 text-xs font-medium">
+              <ShoppingBag size={14} aria-hidden /> Vendendo: {vendendo.produto}
+            </span>
+            <span className="rounded-full bg-night/10 px-2.5 py-1 text-[11px]">
+              {cnaesVendendo.length} tipo{cnaesVendendo.length === 1 ? "" : "s"} de comprador aplicado{cnaesVendendo.length === 1 ? "" : "s"}
+            </span>
+            {cnaesVendendo.length < vendendo.cnaes.length && (
+              <span className="text-[11px] opacity-70">{vendendo.cnaes.length - cnaesVendendo.length} ainda sem empresas na base</span>
+            )}
+            <Link href="/portfolio?aba=catalogo" className="ml-auto rounded-full bg-night px-3 py-1 text-[11px] font-medium text-white">
+              Voltar ao catálogo
+            </Link>
+          </div>
+        )}
 
         {/* perfil de cliente ideal */}
         {perfil && (
