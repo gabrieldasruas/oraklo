@@ -241,6 +241,25 @@ Primeira versão por regras, de 0 a 100. Ajustar os pesos com dados reais:
 
 Para cada nicho, executar o filtro e gravar `companies_count`, `contacts_count`, `avg_score` e 3 empresas de exemplo. Os cards do anel de segmentação leem esses números prontos, sem `COUNT` a cada visita.
 
+### 4.7 Decisores (Hunter)
+
+**Problema:** `buscarDecisores` (`app/(app)/leads/enriquecer.ts`) chama o `domain-search` do Hunter com `limit=10` e o resultado consome até 10 créditos por empresa, todos da conta da Oraklo. Não há limite mensal: o pacote só libera ou bloqueia o recurso. Na planilha [custos-por-cliente.xlsx](custos-por-cliente.xlsx), 100 buscas por mês custam cerca de R$ 67 por cliente Premium e deixam a margem negativa.
+
+**Busca mais barata: sócio do QSA + Email Finder**
+
+1. Os decisores mostrados primeiro são os sócios da Receita (`partners`). Isso é grátis e funciona em todos os pacotes. Para PMEs, o sócio costuma ser quem decide.
+2. Para obter o e-mail, chamar o **Email Finder** do Hunter com o nome do sócio e o domínio da empresa. Ele cobra 1 crédito só quando encontra o e-mail, contra até 10 do `domain-search`.
+3. O `domain-search` vira um passo opcional ("ver outras pessoas da empresa"), com aviso de que consome mais créditos.
+4. O domínio vem do e-mail da Receita ou do site encontrado no enriquecimento. Se for webmail (gmail, hotmail etc.), a empresa não tem domínio próprio e não há o que buscar.
+
+**Limite mensal e quem paga**
+
+- **Limite por pacote:** o limite mensal de decisores entra em `LIMITES` (`lib/pacotes.ts`) e é contado como os demais usos, com o evento `enriched` em `lead_events`. O valor de cada pacote sai do teto calculado na planilha. Hoje, com a busca antiga, o teto do Premium é de 85 buscas por mês.
+- **Chave própria (Ultra):** o cliente pode conectar a própria chave do Hunter (ou do Apollo, numa segunda etapa). Nesse caso a busca sai da conta dele e não conta no limite. A chave é guardada cifrada, como o token do RD Station (`lib/segredo.ts`, `CRM_SECRET`).
+- **Créditos avulsos:** pacotes de decisores vendidos fora da assinatura (ex.: 100 buscas), com preço acima do custo por crédito. O saldo fica no workspace, é usado depois que o limite mensal do pacote acaba e não vence no fim do mês.
+
+**Antes de trocar de fornecedor:** medir a cobertura com uma amostra de cerca de 100 empresas do nicho-piloto no Hunter, no Snov e no Apollo. Vale o que encontrar mais e-mails válidos por real gasto, não o crédito mais barato.
+
 ## 5. API (o que cada tela consome)
 
 | Tela atual | Endpoint / ação | Observação |
@@ -302,7 +321,9 @@ Toda rota de workspace valida a sessão e depende do RLS como segunda barreira. 
 ### Fase 5: Produto comercial
 - [ ] Planos e cotas (Essencial, Profissional, Empresarial) com cobrança (Stripe, Mercado Pago ou Asaas).
 - [ ] Integração com CRM e WhatsApp.
-- [ ] Avaliar um provedor de decisores (ver seção 9).
+- [ ] Decisores pelo sócio do QSA + Email Finder do Hunter, com limite mensal por pacote (ver 4.7).
+- [ ] Chave própria do Hunter no Ultra e créditos avulsos de decisores (ver 4.7).
+- [ ] Avaliar um provedor de decisores com amostra de cobertura (ver 4.7 e seção 9).
 
 ## 7. Mudanças no frontend
 
@@ -328,6 +349,7 @@ Toda rota de workspace valida a sessão e depende do RLS como segunda barreira. 
 |---|---|---|
 | Baixa cobertura de e-mail nos sites | Listas fracas | Medir na fase 3. Se ficar baixa, contratar provedor por demanda |
 | Não existem dados de cargo/decisor em fonte pública | Promessa da UI não cumprida | Usar os sócios do QSA como decisores no MVP. Avaliar provedor pago depois |
+| Custo do Hunter sem limite por cliente | Margem negativa no Premium | Sócio do QSA + Email Finder (1 crédito só quando encontra), limite mensal por pacote, chave própria no Ultra e créditos avulsos (ver 4.7) |
 | Mudança de layout ou URL na Receita | Importação quebra | Validar o número de colunas por linha, alertar e não sobrescrever dados se o arquivo vier incompleto |
 | Bloqueio ou reclamação de sites coletados | Reputação | Respeitar robots.txt, usar baixa taxa e User-Agent com contato |
 | Domínio do cliente queimado por envio frio | Churn | Limites diários, aquecimento, verificação obrigatória e pausa automática quando os bounces passam de 3% |
@@ -340,3 +362,4 @@ Toda rota de workspace valida a sessão e depende do RLS como segunda barreira. 
 3. Onde o worker vai rodar (VPS, Railway ou Fly)?
 4. ~~Orçamento para APIs pagas~~ Decidido: por enquanto custo zero, só para testes (ver "Modo teste"). Revisar depois das medições da fase 3.
 5. As sequências (fase 4) entram no primeiro lançamento, ou o MVP vende só listas e exportação?
+6. Quantas buscas de decisores por mês cada pacote inclui, e qual o preço dos créditos avulsos? Usar o teto da planilha `custos-por-cliente.xlsx` como referência.
