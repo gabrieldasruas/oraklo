@@ -29,6 +29,9 @@ npm run import:receita -- --manter-zips        # não apaga os zips (útil para 
 ```
 
 - **O que entra:** só empresas **ativas** que casam com o `filter` de algum nicho da tabela `niches`. Para importar um nicho novo, insira-o em `niches` (via migration) e rode de novo.
+- **O que nunca entra:** empresário individual (natureza jurídica `2135`, que inclui quase todo MEI), em qualquer nicho. Os que já estavam no banco ficam `fora_da_base` na próxima importação.
+- **Potencial do lead:** a importação grava os estabelecimentos ativos de cada raiz no Brasil e, se houver transporte de cargas (CNAE `4930`), o registro na ANTT (RNTRC). O banco calcula `companies.potential` (A/B/C) a partir disso, e a busca ordena por ele. A regra está na migration `potencial_lead`.
+- **Memória:** a contagem de estabelecimentos usa um vetor de 100 MB (1 byte por raiz de CNPJ possível).
 - **Duração e disco:** baixa cerca de 7,5 GB, em 35 a 40 minutos a uns 3,5 MB/s. Os zips são baixados um por vez e apagados depois de lidos, então o pico de disco é de uns 2,3 GB (o maior arquivo).
 - **Cache:** fica na pasta temporária do sistema (`RECEITA_CACHE_DIR` muda o local). Downloads interrompidos são retomados de onde pararam.
 - **Gravação:** acontece numa única transação. Se algo falhar, nada é gravado. Empresas que somem da base não são apagadas, e sim marcadas com `status = 'fora_da_base'`.
@@ -42,6 +45,8 @@ Se o download começar a falhar com 401/404, o token deve ter mudado:
 1. Abra https://arquivos.receitafederal.gov.br/ e navegue até Dados › Cadastros › CNPJ.
 2. Copie o código que aparece depois de `/index.php/s/` na URL.
 3. Defina esse código em `RECEITA_SHARE_TOKEN` no `.env.local`.
+
+O RNTRC vem dos dados abertos da ANTT (CKAN, pacote `b4a055d1-97a2-46f1-9461-cb17fbc6b6b3`): um CSV mensal de uns 160 MB, Latin-1 e com cabeçalho. A importação baixa o mais recente para `<cache>/rntrc/` e só lê as linhas com CNPJ; o CPF do autônomo nem é lido.
 
 ### Gotchas do arquivo
 

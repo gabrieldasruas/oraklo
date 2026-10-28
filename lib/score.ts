@@ -10,6 +10,10 @@ export type DadosScore = {
   phones: string[];
   isHeadquarters: boolean;
   openedAt: string | null;
+  /** estabelecimentos ativos no Brasil (matriz + filiais) */
+  establishments?: number;
+  /** registro na ANTT (transporte de cargas) */
+  rntrc?: { category: string; status: string; equiparado: boolean } | null;
 };
 
 const celular = (p: string) => {
@@ -48,6 +52,11 @@ export function calcularScore(e: DadosScore): { score: number; motivos: string[]
     if (anos >= 10) (s += 8), motivos.push(`${Math.floor(anos)} anos de mercado`);
     else if (anos >= 3) s += 4;
   }
+  if ((e.establishments ?? 1) >= 2) (s += 8), motivos.push(`${e.establishments} estabelecimentos`);
+
+  // registro na ANTT: transportadora de verdade × autônomo ou registro irregular
+  if (e.rntrc?.status && e.rntrc.status !== "ATIVO") (s -= 20), motivos.push("RNTRC pendente");
+  else if (e.rntrc?.category === "ETC" && !e.rntrc.equiparado) (s += 8), motivos.push("transportadora registrada na ANTT");
 
   return { score: Math.max(0, Math.min(100, Math.round(s))), motivos };
 }

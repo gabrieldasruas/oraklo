@@ -50,6 +50,9 @@ type Item = {
   address: string | null;
   district: string | null;
   openedAt: string | null;
+  establishments: number;
+  rntrc: { category: string; status: string; equiparado: boolean } | null;
+  potential: "A" | "B" | "C";
 };
 type Resultado = {
   items: Item[];
@@ -64,6 +67,13 @@ type Override = { escopo?: Escopo; raioKm?: number; ufs?: string[]; centro?: Cen
 
 /** Fração das empresas localizadas que ganham pin neon (1 = todas as empresas buscadas). */
 const FRACAO_DESTAQUE = 1;
+
+/** Faixa de potencial calculada no banco (companies.potential); os resultados vêm com as A primeiro. */
+const POTENCIAL = {
+  A: { classe: "bg-night text-neon", dica: "Alto potencial: transportadora registrada na ANTT, com filiais ou de porte grande" },
+  B: { classe: "bg-night/10 text-night", dica: "Potencial médio: sem sinais de estrutura além do cadastro" },
+  C: { classe: "bg-danger-100 text-danger-900", dica: "Baixo potencial: registro na ANTT (RNTRC) pendente" },
+} as const;
 
 const INICIO: Centro = [-26.9078, -48.6619]; // Itajaí/SC: a base importada é toda de SC
 const fmt = (n: number) => n.toLocaleString("pt-BR");
@@ -129,6 +139,7 @@ export default function BuscaAvancada({
   const [portes, setPortes] = useState<string[]>(aplicaPerfil && perfil ? perfil.portes : []);
   const [temEmail, setTemEmail] = useState(aplicaPerfil && !!perfil?.temEmail);
   const [matriz, setMatriz] = useState(aplicaPerfil && !!perfil?.soMatriz);
+  const [soPotencialAlto, setSoPotencialAlto] = useState(false);
   const [capitalMin, setCapitalMin] = useState<number | null>(aplicaPerfil ? (perfil?.capitalMin ?? null) : null);
   const [anosMin, setAnosMin] = useState<number | null>(aplicaPerfil ? (perfil?.anosMin ?? null) : null);
   // por padrão só a atividade PRINCIPAL conta (evita JBS/Fedex que têm transporte como secundária)
@@ -145,7 +156,7 @@ export default function BuscaAvancada({
   const [acao, setAcao] = useState<null | "pipeline" | "lista">(null);
   const [retorno, setRetorno] = useState<{ tipo: "ok" | "erro"; texto: string; link?: { href: string; t: string } } | null>(null);
   // a busca só roda no botão; guardamos o que foi buscado para avisar quando os filtros mudarem
-  const assinaturaAtual = JSON.stringify([centro, raioKm, escopo, ufsFiltro, cnaesSel, portes, temEmail, matriz, principal, capitalMin, anosMin]);
+  const assinaturaAtual = JSON.stringify([centro, raioKm, escopo, ufsFiltro, cnaesSel, portes, temEmail, matriz, soPotencialAlto, principal, capitalMin, anosMin]);
   const [assinaturaBuscada, setAssinaturaBuscada] = useState<string | null>(null);
   const desatualizada = assinaturaBuscada !== null && assinaturaBuscada !== assinaturaAtual;
 
@@ -256,6 +267,7 @@ export default function BuscaAvancada({
           portes,
           temEmail,
           matriz,
+          potenciais: soPotencialAlto ? ["A"] : [],
           principal,
           capitalMin,
           anosMin,
@@ -625,6 +637,15 @@ export default function BuscaAvancada({
           </button>
           <button type="button" onClick={() => setMatriz((v) => !v)} aria-pressed={matriz} className={chip(matriz)}>
             Só matrizes
+          </button>
+          <button
+            type="button"
+            onClick={() => setSoPotencialAlto((v) => !v)}
+            aria-pressed={soPotencialAlto}
+            title="Só empresas com estrutura: transportadora registrada na ANTT, com filiais ou de porte grande."
+            className={chip(soPotencialAlto)}
+          >
+            Só alto potencial
           </button>
 
           <button
@@ -1011,6 +1032,12 @@ export default function BuscaAvancada({
                             <Sparkles size={10} aria-hidden /> {af.valor}%
                           </span>
                         )}
+                        <span
+                          className={`rounded-full px-2 py-0.5 font-mono text-[10px] font-medium ${POTENCIAL[c.potential].classe}`}
+                          title={POTENCIAL[c.potential].dica}
+                        >
+                          Potencial {c.potential}
+                        </span>
                         <span
                           className="tema-original rounded-full px-2 py-0.5 font-mono text-[10px] font-medium text-night"
                           style={{ background: faixa.cor }}
