@@ -19,8 +19,13 @@ export type CompanyFilter = {
   min_years_open?: number;
   headquarters_only?: boolean;
   has_email?: boolean;
+  /** faixas de potencial do lead (ver companies.potential) */
+  potentials?: Potencial[];
   q?: string;
 };
+
+/** A = estrutura (transportadora registrada, filiais ou porte grande) · B = o resto · C = registro irregular. */
+export type Potencial = "A" | "B" | "C";
 
 type Row = {
   cnpj: string;
@@ -39,6 +44,11 @@ type Row = {
   zip: string | null;
   address: string | null;
   district: string | null;
+  establishments: number | null;
+  rntrc_category: string | null;
+  rntrc_status: string | null;
+  rntrc_equiparado: boolean | null;
+  potential: Potencial;
 };
 
 export type CompanyItem = {
@@ -59,6 +69,11 @@ export type CompanyItem = {
   zip: string | null;
   address: string | null;
   district: string | null;
+  /** estabelecimentos ativos da empresa no Brasil (matriz + filiais) */
+  establishments: number;
+  /** registro na ANTT, só para transporte rodoviário de cargas */
+  rntrc: { category: string; status: string; equiparado: boolean } | null;
+  potential: Potencial;
 };
 
 const list = (v: string | string[] | undefined) =>
@@ -80,17 +95,19 @@ export function filterFromParams(p: Record<string, string | string[] | undefined
   if (Number.isFinite(capital) && capital > 0) f.min_share_capital = capital;
   if (one("tem_email") === "1") f.has_email = true;
   if (one("matriz") === "1") f.headquarters_only = true;
+  const potentials = list(p.potencial).filter((x): x is Potencial => ["A", "B", "C"].includes(x));
+  if (potentials.length) f.potentials = potentials;
   const q = one("q")?.trim().slice(0, 80);
   if (q) f.q = /^[\d./-]+$/.test(q) ? q.replace(/\D/g, "") : q;
   return f;
 }
 
-// Cursor opaco: capital e CNPJ da última linha da página.
-const encodeCursor = (r: Row) => Buffer.from(`${r.share_capital ?? -1}|${r.cnpj}`).toString("base64url");
+// Cursor opaco: potencial, capital e CNPJ da última linha da página (mesma ordem de search_companies).
+const encodeCursor = (r: Row) => Buffer.from(`${r.potential}|${r.share_capital ?? -1}|${r.cnpj}`).toString("base64url");
 function decodeCursor(c: string | undefined) {
   if (!c) return null;
-  const [capital, cnpj] = Buffer.from(c, "base64url").toString().split("|");
-  return /^\d{14}$/.test(cnpj ?? "") && Number.isFinite(Number(capital)) ? { capital: Number(capital), cnpj } : null;
+  const [potential, capital, cnpj] = Buffer.from(c, "base64url").toString().split("|");
+  return /^[ABC]$/.test(potential) && /^\d{14}$/.test(cnpj ?? "") && Number.isFinite(Number(capital)) ? { potential, capital: Number(capital), cnpj } : null;
 }
 
 async function municipalityNames(codes: string[]) {
@@ -120,17 +137,21 @@ function toItem(r: Row, cities: Map<string, string>): CompanyItem {
     zip: r.zip ? r.zip.replace(/D/g, "").padStart(8, "0") : null,
     address: r.address ? titleCase(r.address) : null,
     district: r.district ? titleCase(r.district) : null,
+    establishments: r.establishments ?? 1,
+    rntrc: r.rntrc_category && r.rntrc_status ? { category: r.rntrc_category, status: r.rntrc_status, equiparado: !!r.rntrc_equiparado } : null,
+    potential: r.potential,
   };
 }
 
 const COLUMNS =
-  "cnpj, legal_name, trade_name, is_headquarters, opened_at, cnae_main, uf, municipality_code, size, share_capital, receita_email, receita_phones, website, zip, address, district";
+  "cnpj, legal_name, trade_name, is_headquarters, opened_at, cnae_main, uf, municipality_code, size, share_capital, receita_email, receita_phones, website, zip, address, district, establishments, rntrc_category, rntrc_status, rntrc_equiparado, potential";
 
 export async function searchCompanies(filter: CompanyFilter, cursor?: string, limit = 50) {
   const after = decodeCursor(cursor);
   const { data, error } = await createAdminClient()
     .rpc("search_companies", {
       f: filter,
+      after_potential: after?.potential ?? null,
       after_capital: after?.capital ?? null,
       after_cnpj: after?.cnpj ?? null,
       lim: limit + 1, // uma a mais para saber se há próxima página

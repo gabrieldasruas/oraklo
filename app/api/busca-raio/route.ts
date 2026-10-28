@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
 import { consumirBusca } from "@/lib/planos";
-import { countCompanies, searchCompanies, type CompanyFilter } from "@/lib/companies";
+import { countCompanies, searchCompanies, type CompanyFilter, type Potencial } from "@/lib/companies";
 import { centroNoBrasil, cidadeMaisProxima, MUNICIPIOS, municipiosNoRaio, RAIO_MAX_KM, RAIO_MIN_KM, UFS, type Escopo } from "@/lib/geo/radius";
 
 const PORTES = ["ME", "EPP", "DEMAIS", "NAO_INFORMADO"];
@@ -72,6 +72,8 @@ export async function POST(request: NextRequest) {
   if (body.matriz === true) filter.headquarters_only = true;
   const capitalMin = Number(body.capitalMin);
   if (Number.isFinite(capitalMin) && capitalMin > 0) filter.min_share_capital = capitalMin;
+  const potenciais = arr(body.potenciais).filter((p): p is Potencial => ["A", "B", "C"].includes(p));
+  if (potenciais.length) filter.potentials = potenciais;
   const anosMin = Number(body.anosMin);
   if (Number.isFinite(anosMin) && anosMin > 0) filter.min_years_open = Math.min(50, Math.round(anosMin));
 
