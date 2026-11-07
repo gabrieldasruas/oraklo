@@ -7,3 +7,6 @@ next-env.d.ts
 # variáveis de ambiente (chaves do Supabase etc.)
 .env*
 !.env.example
+
+# relatório local do npm run comparar:ia
+comparacao-ia.md

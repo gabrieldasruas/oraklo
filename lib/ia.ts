@@ -5,6 +5,21 @@ import Anthropic from "@anthropic-ai/sdk";
 
 export const iaConfigurada = () => Boolean(process.env.ANTHROPIC_API_KEY);
 
+export type ModeloIA = "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5";
+
+/**
+ * Modelo de cada tarefa. Por token, o Haiku 5.5 custa cerca de 1/40 do Opus 5.5 e o Sonnet 5.5, metade.
+ * Só troque depois de comparar a qualidade nos mesmos pedidos: `npm run comparar:ia`.
+ */
+export const MODELOS: Record<"abordagem" | "compradores", ModeloIA> = {
+  abordagem: "claude-opus-5-5",
+  compradores: "claude-opus-5-5",
+};
+
+/** Quando o modelo recusa, o servidor tenta outro (Opus e Sonnet 5.5). O Haiku 5.5 não tem esse recurso. */
+export const opcoesFallback = (m: ModeloIA) =>
+  m === "claude-haiku-5-5" ? {} : { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const };
+
 export type ContextoAbordagem = {
   canal: "email" | "whatsapp";
   /** true = usar {nome} e {empresa} no lugar dos dados do lead (modelo para disparo em massa) */
@@ -15,14 +30,14 @@ export type ContextoAbordagem = {
   instrucao?: string;
 };
 
-const SYSTEM = `Você escreve mensagens de prospecção B2B em português do Brasil para pequenas e médias empresas.
+export const SYSTEM_ABORDAGEM = `Você escreve mensagens de prospecção B2B em português do Brasil para pequenas e médias empresas.
 Escreva como uma pessoa real: direta, cordial, sem exageros nem jargão de marketing, sem emojis em e-mail.
 Conecte o que o remetente oferece ao contexto da empresa do lead (atividade, porte, cidade) com uma ideia concreta.
 Termine com um único pedido simples (uma conversa de 15 minutos ou uma resposta curta). Nunca invente números, clientes ou resultados que não estejam no contexto.
 E-mail: assunto curto (até 60 caracteres) e corpo de 60 a 120 palavras, com saudação e assinatura com o nome do remetente.
 WhatsApp: 2 a 4 frases curtas, tom de conversa, sem assunto.`;
 
-const SCHEMA = {
+export const SCHEMA_ABORDAGEM = {
   type: "object",
   properties: {
     assunto: { type: "string", description: "Assunto do e-mail (vazio para WhatsApp)" },
@@ -32,7 +47,7 @@ const SCHEMA = {
   additionalProperties: false,
 } as const;
 
-function montarPedido(c: ContextoAbordagem) {
+export function montarPedido(c: ContextoAbordagem) {
   const e = c.empresa;
   const linhas = [
     `Canal: ${c.canal === "email" ? "e-mail" : "WhatsApp"}.`,
@@ -51,6 +66,31 @@ function montarPedido(c: ContextoAbordagem) {
   return linhas.filter(Boolean).join("\n");
 }
 
+// Quem compra o produto ("Quem compra o que eu vendo"), usado em app/(app)/portfolio/produtos.ts.
+export const SYSTEM_COMPRADORES =
+  "Você é especialista em vendas B2B no Brasil e na classificação CNAE 2.3 do IBGE. Dado um produto, liste de 4 a 10 tipos de empresa que compram esse produto para revender, usar na operação ou transformar. Use subclasses CNAE reais com 7 dígitos. Prefira o varejo e os serviços que compram de distribuidores; não liste quem fabrica o próprio produto.";
+
+export const SCHEMA_COMPRADORES = {
+  type: "object",
+  properties: {
+    compradores: {
+      type: "array",
+      description: "Tipos de empresa que compram o produto, do mais provável para o menos",
+      items: {
+        type: "object",
+        properties: {
+          code: { type: "string", description: "Subclasse CNAE 2.3 com 7 dígitos, sem pontuação (ex.: 5611201)" },
+          descricao: { type: "string", description: "Nome curto do tipo de comprador (ex.: Restaurantes)" },
+        },
+        required: ["code", "descricao"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["compradores"],
+  additionalProperties: false,
+} as const;
+
 export type Resultado = { ok: true; assunto: string; texto: string } | { ok: false; erro: string };
 
 export async function escreverAbordagem(c: ContextoAbordagem): Promise<Resultado> {
@@ -58,12 +98,11 @@ export async function escreverAbordagem(c: ContextoAbordagem): Promise<Resultado
   const client = new Anthropic({ timeout: 60_000, maxRetries: 1 });
   try {
     const res = await client.beta.messages.create({
-      model: "claude-opus-5-5",
+      model: MODELOS.abordagem,
       max_tokens: 4000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
-      system: SYSTEM,
+      ...opcoesFallback(MODELOS.abordagem),
+      output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA_ABORDAGEM } },
+      system: SYSTEM_ABORDAGEM,
       messages: [{ role: "user", content: montarPedido(c) }],
     });
     if (res.stop_reason === "refusal") return { ok: false, erro: "A IA não conseguiu escrever essa mensagem. Tente mudar o pedido." };
