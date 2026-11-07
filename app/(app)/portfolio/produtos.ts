@@ -1,10 +1,9 @@
 "use server";
 
-import Anthropic from "@anthropic-ai/sdk";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
 import { getFacets } from "@/lib/companies";
-import { MODELOS, SCHEMA_COMPRADORES, SYSTEM_COMPRADORES, escreverAbordagem, iaConfigurada, opcoesFallback } from "@/lib/ia";
+import { MODELOS, SCHEMA_COMPRADORES, SYSTEM_COMPRADORES, escreverAbordagem, gerarJson, iaConfigurada, pedidoCompradores } from "@/lib/ia";
 import { LIMITES, NOME_PLANO, planoDoWorkspace, restante, usoDoMes } from "@/lib/planos";
 import { PORTFOLIO_TAG, completar, type Portfolio } from "@/lib/portfolio-types";
 import { carregarConfig, salvarConfig } from "@/app/(app)/configuracoes/actions";
@@ -91,7 +90,7 @@ export async function excluirProduto(id: string): Promise<{ ok: true } | Falha> 
 /** Confere o limite mensal de textos com IA do pacote. */
 async function podeUsarIA(): Promise<Falha | null> {
   const user = await requireUser();
-  if (!iaConfigurada()) return { ok: false, erro: "A IA ainda não está ligada (falta a chave ANTHROPIC_API_KEY). Use as sugestões da categoria." };
+  if (!iaConfigurada()) return { ok: false, erro: "A IA ainda não está ligada (falta a chave OPENAI_API_KEY). Use as sugestões da categoria." };
   const db = await createClient();
   const limite = LIMITES[await planoDoWorkspace(db, user.workspaceId)].iaMes;
   if (restante(limite, (await usoDoMes(db)).ia) === 0) return { ok: false, erro: `Você usou os ${limite} textos com IA do seu pacote este mês.` };
@@ -102,31 +101,21 @@ async function podeUsarIA(): Promise<Falha | null> {
 export async function sugerirCompradoresIA(p: { nome: string; descricao: string; categoria: string }): Promise<{ ok: true; compradores: Comprador[]; foraDaBase: number } | Falha> {
   const bloqueio = await podeUsarIA();
   if (bloqueio) return bloqueio;
-  const client = new Anthropic({ timeout: 60_000, maxRetries: 1 });
-  try {
-    const res = await client.beta.messages.create({
-      model: MODELOS.compradores,
-      max_tokens: 3000,
-      ...opcoesFallback(MODELOS.compradores),
-      output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA_COMPRADORES } },
-      system: SYSTEM_COMPRADORES,
-      messages: [{ role: "user", content: `Produto: ${limpar(p.nome, 90)}\nDescrição: ${limpar(p.descricao, 280) || "não informada"}\nCategoria: ${limpar(p.categoria, 30) || "não informada"}` }],
-    });
-    if (res.stop_reason === "refusal") return { ok: false, erro: "A IA não conseguiu sugerir compradores para esse produto." };
-    const bloco = res.content.find((b) => b.type === "text");
-    if (!bloco || bloco.type !== "text") return { ok: false, erro: "A IA não devolveu sugestões. Tente de novo." };
-    const json = JSON.parse(bloco.text) as { compradores?: Comprador[] };
-    const facets = await getFacets().catch(() => null);
-    const naBase = new Map((facets?.cnaes ?? []).map((c) => [c.code, c.description]));
-    const sugeridos = (json.compradores ?? []).map((c) => ({ code: String(c.code).replace(/\D/g, ""), descricao: limpar(c.descricao, 90) })).filter((c) => /^\d{7}$/.test(c.code));
-    const validos = sugeridos.filter((c) => naBase.size === 0 || naBase.has(c.code)).slice(0, MAX_COMPRADORES);
-    if (!validos.length) return { ok: false, erro: "A IA não achou compradores desse produto na base atual. Escolha as atividades à mão." };
-    return { ok: true, compradores: validos, foraDaBase: sugeridos.length - validos.length };
-  } catch (err) {
-    if (err instanceof Anthropic.RateLimitError) return { ok: false, erro: "Muitos pedidos agora. Tente em alguns segundos." };
-    if (err instanceof Anthropic.APIError) return { ok: false, erro: "A IA está indisponível agora. Tente de novo." };
-    return { ok: false, erro: "Não foi possível falar com a IA." };
-  }
+  const r = await gerarJson<{ compradores?: Comprador[] }>({
+    modelo: MODELOS.compradores,
+    instrucoes: SYSTEM_COMPRADORES,
+    pedido: pedidoCompradores({ nome: limpar(p.nome, 90), descricao: limpar(p.descricao, 280), categoria: limpar(p.categoria, 30) }),
+    schema: SCHEMA_COMPRADORES,
+    nome: "compradores",
+    maxTokens: 3000,
+  });
+  if (!r.ok) return r;
+  const facets = await getFacets().catch(() => null);
+  const naBase = new Map((facets?.cnaes ?? []).map((c) => [c.code, c.description]));
+  const sugeridos = (r.dados.compradores ?? []).map((c) => ({ code: String(c.code).replace(/\D/g, ""), descricao: limpar(c.descricao, 90) })).filter((c) => /^\d{7}$/.test(c.code));
+  const validos = sugeridos.filter((c) => naBase.size === 0 || naBase.has(c.code)).slice(0, MAX_COMPRADORES);
+  if (!validos.length) return { ok: false, erro: "A IA não achou compradores desse produto na base atual. Escolha as atividades à mão." };
+  return { ok: true, compradores: validos, foraDaBase: sugeridos.length - validos.length };
 }
 
 /** Escreve com IA uma oferta do produto (modelo com {nome} e {empresa}, para disparo). */
