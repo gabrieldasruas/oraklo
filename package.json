@@ -11,7 +11,8 @@
     "build": "next build",
     "start": "next start",
     "import:receita": "node --env-file=.env.local worker/jobs/import-receita.ts",
-    "test:rls": "node --env-file=.env.local scripts/test-rls.mts"
+    "test:rls": "node --env-file=.env.local scripts/test-rls.mts",
+    "comparar:ia": "node --env-file=.env.local --conditions=react-server scripts/comparar-ia.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.1.0",

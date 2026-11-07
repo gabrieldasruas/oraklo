@@ -4,7 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
 import { getFacets } from "@/lib/companies";
-import { escreverAbordagem, iaConfigurada } from "@/lib/ia";
+import { MODELOS, SCHEMA_COMPRADORES, SYSTEM_COMPRADORES, escreverAbordagem, iaConfigurada, opcoesFallback } from "@/lib/ia";
 import { LIMITES, NOME_PLANO, planoDoWorkspace, restante, usoDoMes } from "@/lib/planos";
 import { PORTFOLIO_TAG, completar, type Portfolio } from "@/lib/portfolio-types";
 import { carregarConfig, salvarConfig } from "@/app/(app)/configuracoes/actions";
@@ -98,27 +98,6 @@ async function podeUsarIA(): Promise<Falha | null> {
   return null;
 }
 
-const SCHEMA_COMPRADORES = {
-  type: "object",
-  properties: {
-    compradores: {
-      type: "array",
-      description: "Tipos de empresa que compram o produto, do mais provável para o menos",
-      items: {
-        type: "object",
-        properties: {
-          code: { type: "string", description: "Subclasse CNAE 2.3 com 7 dígitos, sem pontuação (ex.: 5611201)" },
-          descricao: { type: "string", description: "Nome curto do tipo de comprador (ex.: Restaurantes)" },
-        },
-        required: ["code", "descricao"],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ["compradores"],
-  additionalProperties: false,
-} as const;
-
 /** Sugere com IA quem compra o produto. Só devolve CNAEs que existem na base. */
 export async function sugerirCompradoresIA(p: { nome: string; descricao: string; categoria: string }): Promise<{ ok: true; compradores: Comprador[]; foraDaBase: number } | Falha> {
   const bloqueio = await podeUsarIA();
@@ -126,13 +105,11 @@ export async function sugerirCompradoresIA(p: { nome: string; descricao: string;
   const client = new Anthropic({ timeout: 60_000, maxRetries: 1 });
   try {
     const res = await client.beta.messages.create({
-      model: "claude-opus-5-5",
+      model: MODELOS.compradores,
       max_tokens: 3000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
+      ...opcoesFallback(MODELOS.compradores),
       output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA_COMPRADORES } },
-      system:
-        "Você é especialista em vendas B2B no Brasil e na classificação CNAE 2.3 do IBGE. Dado um produto, liste de 4 a 10 tipos de empresa que compram esse produto para revender, usar na operação ou transformar. Use subclasses CNAE reais com 7 dígitos. Prefira o varejo e os serviços que compram de distribuidores; não liste quem fabrica o próprio produto.",
+      system: SYSTEM_COMPRADORES,
       messages: [{ role: "user", content: `Produto: ${limpar(p.nome, 90)}\nDescrição: ${limpar(p.descricao, 280) || "não informada"}\nCategoria: ${limpar(p.categoria, 30) || "não informada"}` }],
     });
     if (res.stop_reason === "refusal") return { ok: false, erro: "A IA não conseguiu sugerir compradores para esse produto." };
