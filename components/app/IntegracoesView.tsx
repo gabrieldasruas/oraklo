@@ -8,6 +8,7 @@ import { EVENTOS_CRM, type ConfigWorkspace, type EventoCrm } from "@/lib/config-
 import { useConfigAutosave } from "@/lib/useConfigAutosave";
 import { testarWebhook } from "@/app/(app)/configuracoes/actions";
 import RdStationCard from "./RdStationCard";
+import HunterCard from "./HunterCard";
 
 const campo = "mt-2 min-h-12 w-full rounded-2xl border border-night/10 bg-white/70 px-4 text-sm outline-none focus:border-night/30";
 const VARIAVEIS = ["{nome}", "{empresa}", "{meu_nome}", "{minha_empresa}", "{meu_telefone}", "{link_portfolio}"];
@@ -118,6 +119,11 @@ export default function IntegracoesView({ inicial, liberado }: { inicial: Config
       {/* RD Station */}
       <div id="rd" className="scroll-mt-28">
         <RdStationCard c={c} setC={setC} onServidor={doServidor} />
+      </div>
+
+      {/* Hunter: e-mail dos decisores com a conta do cliente */}
+      <div id="hunter" className="scroll-mt-28">
+        <HunterCard />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
