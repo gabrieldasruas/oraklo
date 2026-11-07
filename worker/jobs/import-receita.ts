@@ -434,6 +434,8 @@ try {
   const gone = await db.query(
     "update public.companies set status = 'fora_da_base' where updated_at < now() and status <> 'fora_da_base'",
   );
+  // Domínios de e-mail de contador/provedor, usados pelo filtro "sem site próprio"
+  await db.query("select public.refresh_shared_email_domains()");
   await db.query("select public.recompute_niches()");
   await db.query("commit");
 
