@@ -9,7 +9,7 @@ Plataforma de prospecção B2B. Encontra empresas por mapa e raio a partir da ba
 - **Busca avançada** por mapa e raio, CNAE, porte, capital social e anos de abertura, com perfil de cliente ideal que aprende com 👍/👎
 - **Pipeline de vendas** com score de leads, histórico, notas, tarefas e reuniões (Google Agenda e .ics)
 - **E-mails em lote** com follow-up automático, rastreio de abertura e descadastro
-- **IA (Claude)** para escrever abordagens de e-mail e WhatsApp
+- **IA (OpenAI)** para escrever abordagens de e-mail e WhatsApp
 - **Integrações:** RD Station CRM direto, webhook (Zapier, Make, n8n) e exportação para planilhas de CRM
 - **Relatórios** com gráficos, agrupamentos e exportação CSV
 - **Portfólio público** para enviar aos leads, com contagem de visitas
@@ -24,7 +24,7 @@ Plataforma de prospecção B2B. Encontra empresas por mapa e raio a partir da ba
 | Estilo | Tailwind CSS 4 · Motion · Lucide |
 | Banco e login | Supabase (Postgres com RLS por workspace) |
 | Mapa | Leaflet / React-Leaflet |
-| Serviços | Anthropic (Claude) · Resend · RD Station CRM · Hunter (conta do próprio cliente) · BrasilAPI |
+| Serviços | OpenAI · Resend · RD Station CRM · Hunter (conta do próprio cliente) · BrasilAPI |
 | Hospedagem | Vercel (deploy e cron diário) |
 
 ## Rodando localmente

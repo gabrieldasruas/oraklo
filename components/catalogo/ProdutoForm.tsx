@@ -244,7 +244,7 @@ export default function ProdutoForm({
                 type="button"
                 onClick={() => void comIA()}
                 disabled={!iaLigada || !p.nome.trim() || ocupado !== null}
-                title={iaLigada ? "A IA sugere quem compra a partir do nome e da descrição" : "A IA liga quando a chave ANTHROPIC_API_KEY estiver configurada"}
+                title={iaLigada ? "A IA sugere quem compra a partir do nome e da descrição" : "A IA liga quando a chave OPENAI_API_KEY estiver configurada"}
                 className="flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full bg-neon px-3.5 text-xs font-medium text-night disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {ocupado === "ia" ? <Loader2 size={13} className="animate-spin" aria-hidden /> : <Sparkles size={13} aria-hidden />} Sugerir com IA

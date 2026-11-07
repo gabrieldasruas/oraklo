@@ -1,19 +1,18 @@
-// Compara Opus 5.5, Sonnet 5.5 e Haiku 5.5 nas tarefas de IA do app, com os mesmos prompts de lib/ia.ts.
-// Gera um relatório em Markdown com os textos lado a lado, o custo de cada chamada e se o JSON veio válido.
+// Compara modelos da OpenAI nas tarefas de IA do app, com os mesmos prompts e a mesma chamada de lib/ia.ts.
+// Gera um relatório em Markdown com os textos lado a lado e o custo de cada chamada.
 //
 // Uso: npm run comparar:ia [-- --saida=relatorio.md]
-// Gasta créditos da ANTHROPIC_API_KEY: cerca de 30 chamadas curtas (centavos de dólar no total).
+// Gasta créditos da OPENAI_API_KEY: cerca de 27 chamadas curtas (centavos de dólar no total).
 
 import fs from "node:fs";
-import Anthropic from "@anthropic-ai/sdk";
-import { SCHEMA_ABORDAGEM, SCHEMA_COMPRADORES, SYSTEM_ABORDAGEM, SYSTEM_COMPRADORES, montarPedido, opcoesFallback, type ContextoAbordagem, type ModeloIA } from "../lib/ia.ts";
+import { SCHEMA_ABORDAGEM, SCHEMA_COMPRADORES, SYSTEM_ABORDAGEM, SYSTEM_COMPRADORES, gerarJson, montarPedido, pedidoCompradores, type ContextoAbordagem, type ModeloIA } from "../lib/ia.ts";
 
-const MODELOS: ModeloIA[] = ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"];
-// US$ por milhão de tokens (entrada, saída)
+const MODELOS: ModeloIA[] = ["gpt-6.1-sol", "gpt-6.1-terra", "gpt-6-luna"];
+// US$ por milhão de tokens (entrada, saída), tabela padrão da OpenAI em nov/2026
 const PRECO: Record<ModeloIA, [number, number]> = {
-  "claude-opus-5-5": [4, 20],
-  "claude-sonnet-5-5": [2, 10],
-  "claude-haiku-5-5": [0.1, 0.5],
+  "gpt-6.1-sol": [2, 10],
+  "gpt-6.1-terra": [1, 5],
+  "gpt-6-luna": [0.1, 0.5],
 };
 
 const remetente = {
@@ -55,68 +54,38 @@ const PRODUTOS = [
   { nome: "Software de emissão de nota fiscal", descricao: "NF-e e NFS-e na nuvem, plano mensal", categoria: "Tecnologia" },
 ];
 
-const client = new Anthropic({ timeout: 60_000, maxRetries: 2 });
+const formatar = (d: { assunto?: string; texto?: string; compradores?: { code: string; descricao: string }[] }) =>
+  d.compradores ? d.compradores.map((c) => `- ${c.code} · ${c.descricao}`).join("\n") : [d.assunto ? `**Assunto:** ${d.assunto}` : "", d.texto ?? ""].filter(Boolean).join("\n\n");
 
-type Saida = { texto: string; jsonOk: boolean; custo: number; ms: number; tokens: string };
+const linhas: string[] = ["# Comparação de modelos de IA", "", `Gerado em ${new Date().toLocaleString("pt-BR")}. Mesmos prompts e mesma chamada de \`lib/ia.ts\` (reasoning effort \`low\`).`, ""];
+const total: Record<string, { custo: number; ms: number; n: number; ok: number }> = Object.fromEntries(MODELOS.map((m) => [m, { custo: 0, ms: 0, n: 0, ok: 0 }]));
 
-async function chamar(modelo: ModeloIA, system: string, user: string, schema: object, maxTokens: number): Promise<Saida> {
-  const t0 = Date.now();
-  try {
-    const res = await client.beta.messages.create({
-      model: modelo,
-      max_tokens: maxTokens,
-      ...opcoesFallback(modelo),
-      output_config: { effort: "low", format: { type: "json_schema", schema: schema as Record<string, unknown> } },
-      system,
-      messages: [{ role: "user", content: user }],
-    });
-    const bloco = res.content.find((b) => b.type === "text");
-    const texto = bloco && bloco.type === "text" ? bloco.text : `(sem texto; stop_reason=${res.stop_reason})`;
-    let jsonOk = true;
-    try {
-      JSON.parse(texto);
-    } catch {
-      jsonOk = false;
-    }
-    const [pin, pout] = PRECO[modelo];
-    const custo = (res.usage.input_tokens * pin + res.usage.output_tokens * pout) / 1e6;
-    return { texto, jsonOk, custo, ms: Date.now() - t0, tokens: `${res.usage.input_tokens} in / ${res.usage.output_tokens} out` };
-  } catch (e) {
-    const msg = e instanceof Anthropic.APIError ? `${e.status} ${e.message}` : String(e);
-    return { texto: `ERRO: ${msg}`, jsonOk: false, custo: 0, ms: Date.now() - t0, tokens: "-" };
-  }
-}
-
-const formatar = (texto: string) => {
-  try {
-    const j = JSON.parse(texto) as { assunto?: string; texto?: string; compradores?: { code: string; descricao: string }[] };
-    if (j.compradores) return j.compradores.map((c) => `- ${c.code} · ${c.descricao}`).join("\n");
-    return [j.assunto ? `**Assunto:** ${j.assunto}` : "", j.texto ?? ""].filter(Boolean).join("\n\n");
-  } catch {
-    return "```\n" + texto + "\n```";
-  }
-};
-
-const linhas: string[] = ["# Comparação de modelos de IA", "", `Gerado em ${new Date().toLocaleString("pt-BR")}. Effort \`low\`, mesmos prompts de \`lib/ia.ts\`.`, ""];
-const total: Record<string, { custo: number; ms: number; n: number; json: number }> = Object.fromEntries(MODELOS.map((m) => [m, { custo: 0, ms: 0, n: 0, json: 0 }]));
-
-async function caso(titulo: string, system: string, user: string, schema: object, maxTokens: number) {
+async function caso(titulo: string, instrucoes: string, pedido: string, schema: Record<string, unknown>, nome: string) {
   console.log(titulo);
   linhas.push(`## ${titulo}`, "");
-  const resultados = await Promise.all(MODELOS.map((m) => chamar(m, system, user, schema, maxTokens)));
+  const resultados = await Promise.all(
+    MODELOS.map(async (modelo) => {
+      const t0 = Date.now();
+      const r = await gerarJson<Parameters<typeof formatar>[0]>({ modelo, instrucoes, pedido, schema, nome });
+      return { r, ms: Date.now() - t0 };
+    }),
+  );
   MODELOS.forEach((m, i) => {
-    const r = resultados[i];
-    Object.assign(total[m], { custo: total[m].custo + r.custo, ms: total[m].ms + r.ms, n: total[m].n + 1, json: total[m].json + (r.jsonOk ? 1 : 0) });
-    linhas.push(`### ${m}`, "", `_${r.tokens} · US$ ${r.custo.toFixed(5)} · ${(r.ms / 1000).toFixed(1)} s${r.jsonOk ? "" : " · **JSON inválido**"}_`, "", formatar(r.texto), "");
+    const { r, ms } = resultados[i];
+    const [pin, pout] = PRECO[m];
+    const custo = r.ok ? (r.uso.entrada * pin + r.uso.saida * pout) / 1e6 : 0;
+    Object.assign(total[m], { custo: total[m].custo + custo, ms: total[m].ms + ms, n: total[m].n + 1, ok: total[m].ok + (r.ok ? 1 : 0) });
+    const meta = r.ok ? `${r.uso.entrada} in / ${r.uso.saida} out · US$ ${custo.toFixed(5)} · ${(ms / 1000).toFixed(1)} s` : `erro · ${(ms / 1000).toFixed(1)} s`;
+    linhas.push(`### ${m}`, "", `_${meta}_`, "", r.ok ? formatar(r.dados) : `**${r.erro}**`, "");
   });
 }
 
-for (const a of ABORDAGENS) await caso(`Abordagem: ${a.nome}`, SYSTEM_ABORDAGEM, montarPedido(a.c), SCHEMA_ABORDAGEM, 4000);
-for (const p of PRODUTOS) await caso(`Compradores: ${p.nome}`, SYSTEM_COMPRADORES, `Produto: ${p.nome}\nDescrição: ${p.descricao}\nCategoria: ${p.categoria}`, SCHEMA_COMPRADORES, 3000);
+for (const a of ABORDAGENS) await caso(`Abordagem: ${a.nome}`, SYSTEM_ABORDAGEM, montarPedido(a.c), SCHEMA_ABORDAGEM, "abordagem");
+for (const p of PRODUTOS) await caso(`Compradores: ${p.nome}`, SYSTEM_COMPRADORES, pedidoCompradores(p), SCHEMA_COMPRADORES, "compradores");
 
-linhas.splice(4, 0, "| Modelo | Custo total (US$) | Custo médio por chamada | Tempo médio | JSON válido |", "|---|---|---|---|---|", ...MODELOS.map((m) => {
+linhas.splice(4, 0, "| Modelo | Custo total (US$) | Custo médio por chamada | Tempo médio | Respostas válidas |", "|---|---|---|---|---|", ...MODELOS.map((m) => {
   const t = total[m];
-  return `| ${m} | ${t.custo.toFixed(4)} | ${(t.custo / t.n).toFixed(5)} | ${(t.ms / t.n / 1000).toFixed(1)} s | ${t.json}/${t.n} |`;
+  return `| ${m} | ${t.custo.toFixed(4)} | ${(t.custo / Math.max(1, t.ok)).toFixed(5)} | ${(t.ms / t.n / 1000).toFixed(1)} s | ${t.ok}/${t.n} |`;
 }), "");
 
 const saida = process.argv.find((a) => a.startsWith("--saida="))?.split("=")[1] ?? "comparacao-ia.md";

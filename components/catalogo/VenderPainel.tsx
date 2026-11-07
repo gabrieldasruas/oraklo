@@ -244,7 +244,7 @@ export default function VenderPainel({
                   type="button"
                   onClick={() => void comIA()}
                   disabled={!iaLigada || ocupado !== null}
-                  title={iaLigada ? "A IA reescreve a oferta para este produto" : "A IA liga quando a chave ANTHROPIC_API_KEY estiver configurada"}
+                  title={iaLigada ? "A IA reescreve a oferta para este produto" : "A IA liga quando a chave OPENAI_API_KEY estiver configurada"}
                   className="flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full bg-neon px-4 text-xs font-medium text-night disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {ocupado === "ia" ? <Loader2 size={13} className="animate-spin" aria-hidden /> : <Sparkles size={13} aria-hidden />} Escrever com IA
