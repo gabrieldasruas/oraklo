@@ -8,7 +8,7 @@ import { centroNoBrasil, cidadeMaisProxima, MUNICIPIOS, municipiosNoRaio, RAIO_M
 const PORTES = ["ME", "EPP", "DEMAIS", "NAO_INFORMADO"];
 
 // POST /api/busca-raio
-// { lat, lng, raioKm, principal?: boolean (padrão true), escopo?: "raio" | "cidade" | "estado", ufs?: string[], cnaes?: string[], portes?: string[], temEmail?: boolean, matriz?: boolean, cursor?: string }
+// { lat, lng, raioKm, principal?: boolean (padrão true), escopo?: "raio" | "cidade" | "estado", ufs?: string[], cnaes?: string[], portes?: string[], temEmail?: boolean, matriz?: boolean, semSite?: boolean, potenciais?: string[], cursor?: string }
 export async function POST(request: NextRequest) {
   const user = await getUser();
   if (!user) return Response.json({ error: "Não autenticado" }, { status: 401 });
@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
   if (portes.length) filter.sizes = portes;
   if (body.temEmail === true) filter.has_email = true;
   if (body.matriz === true) filter.headquarters_only = true;
+  if (body.semSite === true) filter.no_own_site = true;
   const capitalMin = Number(body.capitalMin);
   if (Number.isFinite(capitalMin) && capitalMin > 0) filter.min_share_capital = capitalMin;
   const potenciais = arr(body.potenciais).filter((p): p is Potencial => ["A", "B", "C"].includes(p));

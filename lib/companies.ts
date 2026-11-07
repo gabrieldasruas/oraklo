@@ -21,6 +21,8 @@ export type CompanyFilter = {
   has_email?: boolean;
   /** faixas de potencial do lead (ver companies.potential) */
   potentials?: Potencial[];
+  /** sem site próprio: sem site encontrado e e-mail da Receita vazio, webmail ou de contador/provedor */
+  no_own_site?: boolean;
   q?: string;
 };
 
@@ -95,6 +97,7 @@ export function filterFromParams(p: Record<string, string | string[] | undefined
   if (Number.isFinite(capital) && capital > 0) f.min_share_capital = capital;
   if (one("tem_email") === "1") f.has_email = true;
   if (one("matriz") === "1") f.headquarters_only = true;
+  if (one("sem_site") === "1") f.no_own_site = true;
   const potentials = list(p.potencial).filter((x): x is Potencial => ["A", "B", "C"].includes(x));
   if (potentials.length) f.potentials = potentials;
   const q = one("q")?.trim().slice(0, 80);

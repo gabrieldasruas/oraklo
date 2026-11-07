@@ -140,6 +140,7 @@ export default function BuscaAvancada({
   const [temEmail, setTemEmail] = useState(aplicaPerfil && !!perfil?.temEmail);
   const [matriz, setMatriz] = useState(aplicaPerfil && !!perfil?.soMatriz);
   const [soPotencialAlto, setSoPotencialAlto] = useState(false);
+  const [semSite, setSemSite] = useState(false);
   const [capitalMin, setCapitalMin] = useState<number | null>(aplicaPerfil ? (perfil?.capitalMin ?? null) : null);
   const [anosMin, setAnosMin] = useState<number | null>(aplicaPerfil ? (perfil?.anosMin ?? null) : null);
   // por padrão só a atividade PRINCIPAL conta (evita JBS/Fedex que têm transporte como secundária)
@@ -156,7 +157,7 @@ export default function BuscaAvancada({
   const [acao, setAcao] = useState<null | "pipeline" | "lista">(null);
   const [retorno, setRetorno] = useState<{ tipo: "ok" | "erro"; texto: string; link?: { href: string; t: string } } | null>(null);
   // a busca só roda no botão; guardamos o que foi buscado para avisar quando os filtros mudarem
-  const assinaturaAtual = JSON.stringify([centro, raioKm, escopo, ufsFiltro, cnaesSel, portes, temEmail, matriz, soPotencialAlto, principal, capitalMin, anosMin]);
+  const assinaturaAtual = JSON.stringify([centro, raioKm, escopo, ufsFiltro, cnaesSel, portes, temEmail, matriz, soPotencialAlto, semSite, principal, capitalMin, anosMin]);
   const [assinaturaBuscada, setAssinaturaBuscada] = useState<string | null>(null);
   const desatualizada = assinaturaBuscada !== null && assinaturaBuscada !== assinaturaAtual;
 
@@ -268,6 +269,7 @@ export default function BuscaAvancada({
           temEmail,
           matriz,
           potenciais: soPotencialAlto ? ["A"] : [],
+          semSite,
           principal,
           capitalMin,
           anosMin,
@@ -646,6 +648,15 @@ export default function BuscaAvancada({
             className={chip(soPotencialAlto)}
           >
             Só alto potencial
+          </button>
+          <button
+            type="button"
+            onClick={() => setSemSite((v) => !v)}
+            aria-pressed={semSite}
+            title="Empresas sem site próprio: sem e-mail na Receita, com e-mail gratuito (gmail, hotmail…) ou com e-mail do contador. Estimativa pelo e-mail até a busca de sites ficar pronta."
+            className={chip(semSite)}
+          >
+            Sem site próprio
           </button>
 
           <button
