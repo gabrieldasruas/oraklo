@@ -10,12 +10,12 @@ export type TarefaIA = "abordagem" | "compradores";
 
 /**
  * Modelo de cada tarefa. Preço por milhão de tokens (entrada/saída): luna US$ 0,10/0,50 · terra US$ 1/5 · sol US$ 2/10.
- * Escrever e-mail é tarefa simples; sugerir compradores exige conhecer a tabela CNAE.
- * Antes de trocar, compare a qualidade nos mesmos pedidos: `npm run comparar:ia`.
+ * Na comparação de 07/11 o terra escreveu tão bem quanto o sol e acertou os CNAEs, sendo o mais rápido;
+ * o luna errou o tom em alguns textos. Antes de trocar, compare de novo: `npm run comparar:ia`.
  */
 export const MODELOS: Record<TarefaIA, ModeloIA> = {
   abordagem: "gpt-6.1-terra",
-  compradores: "gpt-6.1-sol",
+  compradores: "gpt-6.1-terra",
 };
 
 export type UsoIA = { modelo: ModeloIA; entrada: number; saida: number };
