@@ -4,6 +4,8 @@
 export const CONFIG_TAG = "__config__";
 /** token do RD Station, cifrado (linha separada, nunca vai para o navegador) */
 export const RD_TOKEN_TAG = "__rd_token__";
+/** chave da API do Hunter do próprio cliente, cifrada (os créditos saem da conta dele, não da Oraklo) */
+export const HUNTER_KEY_TAG = "__hunter_key__";
 
 const ETAPAS_OK = ["Novo", "Em sequência", "Respondeu", "Reunião marcada", "Sem interesse"];
 

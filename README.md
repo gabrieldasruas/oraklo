@@ -24,7 +24,7 @@ Plataforma de prospecção B2B. Encontra empresas por mapa e raio a partir da ba
 | Estilo | Tailwind CSS 4 · Motion · Lucide |
 | Banco e login | Supabase (Postgres com RLS por workspace) |
 | Mapa | Leaflet / React-Leaflet |
-| Serviços | Anthropic (Claude) · Resend · Hunter · RD Station CRM |
+| Serviços | Anthropic (Claude) · Resend · RD Station CRM · Hunter (conta do próprio cliente) · BrasilAPI |
 | Hospedagem | Vercel (deploy e cron diário) |
 
 ## Rodando localmente

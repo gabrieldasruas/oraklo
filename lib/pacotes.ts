@@ -63,7 +63,7 @@ export const PACOTES: Pacote[] = [
     descricao: "Para quem prospecta todo dia e quer automatizar a abordagem.",
     tom: "lime",
     destaque: "Mais escolhido",
-    itens: ["Tudo do Free", "300 buscas por mês na Busca avançada", "1.000 empresas e 1.000 e-mails por mês", "Follow-up automático e 200 textos com IA", "Decisores, radar completo e relatórios completos", "Integração com CRM (RD Station, webhook, planilhas)"],
+    itens: ["Tudo do Free", "300 buscas por mês na Busca avançada", "1.000 empresas e 1.000 e-mails por mês", "Follow-up automático e 200 textos com IA", "E-mail dos decisores (com sua conta Hunter), radar e relatórios completos", "Integração com CRM (RD Station, webhook, planilhas)"],
     cta: "Assinar Premium",
   },
   {
@@ -103,7 +103,8 @@ export const COMPARACAO: { grupo: string; linhas: { recurso: string; gratis: Cel
       { recurso: "Perfil de cliente ideal e 👍/👎", gratis: true, premium: true, ultra: true },
       { recurso: "Catálogo + Quem compra o que eu vendo", gratis: "5 produtos", premium: "20 produtos", ultra: "Sem limite" },
       { recurso: "Radar de novas empresas", gratis: "5 por vez", premium: "Completo", ultra: "Completo + e-mail semanal" },
-      { recurso: "Decisores (nome, cargo e e-mail)", gratis: false, premium: true, ultra: true },
+      { recurso: "Sócios e decisores da empresa (Receita)", gratis: true, premium: true, ultra: true },
+      { recurso: "E-mail dos decisores (com sua conta Hunter)", gratis: false, premium: true, ultra: true },
     ],
   },
   {

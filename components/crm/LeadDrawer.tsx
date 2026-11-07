@@ -25,7 +25,7 @@ import { faixaScore } from "@/lib/score";
 import { adicionarNota, concluirTarefa, criarTarefa, historicoDoLead } from "@/app/(app)/leads/atividade";
 import { marcarResposta } from "@/app/(app)/leads/emails";
 import { atualizarLead } from "@/app/(app)/leads/actions";
-import { buscarDecisores, dominioDoLead, hunterConfigurado, usarContato, type Pessoa } from "@/app/(app)/leads/enriquecer";
+import { decisoresDoLead, emailDoSocio, outrasPessoas, usarContato, type Pessoa, type Socio } from "@/app/(app)/leads/enriquecer";
 import { COR_ETAPA } from "./Pipeline";
 import { enviarLeadsRd } from "@/app/(app)/configuracoes/rd";
 
@@ -417,46 +417,54 @@ function Contato({ lead, onAtualizado }: { lead: Lead; onAtualizado: (l: Lead) =
 }
 
 function Decisores({ lead, onAtualizado }: { lead: Lead; onAtualizado: (l: Lead) => void }) {
-  const [configurado, setConfigurado] = useState<boolean | null>(null);
-  const [liberado, setLiberado] = useState(true);
+  const [info, setInfo] = useState<{ socios: Socio[]; hunter: boolean; liberado: boolean } | null>(null);
   const [dominio, setDominio] = useState("");
-  const [buscando, setBuscando] = useState(false);
-  const [res, setRes] = useState<{ pessoas: Pessoa[]; organizacao: string | null } | null>(null);
+  // e-mail achado por sócio (null = buscou e não achou)
+  const [emails, setEmails] = useState<Record<string, Pessoa | null>>({});
+  const [outras, setOutras] = useState<Pessoa[] | null>(null);
+  const [ocupado, setOcupado] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-  const [usando, setUsando] = useState<string | null>(null);
 
   useEffect(() => {
-    hunterConfigurado()
+    decisoresDoLead(lead.id)
       .then((r) => {
-        setConfigurado(r.configurado);
-        setLiberado(r.liberado);
+        setInfo(r);
+        if (r.dominio) setDominio(r.dominio);
       })
-      .catch(() => setConfigurado(false));
-    dominioDoLead(lead.id).then((d) => d && setDominio(d)).catch(() => {});
+      .catch(() => setInfo({ socios: [], hunter: false, liberado: false }));
   }, [lead.id]);
 
-  async function buscar(e: React.FormEvent) {
-    e.preventDefault();
-    setBuscando(true);
+  const podeBuscar = !!info?.hunter && info.liberado && !!dominio.trim();
+
+  async function buscarEmail(s: Socio) {
+    setOcupado(s.nome);
     setErro(null);
+    const r = await emailDoSocio(dominio, s.nome).catch(() => ({ ok: false as const, erro: "Falha na busca" }));
+    setOcupado(null);
+    if (!r.ok) return setErro(r.erro);
+    setEmails((m) => ({ ...m, [s.nome]: r.pessoa ? { ...r.pessoa, cargo: r.pessoa.cargo || s.cargo } : null }));
+  }
+
+  async function buscarOutras() {
+    setOcupado("__outras__");
+    setErro(null);
+    const r = await outrasPessoas(dominio).catch(() => ({ ok: false as const, erro: "Falha na busca" }));
+    setOcupado(null);
+    if (!r.ok) return setErro(r.erro);
+    setOutras(r.pessoas);
+  }
+
+  async function usar(p: { nome: string; cargo: string; email: string }) {
+    setOcupado(`usar:${p.nome}`);
     try {
-      setRes(await buscarDecisores(dominio));
-    } catch (err) {
-      setErro(err instanceof Error ? err.message : "Falha na busca");
+      await usarContato(lead.id, p);
+      onAtualizado({ ...lead, name: p.nome, role: p.cargo, email: p.email || lead.email });
     } finally {
-      setBuscando(false);
+      setOcupado(null);
     }
   }
 
-  async function usar(p: Pessoa) {
-    setUsando(p.email);
-    try {
-      await usarContato(lead.id, p);
-      onAtualizado({ ...lead, name: p.nome, role: p.cargo, email: p.email });
-    } finally {
-      setUsando(null);
-    }
-  }
+  const botao = "min-h-8 shrink-0 cursor-pointer rounded-full border border-white/20 px-3 text-[11px] hover:bg-neon hover:text-night disabled:opacity-50";
 
   return (
     <section className="overflow-hidden rounded-[20px] bg-night text-white">
@@ -465,51 +473,99 @@ function Decisores({ lead, onAtualizado }: { lead: Lead; onAtualizado: (l: Lead)
           <UserRoundSearch size={17} aria-hidden />
         </span>
         <div>
-          <p className="font-medium leading-tight">Encontrar decisores</p>
-          <p className="text-xs text-white/55">Nomes, cargos e e-mails corporativos pelo domínio da empresa</p>
+          <p className="font-medium leading-tight">Decisores</p>
+          <p className="text-xs text-white/55">Sócios da Receita e, com a sua conta do Hunter, o e-mail de cada um</p>
         </div>
       </div>
 
-      {!liberado ? (
+      {!info ? (
+        <p className="flex items-center gap-2 border-t border-white/10 p-4 text-sm text-white/60">
+          <Loader2 size={13} className="animate-spin" /> Carregando sócios…
+        </p>
+      ) : (
+        <ul className="divide-y divide-white/10 border-t border-white/10">
+          {!info.socios.length && <li className="p-4 text-sm text-white/60">A Receita não lista sócios para esta empresa (ou o lead não tem CNPJ).</li>}
+          {info.socios.map((s) => {
+            const achado = emails[s.nome];
+            return (
+              <li key={s.nome} className="flex items-center gap-3 p-4">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 font-mono text-[11px]">{iniciais(s.nome)}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{s.nome}</p>
+                  <p className="truncate text-xs text-white/55">
+                    {s.cargo}
+                    {s.decisor && " · decisor"}
+                  </p>
+                  {achado && (
+                    <p className="truncate font-mono text-[11px] text-neon/80">
+                      {achado.email} · {achado.confianca}%
+                    </p>
+                  )}
+                  {achado === null && <p className="text-[11px] text-white/45">E-mail não encontrado no Hunter</p>}
+                </div>
+                {achado ? (
+                  <button type="button" onClick={() => void usar(achado)} disabled={!!ocupado} className={botao}>
+                    {ocupado === `usar:${achado.nome}` ? <Loader2 size={12} className="animate-spin" /> : lead.email === achado.email ? "Em uso" : "Usar contato"}
+                  </button>
+                ) : s.pessoaFisica && podeBuscar && achado === undefined ? (
+                  <button type="button" onClick={() => void buscarEmail(s)} disabled={!!ocupado} className={botao} title="Gasta 1 crédito da sua conta do Hunter, só se encontrar">
+                    {ocupado === s.nome ? <Loader2 size={12} className="animate-spin" /> : "Buscar e-mail"}
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => void usar({ nome: s.nome, cargo: s.cargo, email: "" })} disabled={!!ocupado || lead.name === s.nome} className={botao}>
+                    {ocupado === `usar:${s.nome}` ? <Loader2 size={12} className="animate-spin" /> : lead.name === s.nome ? "Em uso" : "Usar nome"}
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {info && !info.liberado ? (
         <div className="border-t border-white/10 p-4 text-sm text-white/70">
           <p className="flex items-start gap-2">
             <Sparkles size={14} aria-hidden className="mt-0.5 shrink-0 text-neon" />
-            <span>Encontrar decisores faz parte do pacote Premium.</span>
+            <span>Buscar o e-mail dos decisores pelo Hunter faz parte do pacote Premium.</span>
           </p>
           <a href="/pacotes" className="mt-3 inline-flex items-center gap-1.5 text-xs text-neon underline-offset-4 hover:underline">
             Ver pacotes
           </a>
         </div>
-      ) : configurado === false ? (
+      ) : info && !info.hunter ? (
         <div className="border-t border-white/10 p-4 text-sm text-white/70">
           <p className="flex items-start gap-2">
             <Sparkles size={14} aria-hidden className="mt-0.5 shrink-0 text-neon" />
-            <span>
-              Para ativar, crie uma conta no Hunter (tem plano grátis), copie a API key e adicione <code className="rounded bg-white/10 px-1.5 font-mono text-[11px] text-neon">HUNTER_API_KEY</code> nas variáveis da Vercel.
-            </span>
+            <span>Para achar o e-mail de cada decisor, conecte a sua conta do Hunter (tem plano grátis). As buscas usam os créditos da sua conta.</span>
           </p>
-          <a href="https://hunter.io/api-keys" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs text-neon underline-offset-4 hover:underline">
-            Pegar a chave no Hunter <ExternalLink size={11} aria-hidden />
+          <a href="/integracoes#hunter" className="mt-3 inline-flex items-center gap-1.5 text-xs text-neon underline-offset-4 hover:underline">
+            Conectar o Hunter
           </a>
         </div>
-      ) : (
-        <form onSubmit={buscar} className="flex gap-2 border-t border-white/10 p-4">
+      ) : info ? (
+        <div className="flex flex-wrap gap-2 border-t border-white/10 p-4">
           <label className="relative min-w-0 flex-1">
             <span className="sr-only">Domínio da empresa</span>
             <Search size={14} aria-hidden className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-50" />
             <input value={dominio} onChange={(e) => setDominio(e.target.value)} placeholder="empresa.com.br" className="min-h-10 w-full rounded-full bg-white/10 pl-9 pr-3 text-sm outline-none placeholder:text-white/40 focus:bg-white/15" />
           </label>
-          <button type="submit" disabled={buscando || !dominio.trim() || configurado === null} className="flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full bg-neon px-4 text-xs font-medium text-night disabled:opacity-50">
-            {buscando ? <Loader2 size={12} className="animate-spin" /> : null} Buscar
+          <button
+            type="button"
+            onClick={() => void buscarOutras()}
+            disabled={!!ocupado || !dominio.trim()}
+            title="Busca outras pessoas da empresa no Hunter. Gasta mais créditos da sua conta."
+            className="flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full bg-white/10 px-4 text-xs font-medium hover:bg-white/20 disabled:opacity-50"
+          >
+            {ocupado === "__outras__" ? <Loader2 size={12} className="animate-spin" /> : null} Outras pessoas
           </button>
-        </form>
-      )}
+        </div>
+      ) : null}
 
       {erro && <p className="px-4 pb-4 text-sm text-danger-300">{erro}</p>}
-      {res && (
+      {outras && (
         <ul className="divide-y divide-white/10 border-t border-white/10">
-          {!res.pessoas.length && <li className="p-4 text-sm text-white/60">Nenhum contato público encontrado para esse domínio.</li>}
-          {res.pessoas.map((p) => (
+          {!outras.length && <li className="p-4 text-sm text-white/60">Nenhum contato público encontrado para esse domínio.</li>}
+          {outras.map((p) => (
             <li key={p.email} className="flex items-center gap-3 p-4">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 font-mono text-[11px]">{iniciais(p.nome)}</span>
               <div className="min-w-0 flex-1">
@@ -524,8 +580,8 @@ function Decisores({ lead, onAtualizado }: { lead: Lead; onAtualizado: (l: Lead)
                   <LinkedinIcon size={13} />
                 </a>
               )}
-              <button type="button" onClick={() => void usar(p)} disabled={!!usando} className="min-h-8 shrink-0 cursor-pointer rounded-full border border-white/20 px-3 text-[11px] hover:bg-neon hover:text-night disabled:opacity-50">
-                {usando === p.email ? <Loader2 size={12} className="animate-spin" /> : lead.email === p.email ? "Em uso" : "Usar contato"}
+              <button type="button" onClick={() => void usar(p)} disabled={!!ocupado} className={botao}>
+                {ocupado === `usar:${p.nome}` ? <Loader2 size={12} className="animate-spin" /> : lead.email === p.email ? "Em uso" : "Usar contato"}
               </button>
             </li>
           ))}
