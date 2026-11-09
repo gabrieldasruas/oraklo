@@ -1,6 +1,7 @@
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
 import { LIMITES, planoDoWorkspace } from "@/lib/planos";
+import { supressoes } from "@/lib/supressao";
 
 // Leads em CSV no formato de importação de cada CRM. O RLS limita ao workspace do usuário.
 // ?formato=rd | pipedrive | hubspot | completo
@@ -46,8 +47,11 @@ export async function GET(req: Request) {
   const f = FORMATOS[formato] ?? FORMATOS.completo;
   const { data, error } = await db.from("leads").select("name, role, company, email, phone, place, status, score, cnpj, created_at").order("created_at", { ascending: false }).limit(10000);
   if (error) return Response.json({ error: "Falha ao exportar" }, { status: 500 });
+  // lista de não contatar (LGPD): empresa removida não sai e o e-mail de quem pediu para sair fica vazio
+  const lista = await supressoes({ emails: (data as Lead[]).map((l) => l.email), cnpjs: (data as Lead[]).map((l) => l.cnpj) });
+  const leads = (data as Lead[]).filter((l) => !lista.cnpj(l.cnpj)).map((l) => (lista.email(l.email) ? { ...l, email: "" } : l));
   // vírgula: é o que os importadores dos CRMs esperam
-  const csv = "﻿" + [f.cabecalho, ...(data as Lead[]).map(f.linha)].map((l) => l.map(celula).join(",")).join("\r\n");
+  const csv = "﻿" + [f.cabecalho, ...leads.map(f.linha)].map((l) => l.map(celula).join(",")).join("\r\n");
   return new Response(csv, {
     headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="leads-oraklo-${formato}.csv"` },
   });

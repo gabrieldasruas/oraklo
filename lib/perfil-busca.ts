@@ -70,7 +70,7 @@ export function completarPerfil(p: Partial<PerfilBusca> | null | undefined): Per
     nichos: Array.isArray(p.nichos) ? p.nichos.filter((n) => typeof n === "string").slice(0, 30) : [],
     atividades: Array.isArray(p.atividades)
       ? p.atividades
-          .filter((a) => a && /^d{7}$/.test(String(a.code)))
+          .filter((a) => a && /^\d{7}$/.test(String(a.code)))
           .slice(0, 40)
           .map((a) => ({ code: String(a.code), descricao: String(a.descricao ?? "").slice(0, 160) }))
       : [],

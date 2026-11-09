@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/db/admin";
 import { formatCnae, formatCnpj, formatPhone, SIZE_LABEL, titleCase } from "@/lib/format";
 import type { CompanyFilter } from "@/lib/companies";
 import { TAG_INTERNA } from "@/lib/portfolio-types";
+import { semSuprimidos, sociosOcultos } from "@/lib/supressao";
 
 // Listas são do workspace: lidas com o cliente do usuário (RLS). As empresas de cada lista
 // são lidas com a service role, depois que o RLS confirmou que a lista é visível ao usuário.
@@ -104,7 +105,8 @@ export async function buildListCsv(cnpjs: string[]): Promise<string> {
       .select("cnpj, cnpj_root, legal_name, trade_name, is_headquarters, opened_at, cnae_main, uf, municipality_code, district, address, zip, size, share_capital, receita_email, receita_phones, website")
       .in("cnpj", part);
     if (error) throw new Error(`Falha ao ler empresas: ${error.message}`);
-    companies.push(...(data as C[]));
+    // lista de não contatar (LGPD): empresa removida não sai, e-mail de quem pediu para sair fica vazio
+    companies.push(...(await semSuprimidos(data as C[])));
   }
 
   const roots = [...new Set(companies.map((c) => c.cnpj_root))];
@@ -113,7 +115,8 @@ export async function buildListCsv(cnpjs: string[]): Promise<string> {
   for (const part of chunks(roots, 100)) {
     const { data, error } = await db.from("partners").select("cnpj_root, name").in("cnpj_root", part);
     if (error) throw new Error(`Falha ao ler sócios: ${error.message}`);
-    for (const p of data) partners.set(p.cnpj_root, [...(partners.get(p.cnpj_root) ?? []), titleCase(p.name)]);
+    const oculto = await sociosOcultos(data.map((p) => ({ root: p.cnpj_root, nome: p.name })));
+    for (const p of data) if (!oculto(p.cnpj_root, p.name)) partners.set(p.cnpj_root, [...(partners.get(p.cnpj_root) ?? []), titleCase(p.name)]);
   }
   const cnaeCodes = [...new Set(companies.map((c) => c.cnae_main).filter(Boolean))] as string[];
   const cityCodes = [...new Set(companies.map((c) => c.municipality_code).filter(Boolean))] as string[];

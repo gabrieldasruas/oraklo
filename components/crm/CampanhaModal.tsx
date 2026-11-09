@@ -38,7 +38,7 @@ export default function CampanhaModal({
   const [followCorpo, setFollowCorpo] = useState(FOLLOWUP_PADRAO);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [feito, setFeito] = useState<{ enviados: number; semEmail: number; falharam: number; limitados: number } | null>(null);
+  const [feito, setFeito] = useState<{ enviados: number; semEmail: number; falharam: number; limitados: number; bloqueados: number } | null>(null);
   const corpoRef = useRef<HTMLTextAreaElement>(null);
   const [ia, setIa] = useState(false);
   const [escrevendo, setEscrevendo] = useState(false);
@@ -148,6 +148,7 @@ export default function CampanhaModal({
               {feito.falharam ? ` ${feito.falharam} falharam.` : ""}
               {feito.semEmail ? ` ${feito.semEmail} sem e-mail válido.` : ""}
               {feito.limitados ? ` ${feito.limitados} ficaram para o próximo mês pelo limite do plano Grátis.` : ""}
+              {feito.bloqueados ? ` ${feito.bloqueados} não receberam porque pediram para não ser contatados.` : ""}
             </p>
             <button type="button" onClick={onFechar} className="mt-3 min-h-11 cursor-pointer rounded-full bg-night px-6 text-sm font-medium text-white">
               Fechar

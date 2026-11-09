@@ -3,17 +3,19 @@
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/db/admin";
 import { tokenValido } from "@/lib/descadastro";
+import { suprimir } from "@/lib/supressao";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Confirma o descadastro: para os e-mails e marca o lead como sem interesse. */
+/** Confirma o descadastro: o e-mail entra na lista global (nenhum workspace envia mais) e o lead fica sem interesse. */
 export async function confirmarDescadastro(form: FormData) {
   const l = String(form.get("l") ?? "");
   const t = String(form.get("t") ?? "");
   if (!UUID.test(l) || !tokenValido(l, t)) redirect("/sair?erro=1");
   const db = createAdminClient();
-  const { data: lead } = await db.from("leads").select("id, workspace_id").eq("id", l).maybeSingle();
+  const { data: lead } = await db.from("leads").select("id, workspace_id, email").eq("id", l).maybeSingle();
   if (lead) {
+    if (String(lead.email ?? "").trim()) await suprimir([{ email: String(lead.email) }], "descadastro", { lead_id: l, workspace_id: lead.workspace_id, via: "link do e-mail" });
     const { data: ja } = await db.from("lead_events").select("id").eq("lead_id", l).eq("type", "email_unsubscribed").limit(1);
     if (!ja?.length) {
       await db.from("leads").update({ status: "Sem interesse" }).eq("id", l);

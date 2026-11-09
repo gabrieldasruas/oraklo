@@ -41,6 +41,7 @@ const SECOES: { t: string; p: string[] }[] = [
     t: "Seus direitos",
     p: [
       "Empresas e titulares podem pedir acesso, correção ou remoção dos seus dados a qualquer momento.",
+      "Para não ser contatado por nenhum cliente do Oraklo, peça a remoção do seu e-mail, da sua empresa ou do seu nome de sócio em oraklo.app/remover-dados. Vale para todos os clientes assim que você confirma pelo e-mail.",
       `Escreva para ${site.email}. Respondemos em até 15 dias.`,
     ],
   },
@@ -63,7 +64,7 @@ export default function PrivacidadePage() {
           </Glass>
         ))}
       </div>
-      <p className="mt-6 px-1 font-mono text-[10px] uppercase tracking-widest opacity-45">Atualizado em outubro de 2026</p>
+      <p className="mt-6 px-1 font-mono text-[10px] uppercase tracking-widest opacity-45">Atualizado em novembro de 2026</p>
     </>
   );
 }

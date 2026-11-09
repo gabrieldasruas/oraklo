@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/db/server";
 import { emailConfigurado, enviarLote, urlDoApp } from "@/lib/email";
 import { rodapeDescadastro } from "@/lib/descadastro";
+import { supressoes } from "@/lib/supressao";
 import { avisarCrm } from "@/lib/crm-webhook";
 import { carregarConfig } from "../configuracoes/actions";
 import { LIMITES, planoDoWorkspace, restante, usoDoMes } from "@/lib/planos";
@@ -37,7 +38,7 @@ function linkPortfolio(portfolioId: string | null, p: Portfolio, leadId: string)
   return `${urlDoApp()}/p/${portfolioId}?l=${leadId}`;
 }
 
-export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semEmail: number; falharam: number; limitados: number }> {
+export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semEmail: number; falharam: number; limitados: number; bloqueados: number }> {
   const user = await requireUser();
   if (!emailConfigurado()) throw new Error("Configure o envio de e-mail (RESEND_API_KEY e EMAIL_FROM) para disparar.");
   const assunto = texto(d.assunto, 200);
@@ -48,7 +49,7 @@ export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semE
 
   const supabase = await createClient();
   const [{ data: leads, error }, { data: port }] = await Promise.all([
-    supabase.from("leads").select("id, name, company, email, status").in("id", ids),
+    supabase.from("leads").select("id, name, company, email, status, cnpj").in("id", ids),
     supabase.from("lists").select("id, filter").eq("tag", PORTFOLIO_TAG).order("created_at").limit(1).maybeSingle(),
   ]);
   if (error) throw new Error("Não foi possível carregar os leads");
@@ -58,7 +59,11 @@ export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semE
   // quem pediu para sair da lista não recebe mais nada
   const { data: saiu } = await supabase.from("lead_events").select("lead_id").eq("type", "email_unsubscribed").in("lead_id", ids);
   const descadastrados = new Set((saiu ?? []).map((e) => e.lead_id as string));
-  const todosComEmail = (leads ?? []).filter((l) => emailValido(String(l.email).trim()) && !descadastrados.has(l.id));
+  // lista global de não contatar (LGPD): vale para pedidos feitos em qualquer workspace
+  const lista = await supressoes({ emails: (leads ?? []).map((l) => l.email as string), cnpjs: (leads ?? []).map((l) => l.cnpj as string | null) });
+  const comEmailValido = (leads ?? []).filter((l) => emailValido(String(l.email).trim()) && !descadastrados.has(l.id));
+  const todosComEmail = comEmailValido.filter((l) => !lista.email(l.email) && !lista.cnpj(l.cnpj));
+  const bloqueados = comEmailValido.length - todosComEmail.length;
   // limite do plano Grátis (e-mails por mês)
   const lim = LIMITES[await planoDoWorkspace(supabase, user.workspaceId)];
   const limiteEmails = lim.emailsMes;
@@ -67,7 +72,7 @@ export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semE
   const cabe = restante(limiteEmails, (await usoDoMes(supabase)).emails);
   const comEmail = cabe === null ? todosComEmail : todosComEmail.slice(0, cabe);
   const limitados = todosComEmail.length - comEmail.length;
-  const semEmail = (leads?.length ?? 0) - comEmail.length;
+  const semEmail = (leads?.length ?? 0) - comEmail.length - limitados - bloqueados;
   const dias = d.followup ? Math.min(30, Math.max(1, Math.round(d.followup.dias))) : 0;
   const followAt = d.followup ? new Date(Date.now() + dias * 86_400_000).toISOString() : null;
 
@@ -118,7 +123,7 @@ export async function enviarEmails(d: Disparo): Promise<{ enviados: number; semE
       .from("lead_events")
       .insert(paraSequencia.map((id) => ({ lead_id: id, workspace_id: user.workspaceId, type: "status_changed", payload: { status: "Em sequência" } })));
   }
-  return { enviados, semEmail, falharam: comEmail.length - enviados, limitados };
+  return { enviados, semEmail, falharam: comEmail.length - enviados, limitados, bloqueados };
 }
 
 /** Marca que o lead respondeu: para os follow-ups e move para "Respondeu". */
