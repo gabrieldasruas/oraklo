@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { pedirRemocao, type Estado } from "./acoes";
 
 const TIPOS = [
@@ -24,7 +24,15 @@ export default function FormRemocao() {
     );
 
   return (
-    <form action={enviar} className="mt-7 space-y-5 text-left">
+    // onSubmit em vez de action: o React limparia o formulário depois de cada envio (perde o que foi digitado no erro)
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const dados = new FormData(e.currentTarget);
+        startTransition(() => enviar(dados));
+      }}
+      className="mt-7 space-y-5 text-left"
+    >
       <fieldset>
         <legend className="text-sm font-medium">O que você quer remover?</legend>
         <div className="mt-3 grid gap-2">
