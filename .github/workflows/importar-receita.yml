@@ -1,0 +1,58 @@
+# Importação da base da Receita (worker/jobs/import-receita.ts) fora da máquina de quem desenvolve.
+# Toda segunda confere se a Receita publicou competência nova; se já estiver no banco, sai em segundos.
+# Rodar à mão: Actions → "Importação da Receita" → Run workflow (dá para escolher a competência e forçar).
+#
+# Segredo necessário (Settings → Secrets and variables → Actions): DATABASE_URL com o Session pooler
+# do Supabase (host *.pooler.supabase.com, porta 5432). A conexão direta não serve: é só IPv6 e os
+# runners do GitHub não têm IPv6.
+
+name: Importação da Receita
+
+on:
+  schedule:
+    - cron: "0 9 * * 1" # segunda, 6h de Brasília
+  workflow_dispatch:
+    inputs:
+      periodo:
+        description: "Competência AAAA-MM (vazio = a mais recente)"
+        required: false
+        default: ""
+      forcar:
+        description: "Importar mesmo se a competência já estiver no banco"
+        type: boolean
+        default: false
+
+# nunca duas importações ao mesmo tempo
+concurrency:
+  group: importacao-receita
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180 # leva de 35 a 40 min; o disco temporário chega a uns 2,5 GB
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22 # 22.18+ roda .ts direto (type stripping)
+          cache: npm
+
+      - run: npm ci
+
+      - name: Importar
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RECEITA_CACHE_DIR: ${{ runner.temp }}/receita
+          PERIODO: ${{ inputs.periodo }}
+          FORCAR: ${{ inputs.forcar }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "Falta o segredo DATABASE_URL"; exit 1; fi
+          args=()
+          if [ -n "$PERIODO" ]; then args+=("--periodo=$PERIODO"); fi
+          if [ "$FORCAR" != "true" ]; then args+=("--so-se-nova"); fi
+          node worker/jobs/import-receita.ts "${args[@]}"

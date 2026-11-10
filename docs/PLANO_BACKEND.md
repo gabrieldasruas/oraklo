@@ -66,7 +66,7 @@ Enquanto não houver orçamento, o backend roda só com recursos gratuitos, para
 | Peça | Produção (seções acima) | Modo teste |
 |---|---|---|
 | Banco | Supabase pago | Supabase **plano gratuito** (ver abaixo) |
-| Worker | VPS, Railway ou Fly | Roda **na máquina de quem desenvolve** (`npm run worker`), disparado à mão |
+| Worker | VPS, Railway ou Fly | Importação mensal **agendada no GitHub Actions** (de graça, até 6 h por execução). A fila contínua (enriquecimento, sequências) ainda não tem onde rodar |
 | Web | Vercel | `npm run dev` local. A Vercel Hobby (gratuita) só se precisar mostrar a alguém, já que ela não permite uso comercial |
 | Base da Receita | Vários nichos e UFs | **1 ou 2 nichos-piloto em 1 UF** (ex.: transportadoras em SC) |
 | Descoberta de site | Domínio da Receita + Google Places | Domínio da Receita + **dedução de domínio** (sem Places) |
@@ -359,7 +359,7 @@ Toda rota de workspace valida a sessão e depende do RLS como segunda barreira. 
 
 1. Quais são os 2 ou 3 nichos-piloto e a lista exata de CNAEs de cada um?
 2. Supabase está aprovado, ou preferem Postgres próprio?
-3. Onde o worker vai rodar (VPS, Railway ou Fly)?
+3. ~~Onde o worker vai rodar~~ Decidido (09/11): a importação mensal roda agendada no GitHub Actions (custo zero). Railway ou VPS só quando o enriquecimento ou as sequências precisarem de fila sempre ligada.
 4. ~~Orçamento para APIs pagas~~ Decidido: por enquanto custo zero, só para testes (ver "Modo teste"). Revisar depois das medições da fase 3.
 5. As sequências (fase 4) entram no primeiro lançamento, ou o MVP vende só listas e exportação?
 6. Quantas buscas de decisores por mês cada pacote inclui, e qual o preço dos créditos avulsos? Usar o teto da planilha `custos-por-cliente.xlsx` como referência.

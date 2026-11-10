@@ -20,13 +20,22 @@ npx supabase db push --db-url "$DATABASE_URL"
 
 Nunca edite uma migration já aplicada. Para mudar o esquema, crie uma nova com `npx supabase migration new <nome>`.
 
+**Aplicou pelo SQL Editor?** Registre a migration como aplicada, senão o próximo `db push` tenta rodá-la de novo:
+
+```bash
+npx supabase migration repair --status applied <versão> --db-url "$DATABASE_URL"   # versão = prefixo numérico do arquivo
+```
+
 ## Importação da Receita
 
 ```bash
 npm run import:receita                         # competência mais recente
 npm run import:receita -- --periodo=2026-10    # competência específica
 npm run import:receita -- --manter-zips        # não apaga os zips (útil para reprocessar)
+npm run import:receita -- --so-se-nova         # sai sem fazer nada se a competência já estiver no banco
 ```
+
+- **Agendada no GitHub Actions** (`.github/workflows/importar-receita.yml`): toda segunda às 6h (Brasília) confere se a Receita publicou competência nova e só importa se houver. Para rodar à mão: Actions → "Importação da Receita" → Run workflow (dá para escolher a competência e forçar). Precisa do segredo `DATABASE_URL` com o **Session pooler** (`*.pooler.supabase.com:5432`), porque a conexão direta do Supabase é só IPv6 e os runners do GitHub não têm IPv6.
 
 - **O que entra:** só empresas **ativas** que casam com o `filter` de algum nicho da tabela `niches`. Para importar um nicho novo, insira-o em `niches` (via migration) e rode de novo.
 - **O que nunca entra:** empresário individual (natureza jurídica `2135`, que inclui quase todo MEI), em qualquer nicho. Os que já estavam no banco ficam `fora_da_base` na próxima importação.
