@@ -14,6 +14,8 @@ export type DadosScore = {
   establishments?: number;
   /** registro na ANTT (transporte de cargas) */
   rntrc?: { category: string; status: string; equiparado: boolean } | null;
+  /** regime tributário (BrasilAPI, só quando já está no cache): "LUCRO REAL", "SIMPLES NACIONAL"… */
+  regime?: string | null;
 };
 
 const celular = (p: string) => {
@@ -57,6 +59,10 @@ export function calcularScore(e: DadosScore): { score: number; motivos: string[]
   // registro na ANTT: transportadora de verdade × autônomo ou registro irregular
   if (e.rntrc?.status && e.rntrc.status !== "ATIVO") (s -= 20), motivos.push("RNTRC pendente");
   else if (e.rntrc?.category === "ETC" && !e.rntrc.equiparado) (s += 8), motivos.push("transportadora registrada na ANTT");
+
+  // regime tributário: Lucro Real é obrigatório acima de R$ 78 mi de faturamento (ou por atividade)
+  if (e.regime?.startsWith("LUCRO REAL")) (s += 10), motivos.push("Lucro Real");
+  else if (e.regime?.startsWith("LUCRO PRESUMIDO")) s += 4;
 
   return { score: Math.max(0, Math.min(100, Math.round(s))), motivos };
 }
