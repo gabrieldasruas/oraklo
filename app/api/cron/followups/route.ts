@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/db/admin";
 import { emailConfigurado, enviarLote } from "@/lib/email";
 import { rodapeDescadastro } from "@/lib/descadastro";
+import { supressoes } from "@/lib/supressao";
 import { enviarResumoRadar } from "@/lib/radar";
 
 // Cron da Vercel (vercel.json): envia os follow-ups vencidos para quem ainda não respondeu.
@@ -47,9 +48,13 @@ export async function GET(req: Request) {
   if (!vencidos.length) return Response.json({ enviados: 0, radar });
 
   // só quem ainda está em aberto no funil
-  const { data: leads } = await db.from("leads").select("id, status").in("id", [...new Set(vencidos.map((e) => e.lead_id))]);
+  const { data: leads } = await db.from("leads").select("id, status, cnpj").in("id", [...new Set(vencidos.map((e) => e.lead_id))]);
   const status = new Map((leads ?? []).map((l) => [l.id as string, l.status as string]));
-  const enviar = vencidos.filter((e) => status.has(e.lead_id) && !PARAM.has(status.get(e.lead_id)!)).slice(0, 300);
+  const cnpjDe = new Map((leads ?? []).map((l) => [l.id as string, (l.cnpj as string | null) ?? null]));
+  const abertos = vencidos.filter((e) => status.has(e.lead_id) && !PARAM.has(status.get(e.lead_id)!)).slice(0, 300);
+  // lista global de não contatar (LGPD)
+  const lista = await supressoes({ emails: abertos.map((e) => String(e.payload?.to ?? "")), cnpjs: [...cnpjDe.values()] });
+  const enviar = abertos.filter((e) => !lista.email(String(e.payload?.to ?? "")) && !lista.cnpj(cnpjDe.get(e.lead_id)));
 
   const msgs = enviar.map((e) => {
     const f = e.payload!.followup as Follow;

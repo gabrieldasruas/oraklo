@@ -18,12 +18,12 @@ export default async function SairPage({ searchParams }: Props) {
         {ok ? (
           <>
             <h1 className="text-3xl font-light tracking-[-0.04em]">Pronto, você saiu da lista</h1>
-            <p className="mt-3 text-sm text-white/60">Você não vai mais receber e-mails deste remetente enviados pelo {site.name}.</p>
+            <p className="mt-3 text-sm text-white/60">Você não vai mais receber e-mails de nenhum remetente pelo {site.name}.</p>
           </>
         ) : valido ? (
           <>
             <h1 className="text-3xl font-light tracking-[-0.04em]">Não quer mais receber estes e-mails?</h1>
-            <p className="mt-3 text-sm text-white/60">Confirme e o remetente não poderá mais enviar mensagens para você pelo {site.name}.</p>
+            <p className="mt-3 text-sm text-white/60">Confirme e nenhum cliente do {site.name} poderá mais enviar mensagens para este e-mail.</p>
             <form action={confirmarDescadastro} className="mt-7">
               <input type="hidden" name="l" value={l} />
               <input type="hidden" name="t" value={t} />
@@ -36,7 +36,7 @@ export default async function SairPage({ searchParams }: Props) {
           <>
             <h1 className="text-3xl font-light tracking-[-0.04em]">Link inválido</h1>
             <p className="mt-3 text-sm text-white/60">
-              {erro ? "Não foi possível confirmar." : "Este link de descadastro não é válido."} Escreva para {site.email} que removemos você.
+              {erro ? "Não foi possível confirmar." : "Este link de descadastro não é válido."} Peça em <Link href="/remover-dados" className="underline">remover meus dados</Link> ou escreva para {site.email}.
             </p>
           </>
         )}

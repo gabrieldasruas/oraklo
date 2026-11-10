@@ -6,6 +6,7 @@ import { site } from "@/content/site";
 import { requireUser } from "@/lib/auth";
 import { getList, getListCnpjs, getQuotaUsage } from "@/lib/lists";
 import { createAdminClient } from "@/lib/db/admin";
+import { semSuprimidos } from "@/lib/supressao";
 import { formatCnpj, formatMoney, SIZE_LABEL, titleCase } from "@/lib/format";
 import { deleteList } from "@/app/(app)/listas/actions";
 import ExportButton from "@/components/app/ExportButton";
@@ -29,13 +30,15 @@ export default async function ListaPage({ params, searchParams }: PageProps<"/li
     getListCnpjs(id, (pageNum - 1) * PAGE, pageNum * PAGE - 1),
     getQuotaUsage(user.workspaceId),
   ]);
+  type Linha = { cnpj: string; trade_name: string | null; legal_name: string | null; uf: string | null; size: string | null; share_capital: number | null; receita_email: string | null; receita_phones: string[] | null };
   const { data } = cnpjs.length
     ? await createAdminClient()
         .from("companies")
         .select("cnpj, trade_name, legal_name, uf, size, share_capital, receita_email, receita_phones")
         .in("cnpj", cnpjs)
     : { data: [] };
-  const byCnpj = new Map((data ?? []).map((c) => [c.cnpj as string, c]));
+  // lista de não contatar (LGPD)
+  const byCnpj = new Map((await semSuprimidos((data ?? []) as Linha[])).map((c) => [c.cnpj, c]));
   const rows = cnpjs.map((c) => byCnpj.get(c)).filter(Boolean);
   const pages = Math.max(1, Math.ceil(list.count / PAGE));
 

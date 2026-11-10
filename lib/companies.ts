@@ -2,6 +2,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/db/admin";
 import { titleCase } from "@/lib/format";
+import { semSuprimidos, sociosOcultos } from "@/lib/supressao";
 
 // A base de empresas só é lida pelo servidor (service role), sempre depois de conferir a sessão.
 // Quem chama estas funções é responsável por exigir login (requireUser / getUser).
@@ -163,9 +164,10 @@ export async function searchCompanies(filter: CompanyFilter, cursor?: string, li
   if (error) throw new Error(`Falha na busca: ${error.message}`);
   const rows = (data ?? []) as unknown as Row[];
   const page = rows.slice(0, limit);
+  const visiveis = await semSuprimidos(page);
   const cities = await municipalityNames(page.map((r) => r.municipality_code ?? ""));
   return {
-    items: page.map((r) => toItem(r, cities)),
+    items: visiveis.map((r) => toItem(r, cities)),
     nextCursor: rows.length > limit ? encodeCursor(page[page.length - 1]) : null,
   };
 }
@@ -198,6 +200,8 @@ export async function getCompany(cnpj: string): Promise<CompanyDetail | null> {
     .maybeSingle<Row & { status: string; cnae_secondary: string[]; district: string | null; address: string | null; zip: string | null; legal_nature: string | null; cnpj_root: string; source_period: string }>();
   if (error) throw new Error(`Falha ao ler empresa: ${error.message}`);
   if (!c) return null;
+  const [visivel] = await semSuprimidos([c]);
+  if (!visivel) return null;
 
   const codes = [c.cnae_main, ...c.cnae_secondary].filter(Boolean) as string[];
   const [cnaes, partners, cities] = await Promise.all([
@@ -206,10 +210,12 @@ export async function getCompany(cnpj: string): Promise<CompanyDetail | null> {
     municipalityNames([c.municipality_code ?? ""]),
   ]);
   if (cnaes.error || partners.error) throw new Error("Falha ao ler detalhes da empresa");
+  // lista de não contatar (LGPD): empresa removida some, e-mail e sócio que pediram para sair também
+  const oculto = await sociosOcultos(partners.data.map((p) => ({ root: c.cnpj_root, nome: p.name as string })));
   const desc = new Map(cnaes.data.map((k) => [k.code as string, k.description as string]));
 
   return {
-    ...toItem(c, cities),
+    ...toItem(visivel, cities),
     status: c.status,
     cnaeMainDescription: desc.get(c.cnae_main ?? "") ?? null,
     cnaeSecondary: c.cnae_secondary.map((code) => ({ code, description: desc.get(code) ?? "" })),
@@ -218,7 +224,7 @@ export async function getCompany(cnpj: string): Promise<CompanyDetail | null> {
     zip: c.zip,
     legalNature: c.legal_nature,
     // Só nome e qualificação do sócio (LGPD); o CPF nem é importado.
-    partners: partners.data.map((p) => ({ name: titleCase(p.name as string), kind: p.kind as string | null, role: (p.role as string | null) ?? null, enteredAt: p.entered_at as string | null })),
+    partners: partners.data.filter((p) => !oculto(c.cnpj_root, p.name as string)).map((p) => ({ name: titleCase(p.name as string), kind: p.kind as string | null, role: (p.role as string | null) ?? null, enteredAt: p.entered_at as string | null })),
     sourcePeriod: c.source_period,
   };
 }
@@ -253,7 +259,7 @@ export async function empresasAbertasDesde(o: { desde: string; cnaes?: string[];
   if (o.ufs?.length) q = q.in("uf", o.ufs);
   const { data, error, count } = await q;
   if (error) throw new Error(`Falha no radar: ${error.message}`);
-  const rows = (data ?? []) as unknown as Row[];
+  const rows = await semSuprimidos((data ?? []) as unknown as Row[]);
   const cities = await municipalityNames(rows.map((r) => r.municipality_code ?? ""));
   return { items: rows.map((r) => toItem(r, cities)), total: count ?? rows.length };
 }

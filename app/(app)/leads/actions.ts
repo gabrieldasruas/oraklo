@@ -6,6 +6,7 @@ import { createClient } from "@/lib/db/server";
 import { adicionarEmpresasAoPipeline } from "./empresas";
 import { avisarCrm } from "@/lib/crm-webhook";
 import { LIMITES, LimiteAtingido, planoDoWorkspace, restante, usoDoMes } from "@/lib/planos";
+import { supressoes } from "@/lib/supressao";
 import { STATUSES, type Lead, type LeadInput, type Status } from "@/lib/lead-types";
 
 type LeadRow = {
@@ -62,6 +63,7 @@ export async function createLead(input: LeadInput): Promise<Lead> {
     score: Math.min(100, Math.max(0, Math.round(Number(input.score) || 0))),
   };
   if (!row.name || !row.company) throw new Error("Nome e empresa são obrigatórios");
+  if (row.email && (await supressoes({ emails: [row.email] })).email(row.email)) throw new Error("Esse e-mail pediu para não ser contatado pelo Oraklo. Cadastre o lead sem ele.");
   const supabase = await createClient();
   const limite = LIMITES[await planoDoWorkspace(supabase, user.workspaceId)].pipelineMes;
   if (restante(limite, (await usoDoMes(supabase)).pipeline) === 0) throw new LimiteAtingido("empresas no pipeline", limite!);
@@ -108,6 +110,7 @@ export async function atualizarLead(id: string, campos: Partial<Pick<Lead, "name
   if (campos.phone !== undefined) row.phone = text(campos.phone, 30);
   if (campos.place !== undefined) row.place = text(campos.place, 80);
   if (row.name === "") throw new Error("O nome não pode ficar vazio");
+  if (row.email && (await supressoes({ emails: [row.email] })).email(row.email)) throw new Error("Esse e-mail pediu para não ser contatado pelo Oraklo.");
   const supabase = await createClient();
   const { data, error } = await supabase.from("leads").update(row).eq("id", id).select(COLUMNS).single();
   if (error) throw new Error("Não foi possível salvar o lead");

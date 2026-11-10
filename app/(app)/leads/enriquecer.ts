@@ -8,6 +8,7 @@ import { HUNTER_KEY_TAG } from "@/lib/config-workspace";
 import { titleCase } from "@/lib/format";
 import { cifrar, decifrar } from "@/lib/segredo";
 import { LIMITES, planoDoWorkspace } from "@/lib/planos";
+import { sociosOcultos, supressoes } from "@/lib/supressao";
 
 // Decisores do lead:
 // 1. Sócios da Receita (QSA): de graça, em todos os pacotes. Em PME o sócio costuma ser quem decide.
@@ -100,7 +101,10 @@ export async function decisoresDoLead(leadId: string): Promise<{ socios: Socio[]
     emailReceita = (c?.receita_email as string | null) ?? null;
     if (c) {
       const { data: p } = await admin.from("partners").select("name, kind, role").eq("cnpj_root", c.cnpj_root).limit(30);
+      // sócio que pediu para tirar o nome da base não aparece (LGPD)
+      const oculto = await sociosOcultos((p ?? []).map((s) => ({ root: c.cnpj_root as string, nome: s.name as string })));
       socios = (p ?? [])
+        .filter((s) => !oculto(c.cnpj_root as string, s.name as string))
         .map((s) => ({ nome: titleCase(s.name as string), cargo: rotuloCargo(s.role as string | null), decisor: ehDecisor(s.role as string | null), pessoaFisica: s.kind === "PF" }))
         .sort((a, b) => Number(b.decisor) - Number(a.decisor) || a.nome.localeCompare(b.nome));
     }
@@ -142,7 +146,7 @@ export async function emailDoSocio(dominio: string, nome: string): Promise<Res<{
       { domain: d, first_name: partes[0], last_name: partes[partes.length - 1] },
       chave,
     );
-    if (!r.email) return { ok: true, pessoa: null };
+    if (!r.email || (await supressoes({ emails: [r.email] })).email(r.email)) return { ok: true, pessoa: null };
     return { ok: true, pessoa: { nome, cargo: r.position ?? "", email: r.email, confianca: r.score ?? 0, linkedin: r.linkedin_url, senioridade: r.seniority } };
   } catch (e) {
     return { ok: false, erro: msg(e) };
@@ -157,7 +161,10 @@ export async function outrasPessoas(dominio: string): Promise<Res<{ pessoas: Pes
       emails?: { value: string; first_name: string | null; last_name: string | null; position: string | null; confidence: number; linkedin: string | null; seniority: string | null }[];
     }>("domain-search", { domain: d, limit: "10" }, chave);
     const ordem: Record<string, number> = { executive: 0, senior: 1 };
+    // quem pediu para não ser contatado não aparece (LGPD)
+    const lista = await supressoes({ emails: (r.emails ?? []).map((e) => e.value) });
     const pessoas = (r.emails ?? [])
+      .filter((e) => !lista.email(e.value))
       .map((e) => ({
         nome: [e.first_name, e.last_name].filter(Boolean).join(" ") || e.value.split("@")[0],
         cargo: e.position ?? "",
@@ -176,6 +183,7 @@ export async function outrasPessoas(dominio: string): Promise<Res<{ pessoas: Pes
 /** Usa a pessoa (sócio ou encontrada no Hunter) como contato principal do lead. */
 export async function usarContato(leadId: string, p: { nome: string; cargo: string; email: string }): Promise<void> {
   const user = await requireUser();
+  if (p.email && (await supressoes({ emails: [p.email] })).email(p.email)) throw new Error("Esse e-mail pediu para não ser contatado pelo Oraklo.");
   const supabase = await createClient();
   const { error } = await supabase
     .from("leads")
