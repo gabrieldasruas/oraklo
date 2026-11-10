@@ -19,7 +19,9 @@ export const CNAES_DO_NICHO: Record<string, string[]> = {
   "revendas-insumos": ["4683400", "4692300", "4661300"],
   atacadistas: ["4639701", "4691500", "4693100"],
   ecommerce: ["4713004", "4789099"],
-  clinicas: ["8630503", "8630504", "8630501"],
+  clinicas: ["8630501", "8630502", "8630503", "8630504"],
+  "imobiliarias-sc": ["6822600"],
+  "corretores-imoveis-sc": ["6821801", "6821802"],
   construtoras: ["4120400", "4299599", "4330499"],
   contabilidade: ["6920601", "6920602"],
 };

@@ -357,7 +357,7 @@ Toda rota de workspace valida a sessão e depende do RLS como segunda barreira. 
 
 ## 10. Pendências de decisão
 
-1. Quais são os 2 ou 3 nichos-piloto e a lista exata de CNAEs de cada um?
+1. ~~Quais nichos entram no lançamento~~ Decidido (09/11): transportadoras, clínicas, imobiliárias e corretores de imóveis, só em SC, com o mesmo funil (só CNAE principal, só matriz, sem MEI). CNAEs na migration `nichos_lancamento`. Os demais nichos ficam sob demanda.
 2. Supabase está aprovado, ou preferem Postgres próprio?
 3. ~~Onde o worker vai rodar~~ Decidido (09/11): a importação mensal roda agendada no GitHub Actions (custo zero). Railway ou VPS só quando o enriquecimento ou as sequências precisarem de fila sempre ligada.
 4. ~~Orçamento para APIs pagas~~ Decidido: por enquanto custo zero, só para testes (ver "Modo teste"). Revisar depois das medições da fase 3.
