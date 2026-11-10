@@ -5,6 +5,8 @@ import { ArrowLeft, ArrowUpRight, Building2, CheckCircle2, Globe, Mail, MapPin, 
 import { site } from "@/content/site";
 import { requireUser } from "@/lib/auth";
 import { getCompany } from "@/lib/companies";
+import { regimeDaEmpresa, rotuloRegime } from "@/lib/brasilapi";
+import { calcularScore, faixaScore } from "@/lib/score";
 import { formatCnae, formatCnpj, formatMoney, formatPhone, SIZE_LABEL } from "@/lib/format";
 import {
   CARGOS_LIDERANCA,
@@ -40,8 +42,10 @@ const botaoLink = "inline-flex min-h-9 items-center gap-1.5 rounded-full border 
 export default async function EmpresaPage({ params }: PageProps<"/empresas/[cnpj]">) {
   await requireUser();
   const { cnpj } = await params;
-  const c = await getCompany(cnpj);
+  // regime pela BrasilAPI só aqui (uma pessoa abriu a ficha), com cache de 30 dias e no máximo 3 s de espera
+  const [c, regime] = await Promise.all([getCompany(cnpj), regimeDaEmpresa(cnpj)]);
   if (!c) notFound();
+  const sc = calcularScore({ ...c, regime: regime?.regime });
 
   const marca = nomeParaBusca(c.name);
   const site_ = sitePeloEmail(c.email) ?? (c.website ? c.website.replace(/^https?:\/\//, "").replace(/\/$/, "") : null);
@@ -62,8 +66,10 @@ export default async function EmpresaPage({ params }: PageProps<"/empresas/[cnpj
     { l: "Tipo", v: c.isHeadquarters ? "Matriz" : "Filial" },
     { l: "Porte", v: SIZE_LABEL[c.size] ?? "—" },
     { l: "Capital social", v: formatMoney(c.shareCapital) },
+    { l: "Regime tributário", v: regime ? rotuloRegime(regime) : "—" },
     { l: "Abertura", v: date(c.openedAt) },
     { l: "Situação", v: c.status === "02" ? "Ativa" : "Fora da base atual" },
+    { l: "Score", v: `${sc.score} · ${faixaScore(sc.score).rotulo}` },
   ];
 
   const proximosPassos = [
@@ -191,6 +197,7 @@ export default async function EmpresaPage({ params }: PageProps<"/empresas/[cnpj
                 </div>
               ))}
             </dl>
+            {sc.motivos.length > 0 && <p className="mt-4 text-xs opacity-60">Por que esse score: {sc.motivos.join(" · ")}</p>}
             <div className="mt-6 border-t border-night/10 pt-5">
               <Micro>Endereço</Micro>
               <p className="mt-2 text-sm leading-relaxed">{enderecoCompleto || "—"}</p>
@@ -272,7 +279,7 @@ export default async function EmpresaPage({ params }: PageProps<"/empresas/[cnpj
             </ol>
           </Glass>
 
-          <Micro className="px-1">Fonte: Receita Federal, competência {c.sourcePeriod}</Micro>
+          <Micro className="px-1">Fonte: Receita Federal, competência {c.sourcePeriod}{regime ? " · regime tributário: BrasilAPI" : ""}</Micro>
         </div>
       </div>
     </>

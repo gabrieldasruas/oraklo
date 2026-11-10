@@ -5,6 +5,7 @@ import { createClient } from "@/lib/db/server";
 import { getCompany } from "@/lib/companies";
 import { ehDecisor, rotuloCargo } from "@/lib/crm";
 import { calcularScore } from "@/lib/score";
+import { regimesEmCache } from "@/lib/brasilapi";
 import { avisarCrm } from "@/lib/crm-webhook";
 import { LIMITES, planoDoWorkspace, restante, usoDoMes } from "@/lib/planos";
 
@@ -28,6 +29,8 @@ export async function adicionarEmpresasAoPipeline(cnpjs: string[]): Promise<{ cr
   const novos = cabe === null ? todosNovos : todosNovos.slice(0, cabe);
   const limitados = todosNovos.length - novos.length;
 
+  // regime tributário só do cache (quem já abriu a ficha): consultar a BrasilAPI em lote fere os termos de uso
+  const regimes = await regimesEmCache(novos);
   let criados = 0;
   let falharam = 0;
   // poucos de cada vez: cada empresa busca sócios e cargos
@@ -40,7 +43,7 @@ export async function adicionarEmpresasAoPipeline(cnpjs: string[]): Promise<{ cr
       }
       const pessoas = c.partners.filter((p) => p.kind !== "PJ");
       const decisor = pessoas.find((p) => ehDecisor(p.role)) ?? pessoas[0] ?? c.partners[0];
-      const { score } = calcularScore(c);
+      const { score } = calcularScore({ ...c, regime: regimes.get(c.cnpj)?.regime });
       return [
         {
           workspace_id: user.workspaceId,
