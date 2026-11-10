@@ -138,7 +138,7 @@ function toItem(r: Row, cities: Map<string, string>): CompanyItem {
     email: r.receita_email,
     phones: r.receita_phones ?? [],
     website: r.website,
-    zip: r.zip ? r.zip.replace(/D/g, "").padStart(8, "0") : null,
+    zip: r.zip ? r.zip.replace(/\D/g, "").padStart(8, "0") : null,
     address: r.address ? titleCase(r.address) : null,
     district: r.district ? titleCase(r.district) : null,
     establishments: r.establishments ?? 1,

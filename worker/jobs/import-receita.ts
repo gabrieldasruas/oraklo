@@ -1,6 +1,7 @@
 // Importa da base aberta de CNPJ da Receita só as empresas dos nichos cadastrados.
 //
-// Uso: npm run import:receita [-- --periodo=2026-10] [-- --manter-zips]
+// Uso: npm run import:receita [-- --periodo=2026-10] [-- --manter-zips] [-- --so-se-nova]
+// --so-se-nova: sai sem fazer nada se a competência já estiver no banco (usado no agendamento do GitHub Actions).
 //
 // Fluxo: Cnaes e Municipios → Estabelecimentos (filtra por nicho, só ativas; conta filiais de todas) →
 // Empresas (descarta empresário individual) e Socios → RNTRC da ANTT (se houver transporte de cargas)
@@ -36,6 +37,8 @@ type Niche = { id: string; filter: NicheFilter };
 const args = process.argv.slice(2);
 const argPeriod = args.find((a) => a.startsWith("--periodo="))?.split("=")[1];
 const keepZips = args.includes("--manter-zips");
+const onlyIfNew = args.includes("--so-se-nova");
+if (argPeriod && !/^\d{4}-\d{2}$/.test(argPeriod)) throw new Error(`Competência inválida: ${argPeriod} (use AAAA-MM)`);
 
 const log = (msg: string) => console.log(`[${new Date().toISOString().slice(11, 19)}] ${msg}`);
 
@@ -241,8 +244,19 @@ async function readRntrc(cnpjs: Set<string>, roots: Set<string>) {
 const db = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 await db.connect();
 
+let detected: string | undefined;
+if (onlyIfNew) {
+  detected = argPeriod ?? (await latestPeriod());
+  const current = (await db.query("select max(source_period) as p from public.companies")).rows[0]?.p as string | null;
+  if (current && current >= detected) {
+    log(`Competência ${detected} já importada (banco em ${current}). Nada a fazer.`);
+    await db.end();
+    process.exit(0);
+  }
+}
+
 try {
-  const period = argPeriod ?? (await latestPeriod());
+  const period = detected ?? argPeriod ?? (await latestPeriod());
   log(`Competência ${period}, cache em ${CACHE_DIR}`);
 
   const niches: Niche[] = (await db.query("select id, filter from public.niches")).rows;
