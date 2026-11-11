@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CalendarDays, Clock3, KanbanSquare, List, Mail, MousePointerClick, Phone, Search, Send, Trash2 } from "lucide-react";
+import { ArrowRight, CalendarDays, KanbanSquare, List, Mail, MousePointerClick, Phone, Search, Send, Trash2 } from "lucide-react";
 import { faixaScore } from "@/lib/score";
 import { STATUSES, useLeads, type Status } from "@/lib/leads";
 import PageHeader from "@/components/app/PageHeader";
@@ -131,10 +131,10 @@ export default function LeadsView({ abrir = null }: { abrir?: string | null } = 
                 <Send size={24} aria-hidden />
               </span>
               <div className="min-w-0">
-                <Micro className="!text-neon !opacity-90">Novo · E-mail com follow-up</Micro>
+                <Micro className="!text-neon !opacity-90">E-mail personalizado</Micro>
                 <h2 className="mt-1 whitespace-nowrap text-3xl font-light leading-tight tracking-[-0.04em] md:text-4xl">Disparar e-mails</h2>
                 <p className="mt-1 max-w-xl text-sm text-white/60">
-                  Uma mensagem personalizada para cada lead, com o seu portfólio. Quem não responder recebe o follow-up sozinho.
+                  Uma mensagem personalizada para cada lead, com o seu portfólio.
                 </p>
               </div>
             </div>
@@ -143,7 +143,7 @@ export default function LeadsView({ abrir = null }: { abrir?: string | null } = 
               {[
                 { icon: Mail, v: comEmail.length, t: "com e-mail" },
                 { icon: MousePointerClick, v: prontos.length, t: "prontos (Novo)" },
-                { icon: Clock3, v: "auto", t: "follow-up" },
+                { icon: Send, v: leads.filter((l) => l.status === "Em sequência").length, t: "já abordados" },
               ].map(({ icon: Icon, v, t }) => (
                 <li key={t} className="rounded-2xl border border-white/10 bg-white/5 px-2 py-3">
                   <Icon size={14} aria-hidden className="mx-auto text-neon" />

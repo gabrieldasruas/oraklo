@@ -1,6 +1,10 @@
 // Pacotes do Oraklo: preços, limites e comparação. Fonte única para a aba Pacotes, a página
 // pública de Preços e os limites aplicados no servidor (lib/planos.ts). Compartilhado com o cliente.
 
+// Follow-up automático desligado em 10/11: as sequências ficaram fora do primeiro lançamento
+// (o envio pela Resend não pode ser e-mail frio). Volta quando o envio sair da caixa do próprio cliente.
+export const FOLLOWUP_DISPONIVEL = false;
+
 export type Plano = "gratis" | "premium" | "ultra";
 
 export type Limites = {
@@ -22,8 +26,8 @@ export type Limites = {
 
 export const LIMITES: Record<Plano, Limites> = {
   gratis: { produtos: 5, buscasMes: 30, pipelineMes: 50, emailsMes: 20, iaMes: 10, radarItens: 5, followup: false, decisores: false, integracoes: false, relatoriosCompletos: false, semMarca: false },
-  premium: { produtos: 20, buscasMes: 300, pipelineMes: 1000, emailsMes: 1000, iaMes: 200, radarItens: null, followup: true, decisores: true, integracoes: true, relatoriosCompletos: true, semMarca: false },
-  ultra: { produtos: null, buscasMes: null, pipelineMes: null, emailsMes: 5000, iaMes: 1000, radarItens: null, followup: true, decisores: true, integracoes: true, relatoriosCompletos: true, semMarca: true },
+  premium: { produtos: 20, buscasMes: 300, pipelineMes: 1000, emailsMes: 1000, iaMes: 200, radarItens: null, followup: false, decisores: true, integracoes: true, relatoriosCompletos: true, semMarca: false },
+  ultra: { produtos: null, buscasMes: null, pipelineMes: null, emailsMes: 5000, iaMes: 1000, radarItens: null, followup: false, decisores: true, integracoes: true, relatoriosCompletos: true, semMarca: true },
 };
 
 export const NOME_PLANO: Record<Plano, string> = { gratis: "Free", premium: "Premium", ultra: "Ultra" };
@@ -63,7 +67,7 @@ export const PACOTES: Pacote[] = [
     descricao: "Para quem prospecta todo dia e quer automatizar a abordagem.",
     tom: "lime",
     destaque: "Mais escolhido",
-    itens: ["Tudo do Free", "300 buscas por mês na Busca avançada", "1.000 empresas e 1.000 e-mails por mês", "Follow-up automático e 200 textos com IA", "E-mail dos decisores (com sua conta Hunter), radar e relatórios completos", "Integração com CRM (RD Station, webhook, planilhas)"],
+    itens: ["Tudo do Free", "300 buscas por mês na Busca avançada", "1.000 empresas e 1.000 e-mails por mês", "200 textos com IA por mês", "E-mail dos decisores (com sua conta Hunter), radar e relatórios completos", "Integração com CRM (RD Station, webhook, planilhas)"],
     cta: "Assinar Premium",
   },
   {
@@ -112,7 +116,6 @@ export const COMPARACAO: { grupo: string; linhas: { recurso: string; gratis: Cel
     linhas: [
       { recurso: "Empresas no pipeline", gratis: "50/mês", premium: "1.000/mês", ultra: "Ilimitado" },
       { recurso: "E-mails disparados", gratis: "20/mês", premium: "1.000/mês", ultra: "5.000/mês" },
-      { recurso: "Follow-up automático", gratis: false, premium: true, ultra: true },
       { recurso: "Textos escritos com IA", gratis: "10/mês", premium: "200/mês", ultra: "1.000/mês" },
       { recurso: "WhatsApp com modelos", gratis: true, premium: true, ultra: true },
       { recurso: "Portfólio com link e visitas", gratis: true, premium: true, ultra: "Sem a marca Oraklo" },

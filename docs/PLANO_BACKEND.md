@@ -361,5 +361,5 @@ Toda rota de workspace valida a sessão e depende do RLS como segunda barreira. 
 2. Supabase está aprovado, ou preferem Postgres próprio?
 3. ~~Onde o worker vai rodar~~ Decidido (09/11): a importação mensal roda agendada no GitHub Actions (custo zero). Railway ou VPS só quando o enriquecimento ou as sequências precisarem de fila sempre ligada.
 4. ~~Orçamento para APIs pagas~~ Decidido: por enquanto custo zero, só para testes (ver "Modo teste"). Revisar depois das medições da fase 3.
-5. As sequências (fase 4) entram no primeiro lançamento, ou o MVP vende só listas e exportação?
+5. ~~As sequências entram no primeiro lançamento?~~ Decidido (10/11): ficam de fora por enquanto. O MVP vende busca, listas, exportação, pipeline e abordagem individual com IA.
 6. Quantas buscas de decisores por mês cada pacote inclui, e qual o preço dos créditos avulsos? Usar o teto da planilha `custos-por-cliente.xlsx` como referência.

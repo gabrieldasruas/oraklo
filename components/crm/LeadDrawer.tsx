@@ -154,7 +154,7 @@ export default function LeadDrawer({
 
           {/* ações rápidas */}
           <div className="relative mt-5 flex flex-wrap gap-2">
-            <button type="button" onClick={() => onEmail(lead)} disabled={!lead.email} className="flex min-h-9 cursor-pointer items-center gap-2 rounded-full bg-neon px-4 text-xs font-medium text-night disabled:cursor-not-allowed disabled:opacity-40" title={lead.email ? "Enviar e-mail com follow-up" : "Lead sem e-mail — veja a aba Contato"}>
+            <button type="button" onClick={() => onEmail(lead)} disabled={!lead.email} className="flex min-h-9 cursor-pointer items-center gap-2 rounded-full bg-neon px-4 text-xs font-medium text-night disabled:cursor-not-allowed disabled:opacity-40" title={lead.email ? "Enviar e-mail" : "Lead sem e-mail — veja a aba Contato"}>
               <Mail size={13} aria-hidden /> E-mail
             </button>
             <button type="button" onClick={() => onAgendar(lead)} className="flex min-h-9 cursor-pointer items-center gap-2 rounded-full bg-white/10 px-4 text-xs font-medium hover:bg-white/20">

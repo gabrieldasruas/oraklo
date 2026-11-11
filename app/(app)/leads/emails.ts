@@ -10,7 +10,7 @@ import { carregarConfig } from "../configuracoes/actions";
 import { LIMITES, planoDoWorkspace, restante, usoDoMes } from "@/lib/planos";
 import { PORTFOLIO_TAG, completar, preencherEmail, type Portfolio } from "@/lib/portfolio-types";
 
-// Disparo de e-mails para leads (Resend) com follow-up automático.
+// Disparo de e-mails para leads (Resend). O follow-up automático está desligado (FOLLOWUP_DISPONIVEL em lib/pacotes.ts).
 // Cada envio vira um evento `email_sent`; o follow-up é enviado pelo cron (/api/cron/followups)
 // se o lead não responder até a data marcada. Aberturas e cliques chegam pelo webhook da Resend.
 
