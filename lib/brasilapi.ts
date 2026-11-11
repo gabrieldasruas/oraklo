@@ -57,9 +57,17 @@ export async function regimeDaEmpresa(cnpj: string): Promise<Regime | null> {
     return null;
   }
   try {
-    const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`, { signal: AbortSignal.timeout(TEMPO_MS), cache: "no-store" });
+    // Sem User-Agent próprio a BrasilAPI responde 403 (o padrão do fetch do Node é bloqueado)
+    const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`, {
+      signal: AbortSignal.timeout(TEMPO_MS),
+      cache: "no-store",
+      headers: { "User-Agent": "Oraklo/1.0 (+https://oraklo.vercel.app)" },
+    });
     // 404 = a BrasilAPI não conhece o CNPJ: guarda vazio para não perguntar de novo por 30 dias
-    if (!res.ok && res.status !== 404) return doCache(cache);
+    if (!res.ok && res.status !== 404) {
+      console.warn(`[brasilapi] HTTP ${res.status} no CNPJ ${cnpj}`);
+      return doCache(cache);
+    }
     const regime = res.ok ? lerRegime((await res.json()) as RespostaCnpj) : null;
     await db.from("company_tax_info").upsert({ cnpj, regime: regime?.regime ?? null, regime_year: regime?.ano ?? null, fetched_at: new Date().toISOString() });
     return regime;
