@@ -307,7 +307,7 @@ export const reports = {
 export const productSteps = [
   { n: "01", title: "Defina seu cliente ideal", text: "Escolha os nichos e o perfil (porte, capital, tipo de contato) na Segmentação." },
   { n: "02", title: "Encontre no mapa", text: "Busque por raio, cidade ou estado e veja as empresas com pin no endereço e score." },
-  { n: "03", title: "Aborde", text: "Mande ao pipeline, dispare e-mail com follow-up ou chame no WhatsApp." },
+  { n: "03", title: "Aborde", text: "Mande ao pipeline, dispare e-mails personalizados ou chame no WhatsApp." },
   { n: "04", title: "Meça e ajuste", text: "Os relatórios mostram o que responde mais por segmento, cidade, porte e score." },
 ];
 
@@ -315,6 +315,6 @@ export const faq = [
   { q: "O Free tem prazo?", a: "Não. Use à vontade dentro dos limites do pacote (30 buscas, 50 empresas e 20 e-mails por mês), sem cartão de crédito." },
   { q: "De onde vêm os dados das empresas?", a: "Do cadastro público de CNPJ da Receita Federal. Hoje a base cobre Santa Catarina; outros estados estão a caminho." },
   { q: "Como fica a LGPD?", a: "Usamos dados públicos de empresas para contato comercial, e todo e-mail enviado pelo Oraklo tem link para a pessoa sair da lista. Veja a política de privacidade." },
-  { q: "Qual a diferença entre Premium e Ultra?", a: "O Premium tem 300 buscas por mês na Busca avançada, follow-up automático, decisores e integração com CRM. O Ultra libera a busca sem limite, empresas ilimitadas no pipeline e tira a marca Oraklo do portfólio." },
+  { q: "Qual a diferença entre Premium e Ultra?", a: "O Premium tem 300 buscas por mês na Busca avançada, 200 textos com IA, decisores e integração com CRM. O Ultra libera a busca sem limite, empresas ilimitadas no pipeline e tira a marca Oraklo do portfólio." },
   { q: "Como pago?", a: "O pagamento por Pix e cartão está chegando. Até lá, fale com a gente e ativamos seu pacote na hora." },
 ];

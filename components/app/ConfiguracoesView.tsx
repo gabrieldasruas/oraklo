@@ -132,7 +132,7 @@ export default function ConfiguracoesView({ inicial, usuario, plano, membros, em
         {/* assinatura */}
         <Glass className="p-7">
           <Micro>03 · Assinatura dos e-mails</Micro>
-          <p className="mt-2 text-sm opacity-60">Vai no fim de todo e-mail e follow-up disparado pelo Oraklo.</p>
+          <p className="mt-2 text-sm opacity-60">Vai no fim de todo e-mail disparado pelo Oraklo.</p>
           <textarea
             value={c.assinatura}
             onChange={(e) => setC((s) => ({ ...s, assinatura: e.target.value }))}

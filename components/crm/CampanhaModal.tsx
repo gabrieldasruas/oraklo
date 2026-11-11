@@ -9,12 +9,13 @@ import { carregarPortfolio } from "@/app/(app)/portfolio/actions";
 import { configuracaoEmail, enviarEmails, type ConfigEmail } from "@/app/(app)/leads/emails";
 import { escreverComIA, iaDisponivel } from "@/app/(app)/leads/abordagem";
 import { COR_ETAPA } from "./Pipeline";
+import { FOLLOWUP_DISPONIVEL } from "@/lib/pacotes";
 
 const FOLLOWUP_PADRAO = "Oi, {nome}! Passando para saber se conseguiu ver minha mensagem anterior.\n\nSe fizer sentido, te mostro em 15 minutos como funcionaria na {empresa}. Qual o melhor horário?\n\n{meu_nome}";
 const DIAS = [2, 3, 5, 7];
 const valido = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 
-/** Disparo de e-mail para um ou vários leads, com follow-up automático. */
+/** Disparo de e-mail para um ou vários leads (follow-up automático só se FOLLOWUP_DISPONIVEL). */
 export default function CampanhaModal({
   leads,
   inicial,
@@ -33,7 +34,7 @@ export default function CampanhaModal({
   const [busca, setBusca] = useState("");
   const [assunto, setAssunto] = useState("");
   const [corpo, setCorpo] = useState("");
-  const [follow, setFollow] = useState(true);
+  const [follow, setFollow] = useState(FOLLOWUP_DISPONIVEL);
   const [dias, setDias] = useState(3);
   const [followCorpo, setFollowCorpo] = useState(FOLLOWUP_PADRAO);
   const [enviando, setEnviando] = useState(false);
@@ -127,7 +128,7 @@ export default function CampanhaModal({
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-lg font-medium leading-tight tracking-[-0.02em]">Enviar e-mail</p>
-            <p className="truncate text-xs opacity-55">{cfg?.configurado ? `De ${cfg.remetente} · respostas vão para o seu e-mail` : "Mensagem personalizada para cada lead, com follow-up automático"}</p>
+            <p className="truncate text-xs opacity-55">{cfg?.configurado ? `De ${cfg.remetente} · respostas vão para o seu e-mail` : "Mensagem personalizada para cada lead"}</p>
           </div>
           <button type="button" aria-label="Fechar" onClick={onFechar} disabled={enviando} className="flex size-9 cursor-pointer items-center justify-center rounded-full hover:bg-night/5">
             <X size={17} />
@@ -260,7 +261,8 @@ export default function CampanhaModal({
                 ))}
               </div>
 
-              {/* follow-up */}
+              {/* follow-up (desligado enquanto FOLLOWUP_DISPONIVEL for false) */}
+              {FOLLOWUP_DISPONIVEL && (
               <div className={`rounded-[18px] border p-4 transition-colors ${follow ? "border-night bg-night text-white" : "border-white bg-white"}`}>
                 <label className="flex cursor-pointer items-center gap-3">
                   <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} className="size-4 accent-neon" />
@@ -282,6 +284,7 @@ export default function CampanhaModal({
                   </div>
                 )}
               </div>
+              )}
 
               {/* prévia */}
               {exemplo && (

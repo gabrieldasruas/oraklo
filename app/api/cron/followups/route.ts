@@ -3,6 +3,7 @@ import { emailConfigurado, enviarLote } from "@/lib/email";
 import { rodapeDescadastro } from "@/lib/descadastro";
 import { supressoes } from "@/lib/supressao";
 import { enviarResumoRadar } from "@/lib/radar";
+import { FOLLOWUP_DISPONIVEL } from "@/lib/pacotes";
 
 // Cron da Vercel (vercel.json): envia os follow-ups vencidos para quem ainda não respondeu.
 // A Vercel manda "Authorization: Bearer $CRON_SECRET". Sem CRON_SECRET a rota fica fechada.
@@ -20,6 +21,8 @@ export async function GET(req: Request) {
   if (!emailConfigurado()) return Response.json({ enviados: 0, motivo: "e-mail não configurado" });
   // segundas-feiras: resumo semanal do radar de novas empresas
   const radar = new Date().getUTCDay() === 1 ? await enviarResumoRadar().catch(() => ({ enviados: 0 })) : null;
+  // follow-up desligado: os que já estavam agendados também não saem
+  if (!FOLLOWUP_DISPONIVEL) return Response.json({ enviados: 0, motivo: "follow-up desligado", radar });
 
   const db = createAdminClient();
   const desde = new Date(Date.now() - 45 * 86_400_000).toISOString();

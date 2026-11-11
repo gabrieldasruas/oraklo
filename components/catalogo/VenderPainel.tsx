@@ -288,7 +288,7 @@ export default function VenderPainel({
                   </Link>
                 )}
               </div>
-              {canal === "email" && <p className="mt-2 text-[11px] opacity-55">Copie a oferta e cole no “Disparar e-mails” dos Leads, que envia em lote com follow-up.</p>}
+              {canal === "email" && <p className="mt-2 text-[11px] opacity-55">Copie a oferta e cole no “Disparar e-mails” dos Leads, que envia em lote.</p>}
               {retorno && <p className={`mt-3 text-xs ${retorno.tipo === "ok" ? "text-good-700" : "text-danger-600"}`}>{retorno.texto}</p>}
 
               <div className="mt-8 rounded-2xl bg-white/60 p-4 text-xs leading-relaxed">
